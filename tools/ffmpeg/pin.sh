@@ -44,15 +44,17 @@ open(path, "w").write(new)
 PY
 
 cat >third_party/ffmpeg/BUILD.bazel <<'BUILD'
-# Written by tools/ffmpeg/pin.sh. The pinned ffmpeg build for the host.
+# Written by tools/ffmpeg/pin.sh. The pinned ffmpeg build for the host;
+# Linux only for now, so other platforms skip these targets.
 
 [
-    alias(
+    filegroup(
         name = tool,
-        actual = select({
-            "//tools/platforms:linux_amd64": "@ffmpeg_linux_amd64//:bin/" + tool,
-            "//tools/platforms:linux_arm64": "@ffmpeg_linux_arm64//:bin/" + tool,
+        srcs = select({
+            "//tools/platforms:linux_amd64": ["@ffmpeg_linux_amd64//:bin/" + tool],
+            "//tools/platforms:linux_arm64": ["@ffmpeg_linux_arm64//:bin/" + tool],
         }),
+        target_compatible_with = ["@platforms//os:linux"],
         visibility = ["//visibility:public"],
     )
     for tool in [

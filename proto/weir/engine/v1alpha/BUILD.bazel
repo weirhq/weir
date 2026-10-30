@@ -36,3 +36,9 @@ go_library(
     importpath = "github.com/weirhq/weir/proto/weir/engine/v1alpha",
     visibility = ["//visibility:public"],
 )
+
+# Read by the engine's Cargo build script.
+exports_files(
+    ["engine.proto"],
+    visibility = ["//engine:__subpackages__"],
+)

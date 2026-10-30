@@ -1,0 +1,24 @@
+# protoc and its well-known-type includes for the host, for Cargo build
+# scripts. See MODULE.bazel.
+
+alias(
+    name = "protoc",
+    actual = select({
+        "//tools/platforms:darwin_amd64": "@protoc_osx_x86_64//:bin/protoc",
+        "//tools/platforms:darwin_arm64": "@protoc_osx_aarch64//:bin/protoc",
+        "//tools/platforms:linux_amd64": "@protoc_linux_x86_64//:bin/protoc",
+        "//tools/platforms:linux_arm64": "@protoc_linux_aarch64//:bin/protoc",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "include",
+    actual = select({
+        "//tools/platforms:darwin_amd64": "@protoc_osx_x86_64//:include",
+        "//tools/platforms:darwin_arm64": "@protoc_osx_aarch64//:include",
+        "//tools/platforms:linux_amd64": "@protoc_linux_x86_64//:include",
+        "//tools/platforms:linux_arm64": "@protoc_linux_aarch64//:include",
+    }),
+    visibility = ["//visibility:public"],
+)

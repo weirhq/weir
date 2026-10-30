@@ -46,8 +46,9 @@ func TestLoadValidFile(t *testing.T) {
 
 func TestEnvOverridesFile(t *testing.T) {
 	cfg, err := Load(writeConfig(t, validTOML), envMap(map[string]string{
-		"WEIR_BASE_URL":      "http://localhost:8320",
-		"WEIR_LIBRARY_PATHS": "/a" + string(os.PathListSeparator) + "/b" + string(os.PathListSeparator) + "/c",
+		"WEIR_BASE_URL":       "http://localhost:8320",
+		"WEIR_LIBRARY_PATHS":  "/a" + string(os.PathListSeparator) + "/b" + string(os.PathListSeparator) + "/c",
+		"WEIR_ENGINE_COMMAND": "/usr/lib/weir/weir-engine --ffprobe /usr/lib/weir/ffprobe",
 	}))
 	if err != nil {
 		t.Fatal(err)
@@ -57,6 +58,9 @@ func TestEnvOverridesFile(t *testing.T) {
 	}
 	if strings.Join(cfg.LibraryPaths, ",") != "/a,/b,/c" {
 		t.Errorf("library_paths = %v", cfg.LibraryPaths)
+	}
+	if len(cfg.EngineCommand) != 3 || cfg.EngineCommand[2] != "/usr/lib/weir/ffprobe" {
+		t.Errorf("engine_command = %q", cfg.EngineCommand)
 	}
 }
 

@@ -1,0 +1,25 @@
+load("@crates//:defs.bzl", "all_crate_deps")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+# Runs the same build.rs as Cargo, with a pinned protoc.
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    build_script_env = {"PROTOC": "$(execpath //tools/protoc)"},
+    data = [
+        "//proto/weir/engine/v1alpha:engine.proto",
+        "//tools/protoc",
+        "//tools/protoc:include",
+    ],
+    edition = "2024",
+    deps = all_crate_deps(build = True),
+)
+
+rust_library(
+    name = "engine_proto",
+    srcs = ["src/lib.rs"],
+    edition = "2024",
+    visibility = ["//engine:__subpackages__"],
+    deps = all_crate_deps(normal = True) + [":build_script"],
+)

@@ -10,6 +10,7 @@ go_library(
         "//server/internal/admin",
         "//server/internal/auth",
         "//server/internal/config",
+        "//server/internal/engine",
         "//server/internal/store",
         "@com_connectrpc_connect//:connect",
     ],

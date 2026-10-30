@@ -33,6 +33,9 @@ type Config struct {
 	// Optional.
 	Listen  string `toml:"listen"`
 	DataDir string `toml:"data_dir"`
+	// The engine binary and its arguments, for the server to run and restart.
+	// Empty when the engine runs on its own, as in Docker Compose.
+	EngineCommand []string `toml:"engine_command"`
 }
 
 const (
@@ -51,6 +54,8 @@ var envVars = map[string]func(*Config, string){
 	"WEIR_TLS_MODE":      func(c *Config, v string) { c.TLSMode = TLSMode(v) },
 	"WEIR_LISTEN":        func(c *Config, v string) { c.Listen = v },
 	"WEIR_DATA_DIR":      func(c *Config, v string) { c.DataDir = v },
+	// Split on spaces, so paths with spaces need weir.toml.
+	"WEIR_ENGINE_COMMAND": func(c *Config, v string) { c.EngineCommand = strings.Fields(v) },
 }
 
 // Load reads the file at path, if path is non-empty, then applies overrides

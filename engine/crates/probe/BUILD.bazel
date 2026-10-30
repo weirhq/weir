@@ -1,0 +1,34 @@
+load("@crates//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "probe",
+    srcs = glob(["src/**/*.rs"]),
+    compile_data = ["data/iso-639-2.txt"],
+    edition = "2024",
+    visibility = ["//engine:__subpackages__"],
+    deps = all_crate_deps(normal = True) + ["//engine/crates/proto:engine_proto"],
+)
+
+rust_test(
+    name = "probe_test",
+    crate = ":probe",
+    edition = "2024",
+)
+
+[
+    rust_test(
+        name = name + "_test",
+        srcs = ["tests/%s.rs" % name],
+        compile_data = glob(["tests/fixtures/*.json"]),
+        edition = "2024",
+        deps = all_crate_deps(normal = True, normal_dev = True) + [
+            ":probe",
+            "//engine/crates/proto:engine_proto",
+        ],
+    )
+    for name in [
+        "fixtures",
+        "live",
+    ]
+]

@@ -1,0 +1,24 @@
+# Host OS and CPU, named the way release archives name them, for selecting
+# prebuilt tools.
+
+[
+    config_setting(
+        name = os + "_" + arch,
+        constraint_values = [
+            "@platforms//os:" + {"darwin": "macos"}.get(os, os),
+            "@platforms//cpu:" + {
+                "amd64": "x86_64",
+                "arm64": "aarch64",
+            }[arch],
+        ],
+        visibility = ["//visibility:public"],
+    )
+    for os in [
+        "darwin",
+        "linux",
+    ]
+    for arch in [
+        "amd64",
+        "arm64",
+    ]
+]

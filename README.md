@@ -64,6 +64,17 @@ mise run generate
 go run ./server/cmd/weir-server -config weir.toml
 ```
 
+The server reaches the engine at `engine_socket`. Set `engine_command` to
+have the server run and restart the engine itself; leave it empty when
+something else runs it, as Docker Compose does. To run the engine on its own:
+
+```sh
+cd engine && cargo run -p weir-engine -- --socket /tmp/weir-engine.sock
+```
+
+Until the bundled ffmpeg build lands, the engine uses the `ffprobe` on `PATH`
+(or `--ffprobe`).
+
 ## Rules we hold each other to
 
 - Generated code is never committed. If a generator is too slow for Bazel's

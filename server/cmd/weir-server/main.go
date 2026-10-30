@@ -20,6 +20,7 @@ import (
 	"github.com/weirhq/weir/server/internal/admin"
 	"github.com/weirhq/weir/server/internal/auth"
 	"github.com/weirhq/weir/server/internal/config"
+	"github.com/weirhq/weir/server/internal/engine"
 	"github.com/weirhq/weir/server/internal/store"
 )
 
@@ -68,6 +69,12 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	if err := st.Migrate(ctx); err != nil {
 		return err
 	}
+
+	sup, err := engine.New(cfg.EngineSocket, cfg.EngineCommand)
+	if err != nil {
+		return err
+	}
+	go sup.Run(ctx)
 
 	key, err := auth.LoadServerKey(ctx, st)
 	if err != nil {

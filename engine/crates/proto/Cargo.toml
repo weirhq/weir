@@ -1,0 +1,16 @@
+[package]
+name = "engine-proto"
+description = "Generated weir.engine.v1alpha types and gRPC stubs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+prost.workspace = true
+prost-types.workspace = true
+tonic.workspace = true
+tonic-prost.workspace = true
+
+[build-dependencies]
+tonic-prost-build.workspace = true

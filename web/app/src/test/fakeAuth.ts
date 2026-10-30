@@ -16,6 +16,8 @@ export class FakeAuth {
   needsBootstrap = false
   password = 'correct horse'
   refreshCalls = 0
+  logins = 0
+  role = Role.ADMIN
   logouts = 0
   #issued = 0
   #validRefresh = new Set<string>()
@@ -36,7 +38,7 @@ export class FakeAuth {
         id: 'u1',
         username,
         displayName,
-        role: Role.ADMIN
+        role: this.role
       })
     })
   }
@@ -72,6 +74,7 @@ export class FakeAuth {
                 'wrong username or password',
                 Code.Unauthenticated
               )
+            this.logins++
             return {
               credentials: this.credentials(
                 req.username,

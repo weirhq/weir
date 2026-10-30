@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react'
-import { Button, TextField } from '.'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
+import { Button, Dialog, TextField } from '.'
 
 it('renders button variants and passes props through', () => {
   render(
@@ -29,4 +30,27 @@ it('labels the text field and reports errors accessibly', () => {
   expect(input.getAttribute('aria-describedby')).toBe(
     screen.getByRole('alert').id
   )
+})
+
+it('opens a labelled modal dialog and closes it with Escape', () => {
+  function Harness() {
+    const [open, setOpen] = useState(true)
+    return (
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Delete Films?"
+        description="Files on disk are not touched."
+      >
+        <Button>Delete</Button>
+      </Dialog>
+    )
+  }
+  render(<Harness />)
+  const dialog = screen.getByRole('dialog', { name: 'Delete Films?' })
+  expect(dialog.getAttribute('aria-describedby')).toBe(
+    screen.getByText('Files on disk are not touched.').id
+  )
+  fireEvent.keyDown(dialog, { key: 'Escape' })
+  expect(screen.queryByRole('dialog')).toBeNull()
 })

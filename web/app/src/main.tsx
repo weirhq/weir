@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client'
 import { createApi } from './api'
 import { App } from './App'
 import { Auth } from './gen/weir/api/v1alpha/auth_pb'
+import { Reauth, reauthInterceptor } from './reauth'
 import { Session } from './session'
 import { authInterceptor } from './transport'
 
@@ -18,12 +19,16 @@ const session = new Session(
 )
 await session.restore()
 
+const reauth = new Reauth()
 const api = createApi(
-  createConnectTransport({ baseUrl, interceptors: [authInterceptor(session)] })
+  createConnectTransport({
+    baseUrl,
+    interceptors: [reauthInterceptor(reauth), authInterceptor(session)]
+  })
 )
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App context={{ api, session, queryClient: new QueryClient() }} />
+    <App context={{ api, session, reauth, queryClient: new QueryClient() }} />
   </StrictMode>
 )

@@ -9,6 +9,11 @@ import {
 } from '@tanstack/react-router'
 import type { Api } from './api'
 import { AppShell } from './components/AppShell'
+import { Role } from './gen/weir/api/v1alpha/user_pb'
+import { AdminLayout } from './pages/admin/AdminLayout'
+import { LibrariesPage as AdminLibrariesPage } from './pages/admin/LibrariesPage'
+import { StatusPage } from './pages/admin/StatusPage'
+import { UsersPage } from './pages/admin/UsersPage'
 import { HomePage } from './pages/HomePage'
 import { ItemPage } from './pages/ItemPage'
 import { LibraryPage } from './pages/LibraryPage'
@@ -18,11 +23,13 @@ import { PlaylistPage } from './pages/PlaylistPage'
 import { PlaylistsPage } from './pages/PlaylistsPage'
 import { SearchPage } from './pages/SearchPage'
 import { SetupPage } from './pages/SetupPage'
+import type { Reauth } from './reauth'
 import type { Session } from './session'
 
 export type RouterContext = {
   api: Api
   session: Session
+  reauth: Reauth
   queryClient: QueryClient
 }
 
@@ -107,6 +114,34 @@ export const playlistRoute = createRoute({
   component: PlaylistPage
 })
 
+// Server settings, for admins only; the server checks again on every call.
+const adminRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/admin',
+  beforeLoad: ({ context }) => {
+    if (context.session.user?.role !== Role.ADMIN) throw redirect({ to: '/' })
+  },
+  component: AdminLayout
+})
+
+const adminLibrariesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/',
+  component: AdminLibrariesPage
+})
+
+const adminUsersRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/users',
+  component: UsersPage
+})
+
+const adminStatusRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/status',
+  component: StatusPage
+})
+
 // Full screen, without the app's header, but still signed in.
 export const playRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -129,7 +164,12 @@ const routeTree = rootRoute.addChildren([
     itemRoute,
     searchRoute,
     playlistsRoute,
-    playlistRoute
+    playlistRoute,
+    adminRoute.addChildren([
+      adminLibrariesRoute,
+      adminUsersRoute,
+      adminStatusRoute
+    ])
   ])
 ])
 

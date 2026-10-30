@@ -7,7 +7,9 @@ import {
 } from '@tanstack/react-router'
 import { Button } from '@weirhq/ui'
 import { useState, useSyncExternalStore, type FormEvent } from 'react'
+import { Role } from '../gen/weir/api/v1alpha/user_pb'
 import { MiniPlayer } from '../player/MiniPlayer'
+import { ReauthDialog } from './ReauthDialog'
 import styles from './AppShell.module.css'
 
 export const librariesKey = ['libraries'] as const
@@ -74,6 +76,15 @@ export function AppShell() {
           />
         </form>
         <div className={styles.user}>
+          {user?.role === Role.ADMIN && (
+            <Link
+              to="/admin"
+              className={styles.navLink}
+              activeProps={{ 'aria-current': 'page' }}
+            >
+              Settings
+            </Link>
+          )}
           <span>{user?.displayName}</span>
           <Button variant="text" onClick={signOut}>
             Sign out
@@ -84,6 +95,7 @@ export function AppShell() {
         <Outlet />
       </main>
       <MiniPlayer />
+      <ReauthDialog />
     </div>
   )
 }

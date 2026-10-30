@@ -10,6 +10,7 @@ export function errorMessage(err: unknown): string {
       return 'Too many attempts. Try again in a minute.'
     case Code.InvalidArgument:
     case Code.FailedPrecondition:
+    case Code.PermissionDenied:
     case Code.AlreadyExists:
       return capitalise(e.rawMessage)
     case Code.Unavailable:

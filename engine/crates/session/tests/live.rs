@@ -98,7 +98,7 @@ async fn transcodes_a_clip_to_hls() {
         .unwrap()
     {
         match e.event.unwrap() {
-            Event::Ready(r) => ready = std::path::Path::new(&r.init_segment).exists(),
+            Event::Ready(r) => ready = std::fs::metadata(&r.init_segment).is_ok_and(|m| m.len() > 0),
             Event::Segment(s) => {
                 assert!(std::path::Path::new(&s.path).exists());
                 segments.push(s.index);

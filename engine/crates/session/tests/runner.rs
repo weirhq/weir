@@ -76,7 +76,7 @@ async fn reports_ready_segments_progress_and_finished() {
     let bin = tempfile::tempdir().unwrap();
     let ffmpeg = fake_ffmpeg(
         bin.path(),
-        r#": > "$out/init.mp4"
+        r#"echo init > "$out/init.mp4"
 printf '#EXTM3U\n#EXTINF:1.0,\n0.m4s\n#EXTINF:0.5,\n1.m4s\n#EXT-X-ENDLIST\n' > "$last"
 echo out_time_us=1500000; echo speed=3.5x; echo progress=end
 sleep 0.5"#,

@@ -201,25 +201,36 @@ async fn run_once(
 }
 
 /// Sends events for segments ffmpeg has finished since the last look, and
-/// Ready once the init segment exists. Returns how many segments were new.
+/// Ready before the first of them. Returns how many segments were new.
+///
+/// ffmpeg creates the init segment early and fills it in later, so its
+/// existence proves nothing; it is complete once a segment is listed.
 async fn report_segments(
     dir: &Path,
     emitted: &mut HashSet<u32>,
     ready_sent: &mut bool,
     events: &mpsc::Sender<SessionEvent>,
 ) -> usize {
-    if !*ready_sent && dir.join(INIT_SEGMENT).exists() {
+    let Ok(text) = tokio::fs::read_to_string(dir.join(PLAYLIST)).await else {
+        return 0;
+    };
+    let segments = playlist::parse(&text).segments;
+    if segments.is_empty() {
+        return 0;
+    }
+    if !*ready_sent {
+        let init = dir.join(INIT_SEGMENT);
+        if !tokio::fs::metadata(&init).await.is_ok_and(|m| m.len() > 0) {
+            return 0;
+        }
         *ready_sent = true;
-        let init = dir.join(INIT_SEGMENT).to_string_lossy().into_owned();
+        let init = init.to_string_lossy().into_owned();
         let _ = events
             .send(event(Event::Ready(SessionReady { init_segment: init })))
             .await;
     }
-    let Ok(text) = tokio::fs::read_to_string(dir.join(PLAYLIST)).await else {
-        return 0;
-    };
     let mut new = 0;
-    for seg in playlist::parse(&text).segments {
+    for seg in segments {
         if emitted.insert(seg.index) {
             new += 1;
             let ready = SegmentReady {

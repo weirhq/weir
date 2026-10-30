@@ -78,6 +78,12 @@ pub fn ffmpeg_args(run: &Run) -> Vec<String> {
         &secs(run.segment),
         "-hls_segment_type",
         "fmp4",
+        // Fragment decode times from the real timestamps. Without this,
+        // ffmpeg starts every run's fragments at zero and hides the offset
+        // in the init segment's edit list, which a player keeps from the
+        // first run: after a seek, time would restart at zero.
+        "-hls_segment_options",
+        "movflags=+frag_discont",
         "-hls_fmp4_init_filename",
         INIT_SEGMENT,
         "-hls_segment_filename",
@@ -307,6 +313,7 @@ mod tests {
         let i = a.iter().position(|s| s == "-i").unwrap();
         assert!(ss < i, "-ss must come before -i to seek the input");
         assert!(has(&a, &["-ss", "90.000"]) && has(&a, &["-output_ts_offset", "90.000"]));
+        assert!(has(&a, &["-hls_segment_options", "movflags=+frag_discont"]));
         assert!(has(&a, &["-start_number", "15"]));
     }
 }

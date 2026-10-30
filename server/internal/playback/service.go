@@ -31,8 +31,6 @@ var errNoItem = connect.NewError(connect.CodeNotFound, errors.New("no such item"
 
 // Service implements weir.api.v1alpha.Playback.
 type Service struct {
-	// RPCs not implemented yet answer Unimplemented.
-	apiv1alpha.UnimplementedPlaybackHandler
 	store    *store.Store
 	signer   *media.Signer
 	sessions *Sessions
@@ -144,25 +142,84 @@ func (s *Service) Start(ctx context.Context, req *connect.Request[apiv1alpha.Sta
 }
 
 func (s *Service) Heartbeat(ctx context.Context, req *connect.Request[apiv1alpha.HeartbeatRequest]) (*connect.Response[apiv1alpha.HeartbeatResponse], error) {
-	id, user, err := sessionCaller(ctx, req.Msg.SessionId)
-	if err == nil {
-		err = s.sessions.Heartbeat(ctx, id, user)
+	msg := req.Msg
+	if err := s.progress(ctx, msg.ItemId, msg.Position.AsDuration(), msg.Position != nil); err != nil {
+		return nil, err
 	}
-	if err != nil {
-		return nil, sessionError(ctx, err)
+	if msg.SessionId != "" {
+		id, user, err := sessionCaller(ctx, msg.SessionId)
+		if err == nil {
+			err = s.sessions.Heartbeat(ctx, id, user)
+		}
+		if err != nil {
+			return nil, sessionError(ctx, err)
+		}
 	}
 	return connect.NewResponse(&apiv1alpha.HeartbeatResponse{}), nil
 }
 
 func (s *Service) Stop(ctx context.Context, req *connect.Request[apiv1alpha.StopRequest]) (*connect.Response[apiv1alpha.StopResponse], error) {
-	id, user, err := sessionCaller(ctx, req.Msg.SessionId)
-	if err == nil {
-		err = s.sessions.Stop(ctx, id, user)
+	msg := req.Msg
+	if err := s.progress(ctx, msg.ItemId, msg.Position.AsDuration(), msg.Position != nil); err != nil {
+		return nil, err
 	}
-	if err != nil {
-		return nil, sessionError(ctx, err)
+	if msg.SessionId != "" {
+		id, user, err := sessionCaller(ctx, msg.SessionId)
+		if err == nil {
+			err = s.sessions.Stop(ctx, id, user)
+		}
+		if err != nil {
+			return nil, sessionError(ctx, err)
+		}
 	}
 	return connect.NewResponse(&apiv1alpha.StopResponse{}), nil
+}
+
+func (s *Service) SetWatched(ctx context.Context, req *connect.Request[apiv1alpha.SetWatchedRequest]) (*connect.Response[apiv1alpha.SetWatchedResponse], error) {
+	caller, itemID, err := s.viewableItem(ctx, req.Msg.ItemId)
+	if err != nil {
+		return nil, err
+	}
+	err = s.store.SetWatchedTree(ctx, dbgen.SetWatchedTreeParams{ItemID: itemID, UserID: caller.UserID, Watched: req.Msg.Watched})
+	if err != nil {
+		return nil, auth.Internal(ctx, "set watched", err)
+	}
+	return connect.NewResponse(&apiv1alpha.SetWatchedResponse{}), nil
+}
+
+// progress records a reported position, if the request carries one.
+func (s *Service) progress(ctx context.Context, itemID string, position time.Duration, reported bool) error {
+	if itemID == "" || !reported {
+		return nil
+	}
+	caller, id, err := s.viewableItem(ctx, itemID)
+	if err != nil {
+		return err
+	}
+	if err := s.RecordProgress(ctx, caller.UserID, id, max(position, 0)); err != nil {
+		return auth.Internal(ctx, "record progress", err)
+	}
+	return nil
+}
+
+// viewableItem resolves an item the caller may see, else NotFound.
+func (s *Service) viewableItem(ctx context.Context, id string) (*access.Caller, uuid.UUID, error) {
+	itemID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, uuid.Nil, errNoItem
+	}
+	caller, err := access.Load(ctx, s.store)
+	if err != nil {
+		return nil, uuid.Nil, err
+	}
+	item, err := s.store.GetItem(ctx, itemID)
+	if errors.Is(err, pgx.ErrNoRows) || err == nil && !caller.In(item.LibraryID).View {
+		return nil, uuid.Nil, errNoItem
+	}
+	if err != nil {
+		return nil, uuid.Nil, auth.Internal(ctx, "load item", err)
+	}
+	return caller, itemID, nil
 }
 
 func sessionCaller(ctx context.Context, sessionID string) (uuid.UUID, uuid.UUID, error) {

@@ -23,6 +23,7 @@ go_library(
         "migrations/00003_metadata.sql",
         "migrations/00004_playback.sql",
         "migrations/00005_browse.sql",
+        "migrations/00006_watch_state.sql",
     ],
     importpath = "github.com/weirhq/weir/server/internal/store",
     visibility = ["//server:__subpackages__"],

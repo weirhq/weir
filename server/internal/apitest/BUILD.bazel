@@ -7,11 +7,13 @@ go_test(
         "browse_test.go",
         "libraries_test.go",
         "playback_test.go",
+        "watch_test.go",
     ],
     deps = [
         "//proto/weir/api/v1alpha",
         "//proto/weir/engine/v1alpha",
         "//server/internal/admin",
+        "//server/internal/artwork",
         "//server/internal/auth",
         "//server/internal/browse",
         "//server/internal/jobs",
@@ -25,6 +27,7 @@ go_test(
         "@com_connectrpc_connect//:connect",
         "@com_github_google_uuid//:uuid",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_protobuf//types/known/durationpb",
         "@org_golang_google_protobuf//types/known/fieldmaskpb",
     ],
 )

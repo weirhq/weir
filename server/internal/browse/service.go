@@ -7,16 +7,22 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	"github.com/weirhq/weir/server/internal/access"
+	"github.com/weirhq/weir/server/internal/artwork"
 	"github.com/weirhq/weir/server/internal/auth"
+	"github.com/weirhq/weir/server/internal/media"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/store/dbgen"
 )
@@ -29,12 +35,61 @@ const (
 )
 
 type Service struct {
-	// RPCs not implemented yet answer Unimplemented.
-	apiv1alpha.UnimplementedBrowseHandler
-	store *store.Store
+	store  *store.Store
+	signer *media.Signer
 }
 
-func NewService(st *store.Store) *Service { return &Service{store: st} }
+func NewService(st *store.Store, signer *media.Signer) *Service {
+	return &Service{store: st, signer: signer}
+}
+
+// artworkTTL bounds how long a page's image links work.
+const artworkTTL = 24 * time.Hour
+
+// view is the caller's state for an item and which pictures it has.
+type view struct {
+	positionMs *int64
+	watched    *bool
+	playCount  *int32
+	lastPlayed *time.Time
+	artKinds   []string
+}
+
+// urls signs artwork links for one caller; one signature covers them all.
+type urls struct{ query string }
+
+func (s *Service) urls(caller *access.Caller) urls {
+	return urls{s.signer.SignScope(artwork.Prefix, caller.UserID, artworkTTL)}
+}
+
+func (u urls) art(item uuid.UUID, kind string, kinds []string) string {
+	if !slices.Contains(kinds, kind) {
+		return ""
+	}
+	return artwork.Prefix + item.String() + "/" + kind + "?" + u.query
+}
+
+func (u urls) decorate(sum *apiv1alpha.ItemSummary, id uuid.UUID, v view) *apiv1alpha.ItemSummary {
+	sum.PosterUrl = u.art(id, "poster", v.artKinds)
+	sum.ThumbUrl = u.art(id, "thumb", v.artKinds)
+	if v.watched != nil || v.positionMs != nil {
+		ud := &apiv1alpha.UserData{}
+		if v.positionMs != nil {
+			ud.Position = durationpb.New(time.Duration(*v.positionMs) * time.Millisecond)
+		}
+		if v.watched != nil {
+			ud.Watched = *v.watched
+		}
+		if v.playCount != nil {
+			ud.PlayCount = uint32(*v.playCount)
+		}
+		if v.lastPlayed != nil {
+			ud.LastPlayed = timestamppb.New(*v.lastPlayed)
+		}
+		sum.UserData = ud
+	}
+	return sum
+}
 
 var _ apiv1alpha.BrowseHandler = (*Service)(nil)
 
@@ -63,7 +118,8 @@ func (s *Service) ListItems(ctx context.Context, req *connect.Request[apiv1alpha
 		return nil, err
 	}
 	msg := req.Msg
-	params := dbgen.ListItemsParams{Kinds: []string{}}
+	params := dbgen.ListItemsParams{Kinds: []string{}, UserID: caller.UserID}
+	u := s.urls(caller)
 	sort := msg.Sort
 	switch {
 	case msg.LibraryId != "" && msg.ParentId == "":
@@ -107,7 +163,8 @@ func (s *Service) ListItems(ctx context.Context, req *connect.Request[apiv1alpha
 	}
 	resp := &apiv1alpha.ListItemsResponse{}
 	for _, r := range rows {
-		resp.Items = append(resp.Items, summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID))
+		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds}))
 		resp.Total = uint32(r.Total)
 	}
 	if next := offset + len(rows); len(rows) > 0 && uint32(next) < resp.Total {
@@ -142,6 +199,14 @@ func (s *Service) GetItem(ctx context.Context, req *connect.Request[apiv1alpha.G
 	}
 	_ = json.Unmarshal(m.CastMembers, &item.Cast)
 	_ = json.Unmarshal(m.ExternalIds, &item.ExternalIds)
+	uv, err := s.store.ItemUserView(ctx, dbgen.ItemUserViewParams{ItemID: it.ID, UserID: caller.UserID})
+	if err != nil {
+		return nil, auth.Internal(ctx, "load user state", err)
+	}
+	u := s.urls(caller)
+	u.decorate(item.Summary, it.ID, view{uv.PositionMs, uv.Watched, uv.PlayCount, uv.LastPlayed, uv.ArtKinds})
+	item.BackdropUrl = u.art(it.ID, "backdrop", uv.ArtKinds)
+	item.LogoUrl = u.art(it.ID, "logo", uv.ArtKinds)
 
 	ancestors, err := s.store.ItemAncestors(ctx, it.ID)
 	if err != nil {
@@ -178,16 +243,91 @@ func (s *Service) Search(ctx context.Context, req *connect.Request[apiv1alpha.Se
 		limit = defaultResults
 	}
 	rows, err := s.store.SearchItems(ctx, dbgen.SearchItemsParams{
-		Query: query, LibraryIds: caller.Visible(ids), MaxResults: int32(min(limit, maxResults)),
+		Query: query, LibraryIds: caller.Visible(ids), MaxResults: int32(min(limit, maxResults)), UserID: caller.UserID,
 	})
 	if err != nil {
 		return nil, auth.Internal(ctx, "search", err)
 	}
+	u := s.urls(caller)
 	resp := &apiv1alpha.SearchResponse{}
 	for _, r := range rows {
-		resp.Items = append(resp.Items, summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID))
+		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds}))
 	}
 	return connect.NewResponse(resp), nil
+}
+
+func (s *Service) ListContinueWatching(ctx context.Context, req *connect.Request[apiv1alpha.ListContinueWatchingRequest]) (*connect.Response[apiv1alpha.ListContinueWatchingResponse], error) {
+	caller, libs, err := s.visibleLibraries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.store.ContinueWatching(ctx, dbgen.ContinueWatchingParams{
+		UserID: caller.UserID, LibraryIds: libs, MaxResults: resultLimit(req.Msg.Limit),
+	})
+	if err != nil {
+		return nil, auth.Internal(ctx, "continue watching", err)
+	}
+	u := s.urls(caller)
+	resp := &apiv1alpha.ListContinueWatchingResponse{}
+	for _, r := range rows {
+		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
+		watched, count := r.Watched, r.PlayCount
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{&r.PositionMs, &watched, &count, r.LastPlayed, r.ArtKinds}))
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *Service) ListRecentlyAdded(ctx context.Context, req *connect.Request[apiv1alpha.ListRecentlyAddedRequest]) (*connect.Response[apiv1alpha.ListRecentlyAddedResponse], error) {
+	caller, libs, err := s.visibleLibraries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	kinds := []string{"movie", "show", "album"}
+	if len(req.Msg.Kinds) > 0 {
+		kinds = nil
+		for _, k := range req.Msg.Kinds {
+			if name, ok := kindNames[k]; ok {
+				kinds = append(kinds, name)
+			}
+		}
+	}
+	rows, err := s.store.RecentlyAdded(ctx, dbgen.RecentlyAddedParams{
+		UserID: caller.UserID, Kinds: kinds, LibraryIds: libs, MaxResults: resultLimit(req.Msg.Limit),
+	})
+	if err != nil {
+		return nil, auth.Internal(ctx, "recently added", err)
+	}
+	u := s.urls(caller)
+	resp := &apiv1alpha.ListRecentlyAddedResponse{}
+	for _, r := range rows {
+		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds}))
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *Service) visibleLibraries(ctx context.Context) (*access.Caller, []uuid.UUID, error) {
+	caller, err := access.Load(ctx, s.store)
+	if err != nil {
+		return nil, nil, err
+	}
+	libs, err := s.store.ListLibraries(ctx)
+	if err != nil {
+		return nil, nil, auth.Internal(ctx, "list libraries", err)
+	}
+	var ids []uuid.UUID
+	for _, l := range libs {
+		ids = append(ids, l.ID)
+	}
+	return caller, caller.Visible(ids), nil
+}
+
+func resultLimit(limit uint32) int32 {
+	if limit == 0 {
+		limit = defaultResults
+	}
+	return int32(min(limit, maxResults))
 }
 
 // visibleItem loads an item the caller may view, else NotFound.

@@ -31,8 +31,7 @@ type Caller struct {
 	perms  map[uuid.UUID]Perms
 }
 
-// Load reads the caller's role and library access. Admins can do
-// everything everywhere.
+// Load reads the signed-in caller's role and library access.
 func Load(ctx context.Context, st *store.Store) (*Caller, error) {
 	claims := auth.ClaimsFrom(ctx)
 	if claims == nil {
@@ -42,6 +41,12 @@ func Load(ctx context.Context, st *store.Store) (*Caller, error) {
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid access token"))
 	}
+	return LoadUser(ctx, st, id)
+}
+
+// LoadUser reads a user's role and library access. Admins can do
+// everything everywhere.
+func LoadUser(ctx context.Context, st *store.Store, id uuid.UUID) (*Caller, error) {
 	user, err := st.GetUser(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("account no longer exists"))

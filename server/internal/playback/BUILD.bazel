@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "choose.go",
         "decide.go",
+        "progress.go",
         "service.go",
         "sessions.go",
     ],
@@ -34,6 +35,7 @@ go_test(
     srcs = [
         "choose_test.go",
         "decide_test.go",
+        "progress_test.go",
         "sessions_test.go",
     ],
     embed = [":playback"],
@@ -42,6 +44,7 @@ go_test(
         "//proto/weir/engine/v1alpha",
         "//server/internal/media",
         "//server/internal/playback/playbacktest",
+        "//server/internal/store/dbgen",
         "@com_github_google_uuid//:uuid",
     ],
 )

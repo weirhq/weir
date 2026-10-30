@@ -16,6 +16,7 @@ import (
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	enginev1alpha "github.com/weirhq/weir/proto/weir/engine/v1alpha"
 	"github.com/weirhq/weir/server/internal/admin"
+	"github.com/weirhq/weir/server/internal/artwork"
 	"github.com/weirhq/weir/server/internal/auth"
 	"github.com/weirhq/weir/server/internal/browse"
 	"github.com/weirhq/weir/server/internal/jobs"
@@ -63,8 +64,9 @@ func newHarness(t *testing.T) *harness {
 	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, []string{media}, jobClient), interceptors))
 	h := &harness{store: st, media: media}
 	signer := mediaurl.NewSigner(key)
+	mux.Handle(apiv1alpha.NewBrowseHandler(browse.NewService(st, signer), interceptors))
+	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, t.TempDir()))
 	sessions := playback.NewSessions((&playbacktest.Engine{}).Client(t), t.TempDir(), signer)
-	mux.Handle(apiv1alpha.NewBrowseHandler(browse.NewService(st), interceptors))
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, func() *enginev1alpha.CapabilitiesResponse { return h.engineCaps }), interceptors))
 	mux.Handle(mediaurl.FilePrefix, mediaurl.Handler(signer, st))
 	mux.Handle(playback.SessionPrefix, sessions.Handler())

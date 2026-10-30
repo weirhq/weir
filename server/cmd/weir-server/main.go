@@ -21,6 +21,7 @@ import (
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	"github.com/weirhq/weir/server/internal/admin"
+	"github.com/weirhq/weir/server/internal/artwork"
 	"github.com/weirhq/weir/server/internal/auth"
 	"github.com/weirhq/weir/server/internal/browse"
 	"github.com/weirhq/weir/server/internal/config"
@@ -133,8 +134,9 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
 	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, cfg.LibraryPaths, jobClient), interceptors))
-	mux.Handle(apiv1alpha.NewBrowseHandler(browse.NewService(st), interceptors))
 	signer := media.NewSigner(key)
+	mux.Handle(apiv1alpha.NewBrowseHandler(browse.NewService(st, signer), interceptors))
+	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, cfg.DataDir))
 	sessions := playback.NewSessions(sup.Client(), cfg.SegmentDir, signer)
 	go sessions.Run(ctx)
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, sup.Capabilities), interceptors))

@@ -8,11 +8,15 @@ go_library(
     deps = [
         "//proto/weir/api/v1alpha",
         "//server/internal/access",
+        "//server/internal/artwork",
         "//server/internal/auth",
+        "//server/internal/media",
         "//server/internal/store",
         "//server/internal/store/dbgen",
         "@com_connectrpc_connect//:connect",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
+        "@org_golang_google_protobuf//types/known/durationpb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
     ],
 )

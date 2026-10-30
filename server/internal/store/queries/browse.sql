@@ -11,9 +11,12 @@ INSERT INTO library_access (user_id, library_id, can_view, can_play, can_manage)
 -- One page of a library's top level or an item's children. The sort is one
 -- of title, year, added or index.
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
+       ps.position_ms, ps.watched, ps.play_count, ps.last_played,
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
        count(*) OVER () AS total
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
+LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)
 WHERE (sqlc.narg(library_id)::uuid IS NULL OR (i.library_id = sqlc.narg(library_id)::uuid AND i.parent_id IS NULL))
   AND (sqlc.narg(parent_id)::uuid IS NULL OR i.parent_id = sqlc.narg(parent_id)::uuid)
   AND (cardinality(sqlc.arg(kinds)::text[]) = 0 OR i.kind = ANY(sqlc.arg(kinds)::text[]))
@@ -57,9 +60,12 @@ SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_i
                       websearch_to_tsquery('simple', sqlc.arg(query)::text)))
                FROM metadata m WHERE m.item_id = i.id
            ), 0)
-       )::real AS score
+       )::real AS score,
+       ps.position_ms, ps.watched, ps.play_count, ps.last_played,
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
+LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)
 WHERE i.library_id = ANY(sqlc.arg(library_ids)::uuid[])
   AND i.kind IN ('movie', 'show', 'episode', 'artist', 'album', 'track')
   AND (

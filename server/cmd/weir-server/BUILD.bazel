@@ -12,6 +12,7 @@ go_library(
     deps = [
         "//proto/weir/api/v1alpha",
         "//server/internal/admin",
+        "//server/internal/artwork",
         "//server/internal/auth",
         "//server/internal/browse",
         "//server/internal/config",

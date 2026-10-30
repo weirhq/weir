@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "artwork",
+    srcs = ["artwork.go"],
+    importpath = "github.com/weirhq/weir/server/internal/artwork",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "//server/internal/access",
+        "//server/internal/media",
+        "//server/internal/store",
+        "//server/internal/store/dbgen",
+        "@com_github_google_uuid//:uuid",
+        "@org_golang_x_image//draw",
+        "@org_golang_x_image//webp",
+    ],
+)

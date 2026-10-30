@@ -22,6 +22,7 @@ genrule(
         "playback.sql.go",
         "models.go",
         "server_key.sql.go",
+        "watch.sql.go",
     ],
     cmd = """
         work=$$(mktemp -d)

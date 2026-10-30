@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package weir.api.v1alpha;
+
+import "google/protobuf/field_mask.proto";
+import "weir/api/v1alpha/browse.proto";
+
+option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
+
+// Ordered lists of items. A playlist is its owner's; a shared one is
+// visible to everyone, showing each viewer only the items they may see.
+service Playlists {
+  // The caller's playlists and those shared with everyone.
+  rpc ListPlaylists(ListPlaylistsRequest) returns (ListPlaylistsResponse);
+  rpc GetPlaylist(GetPlaylistRequest) returns (GetPlaylistResponse);
+  rpc CreatePlaylist(CreatePlaylistRequest) returns (CreatePlaylistResponse);
+  // Only the owner may change or delete a playlist.
+  rpc UpdatePlaylist(UpdatePlaylistRequest) returns (UpdatePlaylistResponse);
+  rpc DeletePlaylist(DeletePlaylistRequest) returns (DeletePlaylistResponse);
+}
+
+message Playlist {
+  string id = 1;
+  string name = 2;
+  string owner_id = 3;
+  string owner_name = 4;
+  bool shared = 5;
+  // Items the caller may see.
+  uint32 item_count = 6;
+}
+
+message ListPlaylistsRequest {}
+
+message ListPlaylistsResponse {
+  repeated Playlist playlists = 1;
+}
+
+message GetPlaylistRequest {
+  string id = 1;
+}
+
+message GetPlaylistResponse {
+  Playlist playlist = 1;
+  // In playlist order, without items the caller may not see.
+  repeated ItemSummary items = 2;
+}
+
+message CreatePlaylistRequest {
+  string name = 1;
+  // Films, episodes or tracks, in order. Repeats are allowed.
+  repeated string item_ids = 2;
+  bool shared = 3;
+}
+
+message CreatePlaylistResponse {
+  Playlist playlist = 1;
+}
+
+message UpdatePlaylistRequest {
+  string id = 1;
+  string name = 2;
+  // Replaces the whole list.
+  repeated string item_ids = 3;
+  bool shared = 4;
+  // Which of name, item_ids and shared to change.
+  google.protobuf.FieldMask update_mask = 5;
+}
+
+message UpdatePlaylistResponse {
+  Playlist playlist = 1;
+}
+
+message DeletePlaylistRequest {
+  string id = 1;
+}
+
+message DeletePlaylistResponse {}

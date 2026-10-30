@@ -3,6 +3,7 @@ syntax = "proto3";
 package weir.api.v1alpha;
 
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 import "weir/api/v1alpha/library.proto";
 import "weir/api/v1alpha/user.proto";
 
@@ -34,6 +35,9 @@ service Admin {
   // Replaces the user's access with the list given; libraries left out are
   // closed to them.
   rpc SetLibraryAccess(SetLibraryAccessRequest) returns (SetLibraryAccessResponse);
+
+  // The engine's health and capabilities, and the latest background jobs.
+  rpc GetServerStatus(GetServerStatusRequest) returns (GetServerStatusResponse);
 }
 
 message ListUsersRequest {}
@@ -137,3 +141,43 @@ message SetLibraryAccessRequest {
 }
 
 message SetLibraryAccessResponse {}
+
+message GetServerStatusRequest {}
+
+message GetServerStatusResponse {
+  EngineStatus engine = 1;
+  // Newest first.
+  repeated Job recent_jobs = 2;
+}
+
+message EngineStatus {
+  bool healthy = 1;
+  string engine_version = 2;
+  string ffmpeg_version = 3;
+  uint32 max_sessions = 4;
+  uint32 active_sessions = 5;
+  // Hardware the engine found, e.g. "VAAPI: Intel UHD Graphics 770".
+  repeated string hardware = 6;
+}
+
+message Job {
+  string id = 1;
+  // "scan_library" or "refresh_metadata".
+  string kind = 2;
+  string library_id = 3;
+  JobState state = 4;
+  uint32 attempt = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp finished_at = 7;
+  // The last error, if any.
+  string error = 8;
+}
+
+enum JobState {
+  JOB_STATE_UNSPECIFIED = 0;
+  JOB_STATE_WAITING = 1;
+  JOB_STATE_RUNNING = 2;
+  JOB_STATE_COMPLETED = 3;
+  JOB_STATE_FAILED = 4;
+  JOB_STATE_CANCELLED = 5;
+}

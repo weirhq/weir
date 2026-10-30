@@ -14,9 +14,12 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
+	enginev1alpha "github.com/weirhq/weir/proto/weir/engine/v1alpha"
 	"github.com/weirhq/weir/server/internal/admin"
 	"github.com/weirhq/weir/server/internal/auth"
 	"github.com/weirhq/weir/server/internal/jobs"
+	mediaurl "github.com/weirhq/weir/server/internal/media"
+	"github.com/weirhq/weir/server/internal/playback"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/store/storetest"
 )
@@ -25,6 +28,8 @@ type harness struct {
 	store *store.Store
 	auth  apiv1alpha.AuthClient
 	url   string
+	// What the fake engine has reported.
+	engineCaps *enginev1alpha.CapabilitiesResponse
 	// The server's library_paths root, for library tests.
 	media string
 }
@@ -54,9 +59,14 @@ func newHarness(t *testing.T) *harness {
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
 	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, []string{media}, jobClient), interceptors))
+	h := &harness{store: st, media: media}
+	signer := mediaurl.NewSigner(key)
+	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, func() *enginev1alpha.CapabilitiesResponse { return h.engineCaps }), interceptors))
+	mux.Handle(mediaurl.FilePrefix, mediaurl.Handler(signer, st))
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	return &harness{store: st, auth: apiv1alpha.NewAuthClient(srv.Client(), srv.URL), url: srv.URL, media: media}
+	h.auth, h.url = apiv1alpha.NewAuthClient(srv.Client(), srv.URL), srv.URL
+	return h
 }
 
 // bearer returns client options that send creds' access token.

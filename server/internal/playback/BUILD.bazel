@@ -2,18 +2,34 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "playback",
-    srcs = ["decide.go"],
+    srcs = [
+        "choose.go",
+        "decide.go",
+        "service.go",
+    ],
     importpath = "github.com/weirhq/weir/server/internal/playback",
     visibility = ["//server:__subpackages__"],
     deps = [
         "//proto/weir/api/v1alpha",
         "//proto/weir/engine/v1alpha",
+        "//server/internal/auth",
+        "//server/internal/media",
+        "//server/internal/store",
+        "//server/internal/store/dbgen",
+        "@com_connectrpc_connect//:connect",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_google_protobuf//proto",
     ],
 )
 
 go_test(
     name = "playback_test",
-    srcs = ["decide_test.go"],
+    srcs = [
+        "choose_test.go",
+        "decide_test.go",
+    ],
     embed = [":playback"],
     deps = [
         "//proto/weir/api/v1alpha",

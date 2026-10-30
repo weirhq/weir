@@ -26,7 +26,9 @@ import (
 	"github.com/weirhq/weir/server/internal/engine"
 	"github.com/weirhq/weir/server/internal/jobs"
 	"github.com/weirhq/weir/server/internal/library"
+	"github.com/weirhq/weir/server/internal/media"
 	"github.com/weirhq/weir/server/internal/metadata"
+	"github.com/weirhq/weir/server/internal/playback"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/web"
 )
@@ -130,6 +132,9 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
 	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, cfg.LibraryPaths, jobClient), interceptors))
+	signer := media.NewSigner(key)
+	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sup.Capabilities), interceptors))
+	mux.Handle(media.FilePrefix, media.Handler(signer, st))
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})

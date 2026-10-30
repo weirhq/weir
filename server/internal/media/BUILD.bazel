@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "media",
+    srcs = ["media.go"],
+    importpath = "github.com/weirhq/weir/server/internal/media",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+    ],
+)
+
+go_test(
+    name = "media_test",
+    srcs = ["media_test.go"],
+    embed = [":media"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+    ],
+)

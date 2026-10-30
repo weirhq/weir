@@ -64,6 +64,20 @@ mise run generate
 go run ./server/cmd/weir-server -config weir.toml
 ```
 
+Metadata comes from NFO files and artwork next to your media out of the box.
+Online providers stay off until configured:
+
+```toml
+[metadata]
+language = "en-GB"                 # default en-US
+
+[metadata.tmdb]
+api_key = "..."                    # v3 key or v4 read token; or WEIR_TMDB_API_KEY
+
+[metadata.musicbrainz]
+contact = "you@example.org"        # MusicBrainz requires a contact; or WEIR_MUSICBRAINZ_CONTACT
+```
+
 The server reaches the engine at `engine_socket`. Set `engine_command` to
 have the server run and restart the engine itself; leave it empty when
 something else runs it, as Docker Compose does. To run the engine on its own:

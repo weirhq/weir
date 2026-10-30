@@ -1,0 +1,60 @@
+{
+  "id": "4b585938-f271-45e2-b19a-91c634b5e396",
+  "name": "Kate Bush",
+  "sort-name": "Bush, Kate",
+  "type": "Person",
+  "genres": [
+    {
+      "name": "alternative pop",
+      "count": 1
+    },
+    {
+      "name": "ambient pop",
+      "count": 3
+    },
+    {
+      "name": "art pop",
+      "count": 13
+    },
+    {
+      "name": "art rock",
+      "count": 8
+    },
+    {
+      "name": "baroque pop",
+      "count": 3
+    },
+    {
+      "name": "experimental",
+      "count": 1
+    },
+    {
+      "name": "new wave",
+      "count": 1
+    },
+    {
+      "name": "pop",
+      "count": 5
+    },
+    {
+      "name": "pop rock",
+      "count": 1
+    },
+    {
+      "name": "progressive pop",
+      "count": 10
+    },
+    {
+      "name": "progressive rock",
+      "count": 1
+    },
+    {
+      "name": "rock",
+      "count": 3
+    },
+    {
+      "name": "singer-songwriter",
+      "count": 1
+    }
+  ]
+}

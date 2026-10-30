@@ -35,6 +35,9 @@ func (ScanArgs) InsertOpts() river.InsertOpts {
 type ScanWorker struct {
 	river.WorkerDefaults[ScanArgs]
 	Scanner *Scanner
+	// AfterScan runs after each successful scan, e.g. to queue a metadata
+	// refresh.
+	AfterScan func(ctx context.Context, libraryID uuid.UUID) error
 }
 
 // Timeout is disabled: a first scan of a large library takes as long as it
@@ -53,6 +56,9 @@ func (w *ScanWorker) Work(ctx context.Context, job *river.Job[ScanArgs]) error {
 	slog.InfoContext(ctx, "library scanned", "library", job.Args.LibraryID, "took", time.Since(started).Round(time.Millisecond),
 		"added", res.Added, "updated", res.Updated, "unchanged", res.Unchanged, "removed", res.Removed,
 		"unmatched", res.Unmatched, "failed", res.Failed)
+	if w.AfterScan != nil {
+		return w.AfterScan(ctx, job.Args.LibraryID)
+	}
 	return nil
 }
 

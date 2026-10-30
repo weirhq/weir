@@ -1,0 +1,39 @@
+{
+  "release-groups": [
+    {
+      "id": "ecc129fd-419f-49ef-ac02-391cd8ef5c39",
+      "title": "Hounds of Love",
+      "score": 100,
+      "primary-type": "Single",
+      "first-release-date": "1985"
+    },
+    {
+      "id": "017f2a37-a78f-3578-9611-fa40408e5d90",
+      "title": "Hounds of Love",
+      "score": 100,
+      "primary-type": "Album",
+      "first-release-date": "1985-07-30"
+    },
+    {
+      "id": "f62869e0-7058-49f8-ac05-733c1a326fb1",
+      "title": "Hounds of Love (collector’s edition)",
+      "score": 90,
+      "primary-type": "EP",
+      "first-release-date": "2011-04-16"
+    },
+    {
+      "id": "bfb2d112-e8be-4a07-a15b-64253c761833",
+      "title": "Hounds of Love: A Classic Album Under Review",
+      "score": 80,
+      "primary-type": "Other",
+      "first-release-date": "2009-02-23"
+    },
+    {
+      "id": "33f5fa70-4715-4f8d-84e7-b962ee43f3b2",
+      "title": "Hounds of Love / Lionheart / The Kick Inside",
+      "score": 78,
+      "primary-type": "Album",
+      "first-release-date": "1991"
+    }
+  ]
+}

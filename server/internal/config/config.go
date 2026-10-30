@@ -36,11 +36,34 @@ type Config struct {
 	// The engine binary and its arguments, for the server to run and restart.
 	// Empty when the engine runs on its own, as in Docker Compose.
 	EngineCommand []string `toml:"engine_command"`
+
+	Metadata Metadata `toml:"metadata"`
+}
+
+// Metadata configures the online metadata providers. Each stays off until
+// its setting is filled in; NFO files and local artwork need no setup.
+type Metadata struct {
+	// BCP 47 language for titles and overviews. Defaults to "en-US".
+	Language    string      `toml:"language"`
+	TMDB        TMDB        `toml:"tmdb"`
+	MusicBrainz MusicBrainz `toml:"musicbrainz"`
+}
+
+type TMDB struct {
+	// A v3 API key or a v4 read access token.
+	APIKey string `toml:"api_key"`
+}
+
+type MusicBrainz struct {
+	// An email address or URL MusicBrainz can reach you at; their rules
+	// require one in every request.
+	Contact string `toml:"contact"`
 }
 
 const (
-	DefaultListen  = ":8320"
-	DefaultDataDir = "data"
+	DefaultListen           = ":8320"
+	DefaultDataDir          = "data"
+	DefaultMetadataLanguage = "en-US"
 )
 
 // envVars maps each override to the field it sets. Lists are separated by the
@@ -55,7 +78,10 @@ var envVars = map[string]func(*Config, string){
 	"WEIR_LISTEN":        func(c *Config, v string) { c.Listen = v },
 	"WEIR_DATA_DIR":      func(c *Config, v string) { c.DataDir = v },
 	// Split on spaces, so paths with spaces need weir.toml.
-	"WEIR_ENGINE_COMMAND": func(c *Config, v string) { c.EngineCommand = strings.Fields(v) },
+	"WEIR_ENGINE_COMMAND":      func(c *Config, v string) { c.EngineCommand = strings.Fields(v) },
+	"WEIR_METADATA_LANGUAGE":   func(c *Config, v string) { c.Metadata.Language = v },
+	"WEIR_TMDB_API_KEY":        func(c *Config, v string) { c.Metadata.TMDB.APIKey = v },
+	"WEIR_MUSICBRAINZ_CONTACT": func(c *Config, v string) { c.Metadata.MusicBrainz.Contact = v },
 }
 
 // Load reads the file at path, if path is non-empty, then applies overrides
@@ -79,6 +105,9 @@ func Load(path string, lookupEnv func(string) (string, bool)) (*Config, error) {
 	}
 	if cfg.DataDir == "" {
 		cfg.DataDir = DefaultDataDir
+	}
+	if cfg.Metadata.Language == "" {
+		cfg.Metadata.Language = DefaultMetadataLanguage
 	}
 
 	errs = append(errs, cfg.validate()...)

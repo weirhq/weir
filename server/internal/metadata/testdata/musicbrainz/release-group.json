@@ -1,0 +1,60 @@
+{
+  "id": "017f2a37-a78f-3578-9611-fa40408e5d90",
+  "title": "Hounds of Love",
+  "primary-type": "Album",
+  "first-release-date": "1985-07-30",
+  "genres": [
+    {
+      "name": "alternative rock",
+      "count": 2
+    },
+    {
+      "name": "art pop",
+      "count": 7
+    },
+    {
+      "name": "art rock",
+      "count": 12
+    },
+    {
+      "name": "baroque pop",
+      "count": 1
+    },
+    {
+      "name": "electronic",
+      "count": 4
+    },
+    {
+      "name": "experimental",
+      "count": 2
+    },
+    {
+      "name": "experimental rock",
+      "count": 1
+    },
+    {
+      "name": "pop",
+      "count": 4
+    },
+    {
+      "name": "pop rock",
+      "count": 7
+    },
+    {
+      "name": "progressive pop",
+      "count": 5
+    },
+    {
+      "name": "progressive rock",
+      "count": 1
+    },
+    {
+      "name": "rock",
+      "count": 4
+    },
+    {
+      "name": "synth-pop",
+      "count": 1
+    }
+  ]
+}

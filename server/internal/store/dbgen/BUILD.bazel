@@ -17,6 +17,7 @@ genrule(
         "devices.sql.go",
         "libraries.sql.go",
         "media.sql.go",
+        "metadata.sql.go",
         "models.go",
         "server_key.sql.go",
     ],

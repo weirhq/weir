@@ -14,6 +14,9 @@ engine_socket = "/run/weir/engine.sock"
 segment_dir = "/var/cache/weir/segments"
 base_url = "https://weir.example.org"
 tls_mode = "off"
+
+[metadata.tmdb]
+api_key = "from-file"
 `
 
 func writeConfig(t *testing.T, body string) string {
@@ -38,6 +41,9 @@ func TestLoadValidFile(t *testing.T) {
 	}
 	if cfg.BaseURL != "https://weir.example.org" || len(cfg.LibraryPaths) != 2 || cfg.TLSMode != TLSOff {
 		t.Errorf("unexpected config: %+v", cfg)
+	}
+	if cfg.Metadata.TMDB.APIKey != "from-file" || cfg.Metadata.MusicBrainz.Contact != "" || cfg.Metadata.Language != "en-US" {
+		t.Errorf("metadata: %+v", cfg.Metadata)
 	}
 	if cfg.Listen != DefaultListen || cfg.DataDir != DefaultDataDir {
 		t.Errorf("defaults not applied: listen %q, data_dir %q", cfg.Listen, cfg.DataDir)

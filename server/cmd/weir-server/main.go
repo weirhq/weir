@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
@@ -24,9 +26,13 @@ import (
 	"github.com/weirhq/weir/server/internal/engine"
 	"github.com/weirhq/weir/server/internal/jobs"
 	"github.com/weirhq/weir/server/internal/library"
+	"github.com/weirhq/weir/server/internal/metadata"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/web"
 )
+
+// version is the server's release version, set by release builds.
+var version = "0.0.0-dev"
 
 func main() {
 	configPath := flag.String("config", envOr("WEIR_CONFIG", "weir.toml"), "path to weir.toml; empty to use only environment variables")
@@ -89,7 +95,14 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	go sup.Run(ctx)
 
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &library.ScanWorker{Scanner: library.NewScanner(st, sup.Client())})
+	river.AddWorker(workers, &library.ScanWorker{
+		Scanner: library.NewScanner(st, sup.Client()),
+		AfterScan: func(ctx context.Context, libraryID uuid.UUID) error {
+			_, err := river.ClientFromContext[pgx.Tx](ctx).Insert(ctx, metadata.RefreshArgs{LibraryID: libraryID}, nil)
+			return err
+		},
+	})
+	river.AddWorker(workers, &metadata.RefreshWorker{Refresher: newRefresher(st, cfg.Metadata)})
 	jobClient, err := jobs.NewClient(st.Pool, workers)
 	if err != nil {
 		return err
@@ -146,6 +159,20 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return srv.Shutdown(shutdownCtx)
+}
+
+// newRefresher turns on each online provider whose setting is filled in.
+func newRefresher(st *store.Store, cfg config.Metadata) *metadata.Refresher {
+	var tmdb *metadata.TMDB
+	if cfg.TMDB.APIKey != "" {
+		tmdb = metadata.NewTMDB(cfg.TMDB.APIKey, cfg.Language)
+	}
+	var mb *metadata.MusicBrainz
+	if cfg.MusicBrainz.Contact != "" {
+		mb = metadata.NewMusicBrainz(cfg.MusicBrainz.Contact, version)
+	}
+	slog.Info("metadata providers", "tmdb", tmdb != nil, "musicbrainz", mb != nil, "language", cfg.Language)
+	return metadata.NewRefresher(st, tmdb, mb)
 }
 
 func envOr(name, fallback string) string {

@@ -1,0 +1,42 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "metadata",
+    srcs = [
+        "metadata.go",
+        "musicbrainz.go",
+        "nfo.go",
+        "refresh.go",
+        "tmdb.go",
+    ],
+    importpath = "github.com/weirhq/weir/server/internal/metadata",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "//server/internal/store",
+        "//server/internal/store/dbgen",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_riverqueue_river//:river",
+        "@com_github_riverqueue_river_rivertype//:rivertype",
+        "@org_golang_x_time//rate",
+    ],
+)
+
+go_test(
+    name = "metadata_test",
+    srcs = [
+        "nfo_test.go",
+        "providers_test.go",
+        "refresh_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":metadata"],
+    deps = [
+        "//proto/weir/engine/v1alpha",
+        "//server/internal/library",
+        "//server/internal/store",
+        "//server/internal/store/dbgen",
+        "//server/internal/store/storetest",
+        "@com_github_google_uuid//:uuid",
+        "@org_golang_google_grpc//:grpc",
+    ],
+)

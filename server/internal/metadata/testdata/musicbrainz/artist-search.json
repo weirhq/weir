@@ -1,0 +1,39 @@
+{
+  "artists": [
+    {
+      "id": "4b585938-f271-45e2-b19a-91c634b5e396",
+      "name": "Kate Bush",
+      "sort-name": "Bush, Kate",
+      "score": 100,
+      "type": "Person"
+    },
+    {
+      "id": "0a9e7eba-8e55-46b6-9964-0f9de236f144",
+      "name": "Kate Bush‐ka",
+      "sort-name": "Kate Bush‐ka",
+      "score": 62,
+      "type": "Group"
+    },
+    {
+      "id": "ab18d11a-a5c6-4e30-a9dd-1b56d0620245",
+      "name": "The Dutch Kate Bush",
+      "sort-name": "Dutch Kate Bush, The",
+      "score": 58,
+      "type": "Person"
+    },
+    {
+      "id": "fcb04a25-7873-47cc-ac50-f545d36d4980",
+      "name": "Kate Bush and Friends",
+      "sort-name": "Bush, Kate and Friends",
+      "score": 58,
+      "type": null
+    },
+    {
+      "id": "2524dffa-a519-431b-a76d-6d1a1e3d8c11",
+      "name": "The Sensual World - Tribute to Kate Bush",
+      "sort-name": "Sensual World, The - Tribute to Kate Bush",
+      "score": 50,
+      "type": "Group"
+    }
+  ]
+}

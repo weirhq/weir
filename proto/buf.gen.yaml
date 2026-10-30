@@ -1,0 +1,10 @@
+# Dev-loop generation only (`mise run generate`). Bazel generates its own copy;
+# the output here is gitignored.
+version: v2
+plugins:
+  - local: [go, tool, protoc-gen-go]
+    out: .
+    opt: paths=source_relative
+  - local: [go, tool, protoc-gen-connect-go]
+    out: .
+    opt: [paths=source_relative, package_suffix=]

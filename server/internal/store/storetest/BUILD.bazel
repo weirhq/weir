@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "storetest",
+    srcs = ["storetest.go"],
+    importpath = "github.com/weirhq/weir/server/internal/store/storetest",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "//server/internal/store",
+        "@com_github_jackc_pgx_v5//:pgx",
+    ],
+)

@@ -3,7 +3,35 @@ module(name = "weir")
 bazel_dep(name = "protobuf", version = "36.2")
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_buf", version = "0.5.4")
+bazel_dep(name = "rules_go", version = "0.65.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.54.0", repo_name = "bazel_gazelle")
+bazel_dep(name = "platforms", version = "1.1.0")
 
 buf = use_extension("@rules_buf//buf:extensions.bzl", "buf")
 buf.toolchains(version = "v1.75.0")
 use_repo(buf, "rules_buf_toolchains")
+
+go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.27.3")
+
+go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+use_repo(go_deps, "com_connectrpc_connect", "com_github_golang_jwt_jwt_v5", "com_github_google_uuid", "com_github_jackc_pgx_v5", "com_github_pelletier_go_toml_v2", "com_github_pressly_goose_v3", "org_golang_google_grpc", "org_golang_google_grpc_cmd_protoc_gen_go_grpc", "org_golang_google_protobuf", "org_golang_x_crypto", "org_golang_x_time")
+
+# Prebuilt sqlc. Building it from source drags in libpg_query through cgo.
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+[
+    http_archive(
+        name = "sqlc_" + platform,
+        build_file_content = 'exports_files(["sqlc"])',
+        sha256 = sha256,
+        url = "https://github.com/sqlc-dev/sqlc/releases/download/v1.31.1/sqlc_1.31.1_%s.tar.gz" % platform,
+    )
+    for platform, sha256 in {
+        "darwin_amd64": "c5af76772e3785d21663a62697056b383f07629979b1bd25b93872e73dbd519b",
+        "darwin_arm64": "21602158c99eb1f2bae197a66abfb1941d1e9e50b23125bb193349c6b1acc71e",
+        "linux_amd64": "497ae4fcdfa64c5b0c311ffe4c2bd991e43991e82e5367792ed78bc2dca27354",
+        "linux_arm64": "b7cae247740d0c51a1e657479e5b2d21e6fef428f596682a01bc55bf4ab8a23d",
+    }.items()
+]

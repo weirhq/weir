@@ -16,3 +16,6 @@ build:ci --noshow_progress
 build:ci --show_timestamps
 
 try-import %workspace%/user.bazelrc
+
+# Postgres-backed tests skip unless this is set (see `mise run db`).
+test --test_env=WEIR_TEST_DATABASE_URL

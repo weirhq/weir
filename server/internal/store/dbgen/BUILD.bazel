@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+# sqlc output, generated rather than committed. Gazelle skips this package:
+# its sources are the genrule's outputs, one per query file plus db.go and
+# models.go. The .go files `mise run generate` writes here are gitignored.
+genrule(
+    name = "sqlc",
+    srcs = [
+        "//server/internal/store:sqlc.yaml",
+        "//server/internal/store:migrations",
+        "//server/internal/store:queries",
+    ],
+    outs = [
+        "accounts.sql.go",
+        "db.go",
+        "devices.sql.go",
+        "models.go",
+        "server_key.sql.go",
+    ],
+    cmd = """
+        work=$$(mktemp -d)
+        mkdir -p $$work/migrations $$work/queries
+        cp $(location //server/internal/store:sqlc.yaml) $$work/
+        cp $(locations //server/internal/store:migrations) $$work/migrations/
+        cp $(locations //server/internal/store:queries) $$work/queries/
+        $(execpath //tools/sqlc) generate -f $$work/sqlc.yaml
+        cp $$work/dbgen/*.go $(RULEDIR)/
+        rm -rf $$work
+    """,
+    tools = ["//tools/sqlc"],
+)
+
+go_library(
+    name = "dbgen",
+    srcs = [":sqlc"],
+    importpath = "github.com/weirhq/weir/server/internal/store/dbgen",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+    ],
+)

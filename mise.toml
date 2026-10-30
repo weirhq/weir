@@ -9,3 +9,19 @@ sqlc = "1.31.1"
 
 [env]
 _.path = ["{{config_root}}/tools/bin"]
+
+[tasks.generate]
+description = "Generate protobuf and sqlc code for the non-Bazel dev loop"
+run = [
+  "cd proto && buf generate --path weir/api",
+  "cd proto && buf generate --template buf.gen.engine.yaml --path weir/engine",
+  "cd server/internal/store && sqlc generate",
+]
+
+[tasks.gazelle]
+description = "Regenerate Go BUILD files and sync go.mod into MODULE.bazel"
+run = ["go mod tidy", "bazel run //:gazelle", "bazel mod tidy"]
+
+[tasks.db]
+description = "Start the dev Postgres container"
+run = "docker compose -f deploy/dev/compose.yaml up -d --wait"

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "weir-server_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/weirhq/weir/server/cmd/weir-server",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//proto/weir/api/v1alpha",
+        "//server/internal/admin",
+        "//server/internal/auth",
+        "//server/internal/config",
+        "//server/internal/store",
+        "@com_connectrpc_connect//:connect",
+    ],
+)
+
+go_binary(
+    name = "weir-server",
+    embed = [":weir-server_lib"],
+    visibility = ["//visibility:public"],
+)

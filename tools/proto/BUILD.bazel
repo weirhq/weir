@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//proto:compiler.bzl", "go_proto_compiler")
+
+# Connect handlers generated into the same Go package as the messages, so one
+# go_proto_library holds both.
+go_proto_compiler(
+    name = "connect_go",
+    options = ["package_suffix="],
+    plugin = "@com_connectrpc_connect//cmd/protoc-gen-connect-go",
+    suffix = ".connect.go",
+    visibility = ["//visibility:public"],
+    deps = ["@com_connectrpc_connect//:connect"],
+)

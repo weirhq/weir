@@ -1,1 +1,14 @@
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/weirhq/weir
+# gazelle:proto_strip_import_prefix /proto
+# gazelle:exclude proto/**/*.go
+# gazelle:exclude server/internal/store/dbgen
+# gazelle:exclude web
+# gazelle:exclude engine
+# gazelle:exclude desktop
+# gazelle:resolve go github.com/weirhq/weir/server/internal/store/dbgen //server/internal/store/dbgen
+
+gazelle(name = "gazelle")
+
 exports_files(["LICENSE"])

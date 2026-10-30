@@ -41,6 +41,29 @@ bazel build //...
 Day-to-day work can use `go run`, `cargo run` and `pnpm dev` directly. Release
 and CI builds are Bazel only.
 
+| Task | What it does |
+| --- | --- |
+| `mise run db` | Starts Postgres for development on `127.0.0.1:55432` (user, password and database `weir`) |
+| `mise run generate` | Writes protobuf and sqlc code into the tree for `go run` and editors; gitignored |
+| `mise run gazelle` | Tidies `go.mod`, regenerates Go BUILD files, syncs `MODULE.bazel` |
+
+Postgres-backed tests skip unless `WEIR_TEST_DATABASE_URL` is set. Each test
+creates and drops its own database:
+
+```sh
+mise run db
+export WEIR_TEST_DATABASE_URL=postgres://weir:weir@127.0.0.1:55432/weir
+bazel test //...
+```
+
+To run the server outside Bazel, configure it through `weir.toml` or the
+`WEIR_*` environment variables (see `server/internal/config`):
+
+```sh
+mise run generate
+go run ./server/cmd/weir-server -config weir.toml
+```
+
 ## Rules we hold each other to
 
 - Generated code is never committed. If a generator is too slow for Bazel's

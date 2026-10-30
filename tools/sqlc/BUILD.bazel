@@ -1,0 +1,31 @@
+alias(
+    name = "sqlc",
+    actual = select({
+        ":darwin_amd64": "@sqlc_darwin_amd64//:sqlc",
+        ":darwin_arm64": "@sqlc_darwin_arm64//:sqlc",
+        ":linux_amd64": "@sqlc_linux_amd64//:sqlc",
+        ":linux_arm64": "@sqlc_linux_arm64//:sqlc",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+[
+    config_setting(
+        name = os + "_" + arch,
+        constraint_values = [
+            "@platforms//os:" + {"darwin": "macos"}.get(os, os),
+            "@platforms//cpu:" + {
+                "amd64": "x86_64",
+                "arm64": "aarch64",
+            }[arch],
+        ],
+    )
+    for os in [
+        "darwin",
+        "linux",
+    ]
+    for arch in [
+        "amd64",
+        "arm64",
+    ]
+]

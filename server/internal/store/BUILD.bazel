@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+exports_files(["sqlc.yaml"])
+
+filegroup(
+    name = "migrations",
+    srcs = glob(["migrations/*.sql"]),
+    visibility = ["//server/internal/store/dbgen:__pkg__"],
+)
+
+filegroup(
+    name = "queries",
+    srcs = glob(["queries/*.sql"]),
+    visibility = ["//server/internal/store/dbgen:__pkg__"],
+)
+
+go_library(
+    name = "store",
+    srcs = ["store.go"],
+    embedsrcs = ["migrations/00001_accounts.sql"],
+    importpath = "github.com/weirhq/weir/server/internal/store",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "//server/internal/store/dbgen",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_jackc_pgx_v5//stdlib",
+        "@com_github_pressly_goose_v3//:goose",
+    ],
+)

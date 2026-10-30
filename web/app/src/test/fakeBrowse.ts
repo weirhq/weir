@@ -12,7 +12,15 @@ import {
   type ItemSummary
 } from '../gen/weir/api/v1alpha/browse_pb'
 import { LibraryKind, LibrarySchema } from '../gen/weir/api/v1alpha/library_pb'
-import { HdrFormat, Playback } from '../gen/weir/api/v1alpha/playback_pb'
+import {
+  HdrFormat,
+  Playback,
+  PlaybackPlanSchema,
+  type HeartbeatRequest,
+  type PlaybackPlan,
+  type StartRequest,
+  type StopRequest
+} from '../gen/weir/api/v1alpha/playback_pb'
 
 /** A small library to browse: two films, and a show with one season. */
 export class FakeBrowse {
@@ -57,6 +65,11 @@ export class FakeBrowse {
     })
   ]
   watchedCalls: { itemId: string; watched: boolean }[] = []
+  // What Playback.Start answers, or the error it throws.
+  plan: PlaybackPlan | ConnectError = create(PlaybackPlanSchema, {})
+  starts: StartRequest[] = []
+  heartbeats: HeartbeatRequest[] = []
+  stops: StopRequest[] = []
 
   get(id: string): ItemSummary {
     const s = this.summaries.find((x) => x.id === id)
@@ -150,6 +163,19 @@ export class FakeBrowse {
       })
     })
     router.service(Playback, {
+      start: (req) => {
+        this.starts.push(req)
+        if (this.plan instanceof ConnectError) throw this.plan
+        return { plan: this.plan }
+      },
+      heartbeat: (req) => {
+        this.heartbeats.push(req)
+        return {}
+      },
+      stop: (req) => {
+        this.stops.push(req)
+        return {}
+      },
       setWatched: (req) => {
         this.watchedCalls.push({ itemId: req.itemId, watched: req.watched })
         return {}

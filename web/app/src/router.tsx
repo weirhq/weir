@@ -12,6 +12,7 @@ import { AppShell } from './components/AppShell'
 import { HomePage } from './pages/HomePage'
 import { ItemPage } from './pages/ItemPage'
 import { LibraryPage } from './pages/LibraryPage'
+import { PlayerPage } from './player/PlayerPage'
 import { LoginPage } from './pages/LoginPage'
 import { SearchPage } from './pages/SearchPage'
 import { SetupPage } from './pages/SetupPage'
@@ -92,9 +93,22 @@ export const searchRoute = createRoute({
   component: SearchPage
 })
 
+// Full screen, without the app's header, but still signed in.
+export const playRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/play/$itemId',
+  beforeLoad: ({ context }) => {
+    if (!context.session.signedIn) throw redirect({ to: '/login' })
+  },
+  validateSearch: (search: Record<string, unknown>): { version?: string } =>
+    typeof search.version === 'string' ? { version: search.version } : {},
+  component: PlayerPage
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   setupRoute,
+  playRoute,
   appRoute.addChildren([homeRoute, libraryRoute, itemRoute, searchRoute])
 ])
 

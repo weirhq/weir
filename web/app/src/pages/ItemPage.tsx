@@ -15,6 +15,8 @@ import { srcSet, sized } from '../art'
 import { itemRoute } from '../router'
 import styles from './ItemPage.module.css'
 
+const playable = new Set([ItemKind.MOVIE, ItemKind.EPISODE, ItemKind.TRACK])
+
 // What each kind lists beneath itself.
 const childHeading: Partial<Record<ItemKind, string>> = {
   [ItemKind.SHOW]: 'Seasons',
@@ -54,6 +56,9 @@ export function ItemPage() {
   const it = item.data
   const sum = it.summary!
   const watched = sum.userData?.watched ?? false
+  const resumeMs = sum.userData?.position
+    ? Number(sum.userData.position.seconds) * 1000
+    : 0
 
   return (
     <article className={styles.page}>
@@ -84,6 +89,13 @@ export function ItemPage() {
           {it.tagline && <p className={styles.tagline}>{it.tagline}</p>}
           {it.overview && <p className={styles.overview}>{it.overview}</p>}
           <div className={styles.actions}>
+            {playable.has(sum.kind) && it.versions.length > 0 && (
+              <Button asChild>
+                <Link to="/play/$itemId" params={{ itemId }}>
+                  {resumeMs > 0 ? `Resume from ${clock(resumeMs)}` : 'Play'}
+                </Link>
+              </Button>
+            )}
             {sum.kind !== ItemKind.ARTIST &&
               sum.kind !== ItemKind.ALBUM &&
               sum.kind !== ItemKind.TRACK && (
@@ -137,6 +149,18 @@ export function ItemPage() {
             {it.versions.map((v) => (
               <li key={v.id}>
                 <VersionLine version={v} />
+                {it.versions.length > 1 && (
+                  <>
+                    {' · '}
+                    <Link
+                      to="/play/$itemId"
+                      params={{ itemId }}
+                      search={{ version: v.id }}
+                    >
+                      Play this version
+                    </Link>
+                  </>
+                )}
               </li>
             ))}
           </ul>
@@ -228,11 +252,17 @@ function VersionLine({ version }: { version: Version }) {
         .filter(Boolean)
         .join(' '),
     subs ? `${subs} subtitle${subs === 1 ? '' : 's'}` : '',
-    version.sizeBytes
-      ? `${(Number(version.sizeBytes) / 1e9).toFixed(1)} GB`
-      : ''
+    size(Number(version.sizeBytes))
   ].filter(Boolean)
   return <>{parts.join(' · ')}</>
+}
+
+/** 54.2 GB, or 740 MB under a gigabyte. */
+function size(bytes: number): string {
+  if (!bytes) return ''
+  return bytes >= 1e9
+    ? `${(bytes / 1e9).toFixed(1)} GB`
+    : `${Math.max(1, Math.round(bytes / 1e6))} MB`
 }
 
 function channels(n: number): string {

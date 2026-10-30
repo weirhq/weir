@@ -3,6 +3,7 @@ syntax = "proto3";
 package weir.api.v1alpha;
 
 import "google/protobuf/field_mask.proto";
+import "weir/api/v1alpha/library.proto";
 import "weir/api/v1alpha/user.proto";
 
 option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
@@ -15,6 +16,17 @@ service Admin {
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   // Deleting a user revokes all of their devices.
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+
+  rpc ListLibraries(ListLibrariesRequest) returns (ListLibrariesResponse);
+  // Creating a library queues its first scan.
+  rpc CreateLibrary(CreateLibraryRequest) returns (CreateLibraryResponse);
+  rpc UpdateLibrary(UpdateLibraryRequest) returns (UpdateLibraryResponse);
+  // Removes the library and everything scanned into it. Files on disk are
+  // never touched.
+  rpc DeleteLibrary(DeleteLibraryRequest) returns (DeleteLibraryResponse);
+  // Queues a scan. A scan already queued or running for the library absorbs
+  // the request.
+  rpc ScanLibrary(ScanLibraryRequest) returns (ScanLibraryResponse);
 }
 
 message ListUsersRequest {}
@@ -53,3 +65,43 @@ message DeleteUserRequest {
 }
 
 message DeleteUserResponse {}
+
+message ListLibrariesRequest {}
+
+message ListLibrariesResponse {
+  repeated Library libraries = 1;
+}
+
+message CreateLibraryRequest {
+  string name = 1;
+  LibraryKind kind = 2;
+  repeated string paths = 3;
+}
+
+message CreateLibraryResponse {
+  Library library = 1;
+}
+
+message UpdateLibraryRequest {
+  string id = 1;
+  string name = 2;
+  repeated string paths = 3;
+  // Which of name and paths to change. The kind is fixed at creation.
+  google.protobuf.FieldMask update_mask = 4;
+}
+
+message UpdateLibraryResponse {
+  Library library = 1;
+}
+
+message DeleteLibraryRequest {
+  string id = 1;
+}
+
+message DeleteLibraryResponse {}
+
+message ScanLibraryRequest {
+  string id = 1;
+}
+
+message ScanLibraryResponse {}

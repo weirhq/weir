@@ -25,6 +25,8 @@ var (
 )
 
 type Service struct {
+	// RPCs not implemented yet answer Unimplemented.
+	apiv1alpha.UnimplementedAdminHandler
 	store *store.Store
 }
 

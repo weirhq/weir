@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package weir.api.v1alpha;
+
+option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
+
+message Library {
+  // UUIDv7.
+  string id = 1;
+  string name = 2;
+  LibraryKind kind = 3;
+  // Absolute directories, each under one of the server's library_paths.
+  repeated string paths = 4;
+}
+
+enum LibraryKind {
+  LIBRARY_KIND_UNSPECIFIED = 0;
+  LIBRARY_KIND_MOVIES = 1;
+  LIBRARY_KIND_SHOWS = 2;
+  LIBRARY_KIND_MUSIC = 3;
+}

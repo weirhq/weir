@@ -98,6 +98,9 @@ message ProbeResponse {
   repeated Stream streams = 6;
   repeated Chapter chapters = 7;
   repeated Attachment attachments = 8;
+  // Container-level tags, keys lowercased: title, artist, album_artist,
+  // album, track, disc, date, musicbrainz_* and so on.
+  map<string, string> tags = 9;
 }
 
 message Stream {

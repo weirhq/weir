@@ -10,6 +10,7 @@ proto_library(
     srcs = [
         "admin.proto",
         "auth.proto",
+        "library.proto",
         "user.proto",
     ],
     strip_import_prefix = "/proto",

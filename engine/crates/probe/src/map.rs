@@ -31,6 +31,7 @@ pub fn from_ffprobe_json(json: &[u8]) -> Result<ProbeResponse, serde_json::Error
         streams: Vec::new(),
         chapters: out.chapters.iter().map(chapter).collect(),
         attachments: Vec::new(),
+        tags: Default::default(),
     };
     for s in &out.streams {
         match s.codec_type.as_deref() {

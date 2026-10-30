@@ -12,8 +12,11 @@ genrule(
     ],
     outs = [
         "accounts.sql.go",
+        "copyfrom.go",
         "db.go",
         "devices.sql.go",
+        "libraries.sql.go",
+        "media.sql.go",
         "models.go",
         "server_key.sql.go",
     ],

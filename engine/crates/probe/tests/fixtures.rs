@@ -99,6 +99,8 @@ fn flac_with_replaygain() {
     assert_eq!(rg.track_gain_db, Some(-6.48));
     assert_eq!(rg.album_gain_db, Some(-7.10));
     assert_eq!(rg.track_peak, Some(0.988525));
+    assert_eq!(resp.tags["title"], "Test Tone");
+    assert_eq!(resp.tags["replaygain_track_gain"], "-6.48 dB");
 }
 
 #[test]

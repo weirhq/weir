@@ -17,7 +17,10 @@ filegroup(
 go_library(
     name = "store",
     srcs = ["store.go"],
-    embedsrcs = ["migrations/00001_accounts.sql"],
+    embedsrcs = [
+        "migrations/00001_accounts.sql",
+        "migrations/00002_libraries.sql",
+    ],
     importpath = "github.com/weirhq/weir/server/internal/store",
     visibility = ["//server:__subpackages__"],
     deps = [

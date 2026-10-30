@@ -15,10 +15,13 @@ go_library(
         "//server/internal/auth",
         "//server/internal/config",
         "//server/internal/engine",
+        "//server/internal/jobs",
+        "//server/internal/library",
         "//server/internal/store",
         "//server/internal/web",
         "//server/internal/web/dist",
         "@com_connectrpc_connect//:connect",
+        "@com_github_riverqueue_river//:river",
     ],
 )
 

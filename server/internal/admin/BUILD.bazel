@@ -2,12 +2,16 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "admin",
-    srcs = ["service.go"],
+    srcs = [
+        "libraries.go",
+        "service.go",
+    ],
     importpath = "github.com/weirhq/weir/server/internal/admin",
     visibility = ["//server:__subpackages__"],
     deps = [
         "//proto/weir/api/v1alpha",
         "//server/internal/auth",
+        "//server/internal/library",
         "//server/internal/store",
         "//server/internal/store/dbgen",
         "@com_connectrpc_connect//:connect",

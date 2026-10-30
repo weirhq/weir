@@ -16,6 +16,7 @@ import (
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	"github.com/weirhq/weir/server/internal/admin"
 	"github.com/weirhq/weir/server/internal/auth"
+	"github.com/weirhq/weir/server/internal/jobs"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/store/storetest"
 )
@@ -24,6 +25,8 @@ type harness struct {
 	store *store.Store
 	auth  apiv1alpha.AuthClient
 	url   string
+	// The server's library_paths root, for library tests.
+	media string
 }
 
 func newHarness(t *testing.T) *harness {
@@ -39,13 +42,21 @@ func newHarness(t *testing.T) *harness {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := jobs.Migrate(ctx, st.Pool); err != nil {
+		t.Fatal(err)
+	}
+	jobClient, err := jobs.NewClient(st.Pool, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	media := t.TempDir()
 	interceptors := connect.WithInterceptors(auth.NewInterceptor(tokens))
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
-	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st), interceptors))
+	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, []string{media}, jobClient), interceptors))
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	return &harness{store: st, auth: apiv1alpha.NewAuthClient(srv.Client(), srv.URL), url: srv.URL}
+	return &harness{store: st, auth: apiv1alpha.NewAuthClient(srv.Client(), srv.URL), url: srv.URL, media: media}
 }
 
 // bearer returns client options that send creds' access token.

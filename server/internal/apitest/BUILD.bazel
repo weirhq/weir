@@ -2,11 +2,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_test")
 
 go_test(
     name = "apitest_test",
-    srcs = ["apitest_test.go"],
+    srcs = [
+        "apitest_test.go",
+        "libraries_test.go",
+    ],
     deps = [
         "//proto/weir/api/v1alpha",
         "//server/internal/admin",
         "//server/internal/auth",
+        "//server/internal/jobs",
         "//server/internal/store",
         "//server/internal/store/storetest",
         "@com_connectrpc_connect//:connect",

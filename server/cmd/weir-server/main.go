@@ -15,12 +15,15 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/riverqueue/river"
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	"github.com/weirhq/weir/server/internal/admin"
 	"github.com/weirhq/weir/server/internal/auth"
 	"github.com/weirhq/weir/server/internal/config"
 	"github.com/weirhq/weir/server/internal/engine"
+	"github.com/weirhq/weir/server/internal/jobs"
+	"github.com/weirhq/weir/server/internal/library"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/web"
 )
@@ -59,6 +62,11 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 		if err != nil {
 			return err
 		}
+		riverPending, err := jobs.Pending(ctx, st.Pool)
+		if err != nil {
+			return err
+		}
+		pending = append(pending, riverPending...)
 		if len(pending) == 0 {
 			fmt.Println("No pending migrations.")
 		}
@@ -70,12 +78,30 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	if err := st.Migrate(ctx); err != nil {
 		return err
 	}
+	if err := jobs.Migrate(ctx, st.Pool); err != nil {
+		return err
+	}
 
 	sup, err := engine.New(cfg.EngineSocket, cfg.EngineCommand)
 	if err != nil {
 		return err
 	}
 	go sup.Run(ctx)
+
+	workers := river.NewWorkers()
+	river.AddWorker(workers, &library.ScanWorker{Scanner: library.NewScanner(st, sup.Client())})
+	jobClient, err := jobs.NewClient(st.Pool, workers)
+	if err != nil {
+		return err
+	}
+	if err := jobClient.Start(ctx); err != nil {
+		return err
+	}
+	defer func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = jobClient.Stop(stopCtx)
+	}()
 
 	key, err := auth.LoadServerKey(ctx, st)
 	if err != nil {
@@ -90,7 +116,7 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	interceptors := connect.WithInterceptors(auth.NewInterceptor(tokens))
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
-	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st), interceptors))
+	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, cfg.LibraryPaths, jobClient), interceptors))
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})

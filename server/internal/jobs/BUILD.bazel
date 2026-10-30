@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "jobs",
+    srcs = ["jobs.go"],
+    importpath = "github.com/weirhq/weir/server/internal/jobs",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_riverqueue_river//:river",
+        "@com_github_riverqueue_river//rivermigrate",
+        "@com_github_riverqueue_river_riverdriver_riverpgxv5//:riverpgxv5",
+    ],
+)

@@ -108,3 +108,24 @@ func TestVerifyReturnsTheUser(t *testing.T) {
 		t.Errorf("unsigned: %v", err)
 	}
 }
+
+func TestScopedSignatures(t *testing.T) {
+	s := newSigner(t)
+	user := uuid.Must(uuid.NewV7())
+	q := s.SignScope("/media/sessions/abc/", user, time.Minute)
+	for path, ok := range map[string]bool{
+		"/media/sessions/abc/3.m4s":        true,
+		"/media/sessions/abc/index.m3u8":   true,
+		"/media/sessions/abcd/3.m4s":       false,
+		"/media/sessions/other/3.m4s":      false,
+		"/media/sessions/abc/../xyz/3.m4s": false,
+	} {
+		_, err := s.Verify(httptest.NewRequest(http.MethodGet, path+"?"+q, nil))
+		if (err == nil) != ok {
+			t.Errorf("%s: err %v, want ok=%v", path, err, ok)
+		}
+	}
+	if _, err := s.Verify(httptest.NewRequest(http.MethodGet, "/media/sessions/abc/1.m4s?"+s.SignScope("/media/sessions/abc", user, time.Minute), nil)); err == nil {
+		t.Error("accepted a scope without a trailing slash")
+	}
+}

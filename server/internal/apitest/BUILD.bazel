@@ -16,6 +16,7 @@ go_test(
         "//server/internal/library",
         "//server/internal/media",
         "//server/internal/playback",
+        "//server/internal/playback/playbacktest",
         "//server/internal/store",
         "//server/internal/store/dbgen",
         "//server/internal/store/storetest",

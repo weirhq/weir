@@ -130,11 +130,29 @@ func TestStartWithAChosenVersionAndErrors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// HEVC in a browser that can't play it: a transcode, which has no URL
-	// until engine sessions exist.
-	if p := resp.Msg.Plan; p.VersionId != dvVersion || p.Method != apiv1alpha.PlaybackMethod_PLAYBACK_METHOD_VIDEO_TRANSCODE || p.Url != "" {
-		t.Errorf("plan %v", p)
+	// HEVC in a browser that can't play it: a transcode through an engine
+	// session, with its playlist, kept alive by heartbeats.
+	p := resp.Msg.Plan
+	if p.VersionId != dvVersion || p.Method != apiv1alpha.PlaybackMethod_PLAYBACK_METHOD_VIDEO_TRANSCODE || p.SessionId == "" {
+		t.Fatalf("plan %v", p)
 	}
+	got, err := http.Get(h.url + p.Url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	playlist, _ := io.ReadAll(got.Body)
+	got.Body.Close()
+	if got.StatusCode != http.StatusOK || !strings.HasPrefix(string(playlist), "#EXTM3U") {
+		t.Errorf("playlist: %d %s", got.StatusCode, playlist)
+	}
+	if _, err := client.Heartbeat(ctx, connect.NewRequest(&apiv1alpha.HeartbeatRequest{SessionId: p.SessionId})); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Stop(ctx, connect.NewRequest(&apiv1alpha.StopRequest{SessionId: p.SessionId})); err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Heartbeat(ctx, connect.NewRequest(&apiv1alpha.HeartbeatRequest{SessionId: p.SessionId}))
+	wantCode(t, err, connect.CodeNotFound)
 
 	_, err = client.Start(ctx, connect.NewRequest(&apiv1alpha.StartRequest{ItemId: item.String()}))
 	wantCode(t, err, connect.CodeInvalidArgument)

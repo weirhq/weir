@@ -133,8 +133,11 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
 	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, cfg.LibraryPaths, jobClient), interceptors))
 	signer := media.NewSigner(key)
-	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sup.Capabilities), interceptors))
+	sessions := playback.NewSessions(sup.Client(), cfg.SegmentDir, signer)
+	go sessions.Run(ctx)
+	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, sup.Capabilities), interceptors))
 	mux.Handle(media.FilePrefix, media.Handler(signer, st))
+	mux.Handle(playback.SessionPrefix, sessions.Handler())
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})

@@ -30,16 +30,15 @@ var errNoItem = connect.NewError(connect.CodeNotFound, errors.New("no such item"
 
 // Service implements weir.api.v1alpha.Playback.
 type Service struct {
-	// Heartbeat and Stop answer Unimplemented until sessions exist.
-	apiv1alpha.UnimplementedPlaybackHandler
-	store  *store.Store
-	signer *media.Signer
+	store    *store.Store
+	signer   *media.Signer
+	sessions *Sessions
 	// The engine's last reported capabilities; nil until it has reported.
 	engine func() *enginev1alpha.CapabilitiesResponse
 }
 
-func NewService(st *store.Store, signer *media.Signer, engine func() *enginev1alpha.CapabilitiesResponse) *Service {
-	return &Service{store: st, signer: signer, engine: engine}
+func NewService(st *store.Store, signer *media.Signer, sessions *Sessions, engine func() *enginev1alpha.CapabilitiesResponse) *Service {
+	return &Service{store: st, signer: signer, sessions: sessions, engine: engine}
 }
 
 var _ apiv1alpha.PlaybackHandler = (*Service)(nil)
@@ -81,6 +80,8 @@ func (s *Service) Start(ctx context.Context, req *connect.Request[apiv1alpha.Sta
 
 	var best *apiv1alpha.PlaybackPlan
 	var bestRow dbgen.ItemVersionsRow
+	var bestProbe *enginev1alpha.ProbeResponse
+	var bestSel Selection
 	for _, v := range versions {
 		probe := &enginev1alpha.ProbeResponse{}
 		if err := protojson.Unmarshal(v.Probe, probe); err != nil {
@@ -98,7 +99,7 @@ func (s *Service) Start(ctx context.Context, req *connect.Request[apiv1alpha.Sta
 			return nil, auth.Internal(ctx, "decide", err)
 		}
 		if best == nil || Better(plan, best) {
-			best, bestRow = plan, v
+			best, bestRow, bestProbe, bestSel = plan, v, probe, sel
 		}
 	}
 
@@ -110,9 +111,95 @@ func (s *Service) Start(ctx context.Context, req *connect.Request[apiv1alpha.Sta
 		}
 		best.Url = s.signer.FileURL(bestRow.FileID, userID, ttl)
 	}
-	// Remux and transcode URLs come from engine sessions, which aren't wired
-	// up yet; those plans go out with an empty URL.
+	if best.Method != apiv1alpha.PlaybackMethod_PLAYBACK_METHOD_DIRECT_PLAY {
+		var duration time.Duration
+		if bestRow.DurationMs != nil {
+			duration = time.Duration(*bestRow.DurationMs) * time.Millisecond
+		}
+		vod := best.Method == apiv1alpha.PlaybackMethod_PLAYBACK_METHOD_VIDEO_TRANSCODE
+		id, url, err := s.sessions.Start(ctx, userID, bestRow.Path, duration, outputProfile(best, bestProbe, bestSel), vod)
+		if errors.Is(err, ErrBusy) {
+			return nil, connect.NewError(connect.CodeResourceExhausted, err)
+		}
+		if err != nil {
+			return nil, auth.Internal(ctx, "start session", err)
+		}
+		best.SessionId, best.Url = id.String(), url
+	}
 	return connect.NewResponse(&apiv1alpha.StartResponse{Plan: best}), nil
+}
+
+func (s *Service) Heartbeat(ctx context.Context, req *connect.Request[apiv1alpha.HeartbeatRequest]) (*connect.Response[apiv1alpha.HeartbeatResponse], error) {
+	id, user, err := sessionCaller(ctx, req.Msg.SessionId)
+	if err == nil {
+		err = s.sessions.Heartbeat(ctx, id, user)
+	}
+	if err != nil {
+		return nil, sessionError(ctx, err)
+	}
+	return connect.NewResponse(&apiv1alpha.HeartbeatResponse{}), nil
+}
+
+func (s *Service) Stop(ctx context.Context, req *connect.Request[apiv1alpha.StopRequest]) (*connect.Response[apiv1alpha.StopResponse], error) {
+	id, user, err := sessionCaller(ctx, req.Msg.SessionId)
+	if err == nil {
+		err = s.sessions.Stop(ctx, id, user)
+	}
+	if err != nil {
+		return nil, sessionError(ctx, err)
+	}
+	return connect.NewResponse(&apiv1alpha.StopResponse{}), nil
+}
+
+func sessionCaller(ctx context.Context, sessionID string) (uuid.UUID, uuid.UUID, error) {
+	id, err := uuid.Parse(sessionID)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, errNoSession
+	}
+	user, err := auth.ClaimsFrom(ctx).UserID()
+	return id, user, err
+}
+
+func sessionError(ctx context.Context, err error) error {
+	if errors.Is(err, errNoSession) {
+		return connect.NewError(connect.CodeNotFound, err)
+	}
+	return auth.Internal(ctx, "playback session", err)
+}
+
+// outputProfile tells the engine what the plan needs: which streams, and
+// which of them to re-encode into what.
+func outputProfile(plan *apiv1alpha.PlaybackPlan, probe *enginev1alpha.ProbeResponse, sel Selection) *enginev1alpha.OutputProfile {
+	out := &enginev1alpha.OutputProfile{}
+	actions := map[uint32]apiv1alpha.StreamAction{}
+	for _, d := range plan.GetStreams() {
+		actions[d.GetIndex()] = d.GetAction()
+	}
+	for _, st := range probe.GetStreams() {
+		if st.GetKind() == enginev1alpha.StreamKind_STREAM_KIND_VIDEO {
+			out.VideoStream = st.GetIndex()
+			break
+		}
+	}
+	o := plan.GetOutput()
+	if actions[out.VideoStream] == actTranscode {
+		out.Video = &enginev1alpha.VideoOutput{
+			Codec: o.GetVideoCodec(), HdrFormat: enginev1alpha.HdrFormat(o.GetHdrFormat()),
+			Width: o.GetWidth(), Height: o.GetHeight(), Bitrate: o.GetBitrate(),
+		}
+	}
+	if sel.Audio >= 0 {
+		audio := uint32(sel.Audio)
+		out.AudioStream = &audio
+		if actions[audio] == actTranscode {
+			out.Audio = &enginev1alpha.AudioOutput{Codec: o.GetAudioCodec(), Channels: o.GetAudioChannels()}
+		}
+	}
+	if sel.Subtitle >= 0 && actions[uint32(sel.Subtitle)] == actBurnIn {
+		sub := uint32(sel.Subtitle)
+		out.BurnInSubtitleStream = &sub
+	}
+	return out
 }
 
 // decide returns the plan for one version, from the decision cache when the

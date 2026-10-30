@@ -48,12 +48,26 @@ func (s *Signer) Sign(path string, userID uuid.UUID, ttl time.Duration) string {
 
 var errBadSignature = errors.New("invalid or expired media URL")
 
+// SignScope signs a query string good for every path under scope, which
+// must end in "/". A session's playlist hands it to all its segments.
+func (s *Signer) SignScope(scope string, userID uuid.UUID, ttl time.Duration) string {
+	exp := strconv.FormatInt(s.now().Add(ttl).Unix(), 10)
+	return url.Values{"scope": {scope}, "u": {userID.String()}, "exp": {exp}, "sig": {s.mac(scope, userID.String(), exp)}}.Encode()
+}
+
 // Verify checks a request's signature and expiry, and returns the user it
-// was signed for.
+// was signed for. A scoped signature covers any path under its scope.
 func (s *Signer) Verify(r *http.Request) (uuid.UUID, error) {
 	q := r.URL.Query()
 	user, exp, sig := q.Get("u"), q.Get("exp"), q.Get("sig")
-	if !hmac.Equal([]byte(sig), []byte(s.mac(r.URL.Path, user, exp))) {
+	signed := r.URL.Path
+	if scope := q.Get("scope"); scope != "" {
+		if !strings.HasSuffix(scope, "/") || !strings.HasPrefix(r.URL.Path, scope) || strings.Contains(r.URL.Path, "..") {
+			return uuid.Nil, errBadSignature
+		}
+		signed = scope
+	}
+	if !hmac.Equal([]byte(sig), []byte(s.mac(signed, user, exp))) {
 		return uuid.Nil, errBadSignature
 	}
 	expires, err := strconv.ParseInt(exp, 10, 64)

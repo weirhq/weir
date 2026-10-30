@@ -1,0 +1,134 @@
+.page {
+  position: relative;
+}
+
+.backdrop {
+  position: absolute;
+  inset: -24px -16px auto;
+  height: 420px;
+  overflow: hidden;
+  z-index: -1;
+}
+.backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  mask-image: linear-gradient(to bottom, black 30%, transparent);
+}
+
+.crumbs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.crumbs a {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+.crumbs a + a::before {
+  content: '›';
+  margin-right: 8px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.head {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  margin-bottom: 40px;
+}
+
+.poster {
+  width: 240px;
+  flex-shrink: 0;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+}
+
+.info {
+  max-width: 720px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-family: var(--md-sys-typescale-display-small-font);
+  font-size: var(--md-sys-typescale-display-small-size);
+  line-height: var(--md-sys-typescale-display-small-line-height);
+  font-weight: var(--md-sys-typescale-display-small-weight);
+}
+
+.facts,
+.tagline {
+  margin: 0 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.tagline {
+  font-style: italic;
+}
+
+.overview {
+  margin: 0 0 24px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cast {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cast li {
+  display: flex;
+  flex-direction: column;
+}
+.castName {
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+.castRole,
+.versions {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.versions {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.tracks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.track {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  color: var(--md-sys-color-on-surface);
+  text-decoration: none;
+}
+.track:hover {
+  background: var(--md-sys-color-surface-container);
+}
+.trackNumber {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+@media (max-width: 720px) {
+  .head {
+    flex-direction: column;
+  }
+  .poster {
+    width: 160px;
+  }
+}

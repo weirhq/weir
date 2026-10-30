@@ -1,33 +1,53 @@
-import { Button } from '@weirhq/ui'
-import { useNavigate, useRouteContext } from '@tanstack/react-router'
-import { useSyncExternalStore } from 'react'
-import styles from './Page.module.css'
+import { useQuery } from '@tanstack/react-query'
+import { useRouteContext } from '@tanstack/react-router'
+import { PosterCard } from '../components/PosterCard'
+import { Row } from '../components/Row'
+import { librariesKey } from '../components/AppShell'
+import { Role } from '../gen/weir/api/v1alpha/user_pb'
+import cards from '../components/Cards.module.css'
 
 export function HomePage() {
-  const { session } = useRouteContext({ from: '__root__' })
-  const navigate = useNavigate()
-  const user = useSyncExternalStore(session.subscribe, () => session.user)
+  const { api, session } = useRouteContext({ from: '__root__' })
+  const continueWatching = useQuery({
+    queryKey: ['continueWatching'],
+    queryFn: async () => (await api.browse.listContinueWatching({})).items
+  })
+  const recent = useQuery({
+    queryKey: ['recentlyAdded'],
+    queryFn: async () => (await api.browse.listRecentlyAdded({})).items
+  })
+  const libraries = useQuery({
+    queryKey: librariesKey,
+    queryFn: async () => (await api.browse.listVisibleLibraries({})).libraries
+  })
 
-  async function signOut() {
-    await session.signOut()
-    await navigate({ to: '/login' })
+  if (libraries.data?.length === 0) {
+    return (
+      <section className={cards.section}>
+        <h1 className={cards.heading}>No libraries yet</h1>
+        <p className={cards.empty}>
+          {session.user?.role === Role.ADMIN
+            ? 'Add a library of films, shows or music to get started.'
+            : 'Ask an admin to share a library with you.'}
+        </p>
+      </section>
+    )
   }
-
   return (
     <>
-      <header className={styles.appBar}>
-        <h1 className={styles.appTitle}>Weir</h1>
-        <div className={styles.user}>
-          <span>{user?.displayName}</span>
-          <Button variant="text" onClick={signOut}>
-            Sign out
-          </Button>
-        </div>
-      </header>
-      <main className={styles.empty}>
-        <h2 className={styles.title}>No libraries yet</h2>
-        <p className={styles.lead}>Libraries you add will show up here.</p>
-      </main>
+      <Row title="Continue watching" wide>
+        {(continueWatching.data ?? []).map((item) => (
+          <PosterCard
+            key={item.id}
+            item={{ ...item, posterUrl: item.thumbUrl || item.posterUrl }}
+          />
+        ))}
+      </Row>
+      <Row title="Recently added">
+        {(recent.data ?? []).map((item) => (
+          <PosterCard key={item.id} item={item} />
+        ))}
+      </Row>
     </>
   )
 }

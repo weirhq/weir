@@ -1,26 +1,8 @@
-import { QueryClient } from '@tanstack/react-query'
-import { createMemoryHistory } from '@tanstack/react-router'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { App } from './App'
-import { Session } from './session'
-import { FakeAuth, memoryStorage } from './test/fakeAuth'
+import { FakeAuth } from './test/fakeAuth'
+import { renderApp } from './test/render'
 import { describeBrowser } from './device'
-
-function renderApp(fake: FakeAuth, path = '/') {
-  const auth = fake.client()
-  const session = new Session(auth, memoryStorage())
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } }
-  })
-  render(
-    <App
-      context={{ auth, session, queryClient }}
-      history={createMemoryHistory({ initialEntries: [path] })}
-    />
-  )
-  return session
-}
 
 it('sends a fresh server to setup, then signs the new admin in', async () => {
   const fake = new FakeAuth()
@@ -37,7 +19,7 @@ it('sends a fresh server to setup, then signs the new admin in', async () => {
   await user.type(screen.getByLabelText('Confirm password'), 'short but longer')
   await user.click(screen.getByRole('button', { name: 'Create account' }))
 
-  await screen.findByRole('heading', { name: 'No libraries yet' })
+  await screen.findByRole('heading', { name: 'Recently added' })
   expect(screen.getByText('Luna Nova')).toBeTruthy()
   expect(session.signedIn).toBe(true)
 })
@@ -58,7 +40,7 @@ it('asks for a password, reports a wrong one, and signs in and out', async () =>
   await user.clear(screen.getByLabelText('Password'))
   await user.type(screen.getByLabelText('Password'), 'correct horse')
   await user.click(screen.getByRole('button', { name: 'Sign in' }))
-  await screen.findByRole('heading', { name: 'No libraries yet' })
+  await screen.findByRole('heading', { name: 'Recently added' })
 
   await user.click(screen.getByRole('button', { name: 'Sign out' }))
   await screen.findByRole('heading', { name: 'Sign in to Weir' })

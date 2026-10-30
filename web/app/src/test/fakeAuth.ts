@@ -5,6 +5,7 @@ import {
   ConnectError,
   createClient,
   createRouterTransport,
+  type ConnectRouter,
   type Interceptor
 } from '@connectrpc/connect'
 import { Auth, CredentialsSchema } from '../gen/weir/api/v1alpha/auth_pb'
@@ -45,9 +46,15 @@ export class FakeAuth {
     this.#validAccess.clear()
   }
 
-  transport(interceptors: Interceptor[] = []) {
+  /** A transport serving this fake Auth, plus whatever `more` registers. */
+  transport(
+    interceptors: Interceptor[] = [],
+    more?: (router: ConnectRouter) => void
+  ) {
     return createRouterTransport(
-      ({ service }) => {
+      (router) => {
+        more?.(router)
+        const { service } = router
         service(Auth, {
           getSetupState: () => ({ needsBootstrap: this.needsBootstrap }),
           bootstrap: (req) => {

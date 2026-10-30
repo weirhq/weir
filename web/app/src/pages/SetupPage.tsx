@@ -10,7 +10,7 @@ const MIN_PASSWORD_LENGTH = 8
 
 /** First run: create the admin account. */
 export function SetupPage() {
-  const { auth, session, queryClient } = useRouteContext({ from: '__root__' })
+  const { api, session, queryClient } = useRouteContext({ from: '__root__' })
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -32,7 +32,7 @@ export function SetupPage() {
     setBusy(true)
     setError('')
     try {
-      const { credentials } = await auth.bootstrap({
+      const { credentials } = await api.auth.bootstrap({
         username,
         displayName,
         password,

@@ -1,4 +1,3 @@
-import type { Client } from '@connectrpc/connect'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
@@ -8,14 +7,18 @@ import {
   redirect,
   type RouterHistory
 } from '@tanstack/react-router'
-import type { Auth } from './gen/weir/api/v1alpha/auth_pb'
+import type { Api } from './api'
+import { AppShell } from './components/AppShell'
 import { HomePage } from './pages/HomePage'
+import { ItemPage } from './pages/ItemPage'
+import { LibraryPage } from './pages/LibraryPage'
 import { LoginPage } from './pages/LoginPage'
+import { SearchPage } from './pages/SearchPage'
 import { SetupPage } from './pages/SetupPage'
 import type { Session } from './session'
 
 export type RouterContext = {
-  auth: Client<typeof Auth>
+  api: Api
   session: Session
   queryClient: QueryClient
 }
@@ -27,7 +30,7 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context, location }) => {
     const { needsBootstrap } = await context.queryClient.ensureQueryData({
       queryKey: setupStateKey,
-      queryFn: () => context.auth.getSetupState({})
+      queryFn: () => context.api.auth.getSetupState({})
     })
     if (needsBootstrap && location.pathname !== '/setup')
       throw redirect({ to: '/setup' })
@@ -35,15 +38,6 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
       throw redirect({ to: '/login' })
   },
   component: Outlet
-})
-
-const homeRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  beforeLoad: ({ context }) => {
-    if (!context.session.signedIn) throw redirect({ to: '/login' })
-  },
-  component: HomePage
 })
 
 const loginRoute = createRoute({
@@ -61,7 +55,48 @@ const setupRoute = createRoute({
   component: SetupPage
 })
 
-const routeTree = rootRoute.addChildren([homeRoute, loginRoute, setupRoute])
+// Everything past sign-in shares the app's header.
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'app',
+  beforeLoad: ({ context }) => {
+    if (!context.session.signedIn) throw redirect({ to: '/login' })
+  },
+  component: AppShell
+})
+
+const homeRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/',
+  component: HomePage
+})
+
+export const libraryRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/library/$libraryId',
+  component: LibraryPage
+})
+
+export const itemRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/item/$itemId',
+  component: ItemPage
+})
+
+export const searchRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/search',
+  validateSearch: (search: Record<string, unknown>): { q: string } => ({
+    q: typeof search.q === 'string' ? search.q : ''
+  }),
+  component: SearchPage
+})
+
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  setupRoute,
+  appRoute.addChildren([homeRoute, libraryRoute, itemRoute, searchRoute])
+])
 
 export function createAppRouter(
   context: RouterContext,

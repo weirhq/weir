@@ -5,6 +5,7 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { QueryClient } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { createApi } from './api'
 import { App } from './App'
 import { Auth } from './gen/weir/api/v1alpha/auth_pb'
 import { Session } from './session'
@@ -17,13 +18,12 @@ const session = new Session(
 )
 await session.restore()
 
-const auth = createClient(
-  Auth,
+const api = createApi(
   createConnectTransport({ baseUrl, interceptors: [authInterceptor(session)] })
 )
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App context={{ auth, session, queryClient: new QueryClient() }} />
+    <App context={{ api, session, queryClient: new QueryClient() }} />
   </StrictMode>
 )

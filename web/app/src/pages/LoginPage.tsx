@@ -6,7 +6,7 @@ import { errorMessage } from '../errors'
 import styles from './Page.module.css'
 
 export function LoginPage() {
-  const { auth, session } = useRouteContext({ from: '__root__' })
+  const { api, session } = useRouteContext({ from: '__root__' })
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -18,7 +18,7 @@ export function LoginPage() {
     setBusy(true)
     setError('')
     try {
-      const { credentials } = await auth.login({
+      const { credentials } = await api.auth.login({
         username,
         password,
         device: deviceInfo(session.deviceId)

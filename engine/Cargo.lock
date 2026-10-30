@@ -869,6 +869,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "session"
+version = "0.0.0"
+dependencies = [
+ "engine-proto",
+ "prost-types",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sha2"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1268,6 +1280,8 @@ dependencies = [
  "engine-proto",
  "hyper-util",
  "probe",
+ "prost-types",
+ "session",
  "tempfile",
  "tokio",
  "tokio-stream",

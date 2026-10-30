@@ -1,0 +1,32 @@
+load("@crates//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "session",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2024",
+    visibility = ["//engine:__subpackages__"],
+    deps = all_crate_deps(normal = True) + ["//engine/crates/proto:engine_proto"],
+)
+
+rust_test(
+    name = "session_test",
+    crate = ":session",
+    edition = "2024",
+)
+
+[
+    rust_test(
+        name = name + "_test",
+        srcs = ["tests/%s.rs" % name],
+        edition = "2024",
+        deps = all_crate_deps(normal = True, normal_dev = True) + [
+            ":session",
+            "//engine/crates/proto:engine_proto",
+        ],
+    )
+    for name in [
+        "live",
+        "runner",
+    ]
+]

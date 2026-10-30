@@ -11,6 +11,7 @@ publish = false
 [workspace.dependencies]
 engine-proto = { path = "crates/proto" }
 probe = { path = "crates/probe" }
+session = { path = "crates/session" }
 
 clap = { version = "4.6.7", features = ["derive", "env"] }
 hyper-util = { version = "0.1.21", features = ["tokio"] }

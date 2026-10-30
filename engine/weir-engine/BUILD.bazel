@@ -8,6 +8,7 @@ rust_library(
     deps = all_crate_deps(normal = True) + [
         "//engine/crates/probe",
         "//engine/crates/proto:engine_proto",
+        "//engine/crates/session",
     ],
 )
 
@@ -16,7 +17,10 @@ rust_binary(
     srcs = ["src/main.rs"],
     edition = "2024",
     visibility = ["//visibility:public"],
-    deps = all_crate_deps(normal = True) + [":weir_engine"],
+    deps = all_crate_deps(normal = True) + [
+        ":weir_engine",
+        "//engine/crates/session",
+    ],
 )
 
 rust_test(
@@ -26,5 +30,6 @@ rust_test(
     deps = all_crate_deps(normal = True, normal_dev = True) + [
         ":weir_engine",
         "//engine/crates/proto:engine_proto",
+        "//engine/crates/session",
     ],
 )

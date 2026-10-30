@@ -83,6 +83,7 @@ crate.from_cargo(
         "//engine:Cargo.toml",
         "//engine/crates/probe:Cargo.toml",
         "//engine/crates/proto:Cargo.toml",
+        "//engine/crates/session:Cargo.toml",
         "//engine/weir-engine:Cargo.toml",
     ],
 )

@@ -20,6 +20,9 @@ struct Args {
     /// The ffprobe binary to run.
     #[arg(long, env = "WEIR_FFPROBE", default_value = "ffprobe")]
     ffprobe: PathBuf,
+    /// The ffmpeg binary to run for playback sessions.
+    #[arg(long, env = "WEIR_FFMPEG", default_value = "ffmpeg")]
+    ffmpeg: PathBuf,
     /// Concurrent playback sessions this engine accepts.
     #[arg(long, env = "WEIR_ENGINE_MAX_SESSIONS", default_value_t = 2)]
     max_sessions: u32,
@@ -37,7 +40,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = bind(&args.socket).await?;
     let service = EngineService::new(Config {
         ffprobe: args.ffprobe,
+        ffmpeg: args.ffmpeg,
         max_sessions: args.max_sessions,
+        session_limits: session::Limits::default(),
     })
     .await;
     tracing::info!(socket = %args.socket.display(), "listening");

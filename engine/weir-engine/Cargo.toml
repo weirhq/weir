@@ -10,6 +10,8 @@ publish.workspace = true
 clap.workspace = true
 engine-proto.workspace = true
 probe.workspace = true
+prost-types.workspace = true
+session.workspace = true
 tokio.workspace = true
 tokio-stream.workspace = true
 tonic.workspace = true
@@ -18,5 +20,6 @@ tracing-subscriber.workspace = true
 
 [dev-dependencies]
 hyper-util.workspace = true
+session.workspace = true
 tempfile.workspace = true
 tower.workspace = true

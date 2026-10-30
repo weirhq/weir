@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: bazel test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: bazel-contrib/setup-bazel@104e3eea9447cdaa4b00d0fb46191a3985d26ab3 # 0.19.1
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}-${{ matrix.os }}
+          repository-cache: true
+      - name: Allow Bazel's Linux sandbox
+        if: runner.os == 'Linux'
+        # Ubuntu 24.04 blocks the unprivileged user namespaces linux-sandbox needs.
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Start Postgres
+        # Service containers are Linux-only; on macOS the Postgres tests skip.
+        if: runner.os == 'Linux'
+        run: |
+          docker compose -f deploy/dev/compose.yaml up -d --wait
+          echo "WEIR_TEST_DATABASE_URL=postgres://weir:weir@127.0.0.1:55432/weir" >> "$GITHUB_ENV"
+      - run: bazel test --config=ci //...
+
+  proto:
+    name: buf breaking
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        with:
+          install_args: buf
+      - name: buf breaking against ${{ github.base_ref }}
+        run: buf breaking proto --against ".git#ref=origin/${{ github.base_ref }},subdir=proto"
+
+  lint:
+    name: format and lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+      - uses: bazel-contrib/setup-bazel@104e3eea9447cdaa4b00d0fb46191a3985d26ab3 # 0.19.1
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}-lint
+          repository-cache: true
+      - name: Go
+        run: |
+          mise run generate
+          unformatted=$(gofmt -l server)
+          if [ -n "$unformatted" ]; then echo "gofmt needed:"; echo "$unformatted"; exit 1; fi
+          go vet ./...
+      - name: BUILD files and go.mod are in sync
+        run: |
+          go mod tidy -diff
+          bazel run //:gazelle -- -mode=diff
+      - name: Rust
+        working-directory: engine
+        run: |
+          cargo fmt --all --check
+          cargo clippy --all-targets -- -D warnings
+      - name: Web
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @weirhq/app generate
+          pnpm lint

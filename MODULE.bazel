@@ -109,3 +109,7 @@ use_repo(npm, "npm")
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext")
 rules_ts_ext.deps(ts_version_from = "//web:package.json")
 use_repo(rules_ts_ext, "npm_typescript")
+
+# BEGIN ffmpeg (written by tools/ffmpeg/pin.sh; see docs/runbooks/ffmpeg.md)
+# Not pinned yet: the first run of the "ffmpeg" workflow publishes the release.
+# END ffmpeg

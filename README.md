@@ -84,6 +84,20 @@ don't.
 cd web && pnpm install && pnpm dev
 ```
 
+## CI
+
+`.github/workflows/ci.yml` runs three checks; make all of them required on
+`main`:
+
+| Check | What fails it |
+| --- | --- |
+| `bazel test (ubuntu-24.04)`, `bazel test (macos-15)` | Any test or build failure. Postgres tests run on Linux only. |
+| `buf breaking` | A pull request that breaks a published proto contract |
+| `format and lint` | gofmt, `go vet`, BUILD files or `go.mod` out of date, rustfmt, clippy, ESLint, Prettier |
+
+The engine's ffmpeg is built by `.github/workflows/ffmpeg.yml`; see
+[the runbook](docs/runbooks/ffmpeg.md).
+
 ## Rules we hold each other to
 
 - Generated code is never committed. If a generator is too slow for Bazel's

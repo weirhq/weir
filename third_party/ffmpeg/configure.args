@@ -1,0 +1,41 @@
+# ffmpeg configure flags, one per line. build.sh adds --prefix and the
+# per-architecture flags. Autodetection is off so the feature set is exactly
+# this list on every build host.
+--disable-autodetect
+--enable-gpl
+--enable-version3
+--disable-debug
+--disable-doc
+--disable-ffplay
+--enable-static
+--disable-shared
+--enable-pthreads
+
+# Containers and compression
+--enable-zlib
+--enable-bzlib
+--enable-lzma
+
+# Codecs
+--enable-libdav1d
+--enable-libx264
+--enable-libx265
+--enable-libsvtav1
+--enable-libopus
+
+# Subtitles
+--enable-libass
+--enable-libfreetype
+--enable-libharfbuzz
+
+# Tonemapping and Dolby Vision output
+--enable-vulkan
+--enable-libplacebo
+
+# Hardware acceleration
+--enable-vaapi
+--enable-libdrm
+--enable-ffnvcodec
+--enable-nvenc
+--enable-nvdec
+--enable-cuvid

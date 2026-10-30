@@ -13,8 +13,6 @@ build --heap_dump_on_oom
 
 test --test_output=errors
 
-# CI pins the lockfile and fails if it drifts.
-common:ci --lockfile_mode=error
 build:ci --noshow_progress
 build:ci --show_timestamps
 

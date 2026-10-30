@@ -161,6 +161,9 @@ message EngineStatus {
   uint32 active_sessions = 5;
   // Hardware the engine found, e.g. "VAAPI: Intel UHD Graphics 770".
   repeated string hardware = 6;
+  // Why the server won't use an engine that is running, e.g. a version
+  // outside the range this server works with. Empty otherwise.
+  string problem = 7;
 }
 
 message Job {

@@ -20,6 +20,7 @@ genrule(
         "media.sql.go",
         "metadata.sql.go",
         "playback.sql.go",
+        "playlists.sql.go",
         "models.go",
         "server_key.sql.go",
         "watch.sql.go",

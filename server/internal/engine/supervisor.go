@@ -45,6 +45,7 @@ type Supervisor struct {
 	mu      sync.RWMutex
 	healthy bool
 	caps    *enginev1alpha.CapabilitiesResponse
+	health  *enginev1alpha.HealthResponse
 }
 
 func New(socket string, command []string) (*Supervisor, error) {
@@ -77,6 +78,14 @@ func (s *Supervisor) Capabilities() *enginev1alpha.CapabilitiesResponse {
 	return s.caps
 }
 
+// LastHealth returns the engine's latest Health reply, or nil while it is
+// down.
+func (s *Supervisor) LastHealth() *enginev1alpha.HealthResponse {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.health
+}
+
 // Run supervises the engine until ctx is done, then closes the connection.
 func (s *Supervisor) Run(ctx context.Context) {
 	defer s.conn.Close()
@@ -105,7 +114,7 @@ func (s *Supervisor) check(ctx context.Context) {
 	callCtx, cancel := context.WithTimeout(ctx, callTimeout)
 	defer cancel()
 
-	_, err := s.client.Health(callCtx, &enginev1alpha.HealthRequest{})
+	health, err := s.client.Health(callCtx, &enginev1alpha.HealthRequest{})
 	healthy := err == nil
 	var caps *enginev1alpha.CapabilitiesResponse
 	if healthy && !s.Healthy() {
@@ -116,6 +125,7 @@ func (s *Supervisor) check(ctx context.Context) {
 	s.mu.Lock()
 	was := s.healthy
 	s.healthy = healthy
+	s.health = health
 	if caps != nil {
 		s.caps = caps
 	}

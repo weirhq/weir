@@ -13,7 +13,6 @@ import (
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	"github.com/weirhq/weir/server/internal/auth"
-	"github.com/weirhq/weir/server/internal/library"
 	"github.com/weirhq/weir/server/internal/store"
 	"github.com/weirhq/weir/server/internal/store/dbgen"
 )
@@ -26,16 +25,16 @@ var (
 )
 
 type Service struct {
-	// RPCs not implemented yet answer Unimplemented.
-	apiv1alpha.UnimplementedAdminHandler
 	store *store.Store
 	// The server's library_paths: every library folder must be inside one.
-	roots []string
-	jobs  library.Inserter
+	roots  []string
+	jobs   Jobs
+	engine Engine
 }
 
-func NewService(st *store.Store, roots []string, jobs library.Inserter) *Service {
-	return &Service{store: st, roots: roots, jobs: jobs}
+// NewService takes the engine for the status page; nil reports it unknown.
+func NewService(st *store.Store, roots []string, jobs Jobs, engine Engine) *Service {
+	return &Service{store: st, roots: roots, jobs: jobs, engine: engine}
 }
 
 var _ apiv1alpha.AdminHandler = (*Service)(nil)

@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "browse",
-    srcs = ["service.go"],
+    srcs = [
+        "playlists.go",
+        "service.go",
+    ],
     importpath = "github.com/weirhq/weir/server/internal/browse",
     visibility = ["//server:__subpackages__"],
     deps = [

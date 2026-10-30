@@ -32,7 +32,8 @@ type harness struct {
 	auth  apiv1alpha.AuthClient
 	url   string
 	// What the fake engine has reported.
-	engineCaps *enginev1alpha.CapabilitiesResponse
+	engineCaps   *enginev1alpha.CapabilitiesResponse
+	engineStatus *fakeStatus
 	// The server's library_paths root, for library tests.
 	media string
 }
@@ -58,13 +59,16 @@ func newHarness(t *testing.T) *harness {
 		t.Fatal(err)
 	}
 	media := t.TempDir()
+	status := &fakeStatus{}
 	interceptors := connect.WithInterceptors(auth.NewInterceptor(tokens))
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
-	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, []string{media}, jobClient), interceptors))
-	h := &harness{store: st, media: media}
+	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, []string{media}, jobClient, status), interceptors))
+	h := &harness{store: st, media: media, engineStatus: status}
 	signer := mediaurl.NewSigner(key)
-	mux.Handle(apiv1alpha.NewBrowseHandler(browse.NewService(st, signer), interceptors))
+	browseService := browse.NewService(st, signer)
+	mux.Handle(apiv1alpha.NewBrowseHandler(browseService, interceptors))
+	mux.Handle(apiv1alpha.NewPlaylistsHandler(browse.NewPlaylists(browseService), interceptors))
 	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, t.TempDir()))
 	sessions := playback.NewSessions((&playbacktest.Engine{}).Client(t), t.TempDir(), signer)
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, func() *enginev1alpha.CapabilitiesResponse { return h.engineCaps }), interceptors))
@@ -323,3 +327,14 @@ func TestAdminNeedsRecentLogin(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// fakeStatus stands in for the engine supervisor on the status page.
+type fakeStatus struct {
+	healthy bool
+	caps    *enginev1alpha.CapabilitiesResponse
+	health  *enginev1alpha.HealthResponse
+}
+
+func (f *fakeStatus) Healthy() bool                                     { return f.healthy }
+func (f *fakeStatus) Capabilities() *enginev1alpha.CapabilitiesResponse { return f.caps }
+func (f *fakeStatus) LastHealth() *enginev1alpha.HealthResponse         { return f.health }

@@ -7,6 +7,7 @@ go_test(
         "browse_test.go",
         "libraries_test.go",
         "playback_test.go",
+        "playlists_test.go",
         "watch_test.go",
     ],
     deps = [

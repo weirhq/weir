@@ -82,6 +82,9 @@ func TestLibraryLifecycle(t *testing.T) {
 	if len(list.Msg.Libraries) != 1 || len(list.Msg.Libraries[0].Paths) != 2 {
 		t.Errorf("listed %v", list.Msg.Libraries)
 	}
+	if got := list.Msg.LibraryPaths; len(got) != 1 || got[0] != h.media {
+		t.Errorf("library_paths = %v, want [%s]", got, h.media)
+	}
 
 	if _, err := adm.DeleteLibrary(ctx, connect.NewRequest(&apiv1alpha.DeleteLibraryRequest{Id: lib.Id})); err != nil {
 		t.Fatal(err)

@@ -9,7 +9,13 @@ import {
   LibraryKind,
   type Library
 } from '../../gen/weir/api/v1alpha/library_pb'
-import { adminLibrariesKey, kindNames, statusKey, when } from './keys'
+import {
+  adminLibrariesKey,
+  adminLibrariesQuery,
+  kindNames,
+  statusKey,
+  when
+} from './keys'
 import styles from './Admin.module.css'
 
 type Draft = { name: string; kind: LibraryKind; paths: string[] }
@@ -20,10 +26,9 @@ export function LibrariesPage() {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<string>()
   const [deleting, setDeleting] = useState<Library>()
-  const libraries = useQuery({
-    queryKey: adminLibrariesKey,
-    queryFn: async () => (await api.admin.listLibraries({})).libraries
-  })
+  const list = useQuery(adminLibrariesQuery(api))
+  const libraries = list.data?.libraries
+  const roots = list.data?.libraryPaths ?? []
   // Scans show up as jobs; poll while this page is open.
   const status = useQuery({
     queryKey: statusKey,
@@ -67,7 +72,7 @@ export function LibrariesPage() {
     }
   })
   const jobs = status.data?.recentJobs ?? []
-  const failed = libraries.error ?? scan.error
+  const failed = list.error ?? scan.error
 
   return (
     <section aria-label="Libraries">
@@ -77,11 +82,12 @@ export function LibrariesPage() {
         </p>
       )}
       <ul className={styles.list}>
-        {libraries.data?.map((l) => (
+        {libraries?.map((l) => (
           <li key={l.id} className={styles.card}>
             {editing === l.id ? (
               <LibraryForm
                 initial={l}
+                roots={roots}
                 submitLabel="Save"
                 busy={update.isPending}
                 error={update.error}
@@ -120,7 +126,7 @@ export function LibrariesPage() {
           </li>
         ))}
       </ul>
-      {libraries.data?.length === 0 && !adding && (
+      {libraries?.length === 0 && !adding && (
         <p className={styles.meta}>
           No libraries yet. Add one to start scanning your media.
         </p>
@@ -128,6 +134,7 @@ export function LibrariesPage() {
       {adding ? (
         <div className={styles.card}>
           <LibraryForm
+            roots={roots}
             submitLabel="Add library"
             busy={create.isPending}
             error={create.error}
@@ -187,6 +194,7 @@ function scanState(libraryId: string, jobs: Job[]): string {
 
 function LibraryForm({
   initial,
+  roots,
   submitLabel,
   busy,
   error,
@@ -194,6 +202,8 @@ function LibraryForm({
   onCancel
 }: {
   initial?: Library
+  // The server's library_paths; every folder must be inside one.
+  roots: string[]
   submitLabel: string
   busy: boolean
   error: Error | null
@@ -205,6 +215,7 @@ function LibraryForm({
   const [paths, setPaths] = useState(initial?.paths.join('\n') ?? '')
   const kindId = useId()
   const pathsId = useId()
+  const rootsId = useId()
   const list = paths
     .split('\n')
     .map((p) => p.trim())
@@ -252,10 +263,25 @@ function LibraryForm({
           id={pathsId}
           className={styles.textarea}
           rows={3}
-          placeholder="/media/films"
+          placeholder={roots.length ? undefined : '/media/films'}
+          aria-describedby={roots.length ? rootsId : undefined}
           value={paths}
           onChange={(e) => setPaths(e.target.value)}
         />
+        {roots.length > 0 && (
+          <div id={rootsId} className={styles.hint}>
+            {roots.length === 1
+              ? 'Folders must be inside '
+              : 'Folders must be inside one of '}
+            {roots.map((r, i) => (
+              <span key={r}>
+                {i > 0 && ', '}
+                <code>{r}</code>
+              </span>
+            ))}
+            . Change these in the server’s <code>library_paths</code> setting.
+          </div>
+        )}
       </div>
       {error && (
         <p role="alert" className={styles.error}>

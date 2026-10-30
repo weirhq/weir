@@ -4,7 +4,7 @@ import { Button, Dialog, TextField } from '@weirhq/ui'
 import { useId, useState, type FormEvent } from 'react'
 import { errorMessage } from '../../errors'
 import { Role, type User } from '../../gen/weir/api/v1alpha/user_pb'
-import { accessKey, adminLibrariesKey, usersKey } from './keys'
+import { accessKey, adminLibrariesQuery, usersKey } from './keys'
 import styles from './Admin.module.css'
 
 const roleNames: Record<Role, string> = {
@@ -287,8 +287,8 @@ function AccessEditor({ userId }: { userId: string }) {
   const [draft, setDraft] = useState<Record<string, Record<Flag, boolean>>>()
   const [saved, setSaved] = useState(false)
   const libraries = useQuery({
-    queryKey: adminLibrariesKey,
-    queryFn: async () => (await api.admin.listLibraries({})).libraries
+    ...adminLibrariesQuery(api),
+    select: (r) => r.libraries
   })
   const access = useQuery({
     queryKey: accessKey(userId),

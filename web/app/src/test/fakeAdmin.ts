@@ -123,7 +123,10 @@ export class FakeAdmin {
         this.users = this.users.filter((u) => u.id !== req.id)
         return {}
       }),
-      listLibraries: guard(() => ({ libraries: this.libraries })),
+      listLibraries: guard(() => ({
+        libraries: this.libraries,
+        libraryPaths: ['/media']
+      })),
       createLibrary: guard((req) => {
         const library = create(LibrarySchema, {
           id: `lib${this.libraries.length + 1}`,

@@ -1,4 +1,5 @@
 import type { Timestamp } from '@bufbuild/protobuf/wkt'
+import type { Api } from '../../api'
 import { LibraryKind } from '../../gen/weir/api/v1alpha/library_pb'
 
 export const adminLibrariesKey = ['admin', 'libraries'] as const
@@ -6,6 +7,12 @@ export const usersKey = ['admin', 'users'] as const
 export const statusKey = ['admin', 'status'] as const
 export const accessKey = (userId: string) =>
   ['admin', 'access', userId] as const
+
+/** Libraries and the folders they may use; pages select what they need. */
+export const adminLibrariesQuery = (api: Api) => ({
+  queryKey: adminLibrariesKey,
+  queryFn: () => api.admin.listLibraries({})
+})
 
 export const kindNames: Record<LibraryKind, string> = {
   [LibraryKind.UNSPECIFIED]: '',

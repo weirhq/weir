@@ -47,6 +47,16 @@ it('lists libraries with their scans, and scans, edits, adds and deletes', async
   })
 
   await user.click(screen.getByRole('button', { name: 'Add library' }))
+  // The form says where folders may go, before anyone gets it wrong.
+  const hint = screen.getByText(/Folders must be inside/)
+  expect(hint.textContent).toBe(
+    'Folders must be inside /media. Change these in the server’s library_paths setting.'
+  )
+  expect(
+    screen
+      .getByLabelText('Folders, one per line')
+      .getAttribute('aria-describedby')
+  ).toBe(hint.id)
   await user.type(screen.getByLabelText('Name'), 'Concerts')
   await user.selectOptions(screen.getByLabelText('Kind'), 'Music')
   await user.type(
@@ -196,7 +206,7 @@ it('shows the engine and the recent jobs', async () => {
   )
   expect(engine.textContent).toContain('Playback sessions1 of 4')
   expect(engine.textContent).toContain(
-    'None found; converting on the processor'
+    'None in use; converting on the processor'
   )
 
   const jobs = screen.getByRole('region', { name: 'Recent jobs' })

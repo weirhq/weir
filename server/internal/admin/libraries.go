@@ -36,7 +36,7 @@ func (s *Service) ListLibraries(ctx context.Context, _ *connect.Request[apiv1alp
 	if err != nil {
 		return nil, auth.Internal(ctx, "list library paths", err)
 	}
-	resp := &apiv1alpha.ListLibrariesResponse{}
+	resp := &apiv1alpha.ListLibrariesResponse{LibraryPaths: s.roots}
 	for _, l := range libs {
 		resp.Libraries = append(resp.Libraries, libraryToProto(l, paths[l.ID]))
 	}

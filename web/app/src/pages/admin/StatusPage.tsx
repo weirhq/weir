@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
 import { errorMessage } from '../../errors'
 import { JobState } from '../../gen/weir/api/v1alpha/admin_pb'
-import { adminLibrariesKey, statusKey, when } from './keys'
+import { adminLibrariesQuery, statusKey, when } from './keys'
 import styles from './Admin.module.css'
 
 const jobNames: Record<string, string> = {
@@ -28,8 +28,8 @@ export function StatusPage() {
     refetchInterval: 5000
   })
   const libraries = useQuery({
-    queryKey: adminLibrariesKey,
-    queryFn: async () => (await api.admin.listLibraries({})).libraries
+    ...adminLibrariesQuery(api),
+    select: (r) => r.libraries
   })
   if (status.error)
     return (
@@ -70,7 +70,7 @@ export function StatusPage() {
             <dd>
               {engine.hardware.length
                 ? engine.hardware.join(', ')
-                : 'None found; converting on the processor'}
+                : 'None in use; converting on the processor'}
             </dd>
           </dl>
         )}

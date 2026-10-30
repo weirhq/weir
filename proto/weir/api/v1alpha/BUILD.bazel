@@ -18,6 +18,7 @@ proto_library(
     strip_import_prefix = "/proto",
     visibility = ["//visibility:public"],
     deps = [
+        "@protobuf//:duration_proto",
         "@protobuf//:field_mask_proto",
         "@protobuf//:timestamp_proto",
     ],

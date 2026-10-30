@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package weir.api.v1alpha;
 
+import "google/protobuf/duration.proto";
+
 option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
 
 // The server decides how each item plays, and always says why.
@@ -10,23 +12,42 @@ service Playback {
   // them.
   rpc Start(StartRequest) returns (StartResponse);
 
-  // Keeps a session alive. Clients send one every 10 s while playing; a
-  // session without one for 30 s is torn down.
+  // Reports progress and keeps a session alive. Clients send one every
+  // 10 s while playing, direct play included; a session without one for
+  // 30 s is torn down.
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 
-  // Ends a session early.
+  // Ends playback, recording where it stopped.
   rpc Stop(StopRequest) returns (StopResponse);
+
+  // Marks an item, or everything under it (a show, a season), watched or
+  // unwatched.
+  rpc SetWatched(SetWatchedRequest) returns (SetWatchedResponse);
 }
 
 message HeartbeatRequest {
+  // Empty for direct play.
   string session_id = 1;
+  string item_id = 2;
+  // Where playback is now.
+  google.protobuf.Duration position = 3;
 }
 
 message HeartbeatResponse {}
 
 message StopRequest {
+  // Empty for direct play.
   string session_id = 1;
+  string item_id = 2;
+  google.protobuf.Duration position = 3;
 }
+
+message SetWatchedRequest {
+  string item_id = 1;
+  bool watched = 2;
+}
+
+message SetWatchedResponse {}
 
 message StopResponse {}
 

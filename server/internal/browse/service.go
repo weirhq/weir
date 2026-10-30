@@ -29,6 +29,8 @@ const (
 )
 
 type Service struct {
+	// RPCs not implemented yet answer Unimplemented.
+	apiv1alpha.UnimplementedBrowseHandler
 	store *store.Store
 }
 

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package weir.api.v1alpha;
 
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "weir/api/v1alpha/library.proto";
 import "weir/api/v1alpha/playback.proto";
 
@@ -15,6 +17,39 @@ service Browse {
   rpc GetItem(GetItemRequest) returns (GetItemResponse);
   // Titles, original titles, overviews and cast, forgiving of typos.
   rpc Search(SearchRequest) returns (SearchResponse);
+  // Films and episodes started but not finished, most recent first.
+  rpc ListContinueWatching(ListContinueWatchingRequest) returns (ListContinueWatchingResponse);
+  // Newest additions across every visible library.
+  rpc ListRecentlyAdded(ListRecentlyAddedRequest) returns (ListRecentlyAddedResponse);
+}
+
+message ListContinueWatchingRequest {
+  // At most 100; zero means 20.
+  uint32 limit = 1;
+}
+
+message ListContinueWatchingResponse {
+  repeated ItemSummary items = 1;
+}
+
+message ListRecentlyAddedRequest {
+  // Only these kinds; empty means films, shows and albums.
+  repeated ItemKind kinds = 1;
+  // At most 100; zero means 20.
+  uint32 limit = 2;
+}
+
+message ListRecentlyAddedResponse {
+  repeated ItemSummary items = 1;
+}
+
+// The caller's own history with an item.
+message UserData {
+  // Where playback stopped; zero once watched.
+  google.protobuf.Duration position = 1;
+  bool watched = 2;
+  uint32 play_count = 3;
+  google.protobuf.Timestamp last_played = 4;
 }
 
 message ListVisibleLibrariesRequest {}
@@ -47,6 +82,11 @@ message ItemSummary {
   string library_id = 7;
   // Empty for top-level items.
   string parent_id = 8;
+  UserData user_data = 9;
+  // Signed image URLs; empty when there is no such picture. Add w=<pixels>
+  // for a resized copy.
+  string poster_url = 10;
+  string thumb_url = 11;
 }
 
 enum ItemSort {
@@ -111,6 +151,8 @@ message Item {
   repeated Version versions = 12;
   // The item's ancestors, top first (a season's show), for breadcrumbs.
   repeated ItemSummary ancestors = 13;
+  string backdrop_url = 14;
+  string logo_url = 15;
 }
 
 message Person {

@@ -333,8 +333,10 @@ type fakeStatus struct {
 	healthy bool
 	caps    *enginev1alpha.CapabilitiesResponse
 	health  *enginev1alpha.HealthResponse
+	problem string
 }
 
+func (f *fakeStatus) Problem() string                                   { return f.problem }
 func (f *fakeStatus) Healthy() bool                                     { return f.healthy }
 func (f *fakeStatus) Capabilities() *enginev1alpha.CapabilitiesResponse { return f.caps }
 func (f *fakeStatus) LastHealth() *enginev1alpha.HealthResponse         { return f.health }

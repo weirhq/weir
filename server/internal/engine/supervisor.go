@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	enginev1alpha "github.com/weirhq/weir/proto/weir/engine/v1alpha"
+	"github.com/weirhq/weir/server/internal/version"
 )
 
 const (
@@ -46,6 +47,8 @@ type Supervisor struct {
 	healthy bool
 	caps    *enginev1alpha.CapabilitiesResponse
 	health  *enginev1alpha.HealthResponse
+	// Why a running engine isn't used, e.g. an incompatible version.
+	problem string
 }
 
 func New(socket string, command []string) (*Supervisor, error) {
@@ -70,8 +73,16 @@ func (s *Supervisor) Healthy() bool {
 	return s.healthy
 }
 
-// Capabilities returns what the engine reported when it last became
-// healthy, or nil if it never has.
+// Problem says why a running engine isn't being used, or is empty.
+func (s *Supervisor) Problem() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.problem
+}
+
+// Capabilities returns what the engine last reported on coming up, or nil
+// if it never has. An engine with a Problem has capabilities but isn't
+// healthy.
 func (s *Supervisor) Capabilities() *enginev1alpha.CapabilitiesResponse {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -109,7 +120,8 @@ func (s *Supervisor) Run(ctx context.Context) {
 }
 
 // check polls Health and re-reads Capabilities whenever the engine comes
-// (back) up, since a restarted engine may be a different build.
+// (back) up, since a restarted engine may be a different build. An engine
+// whose version this server doesn't work with is never healthy.
 func (s *Supervisor) check(ctx context.Context) {
 	callCtx, cancel := context.WithTimeout(ctx, callTimeout)
 	defer cancel()
@@ -117,20 +129,30 @@ func (s *Supervisor) check(ctx context.Context) {
 	health, err := s.client.Health(callCtx, &enginev1alpha.HealthRequest{})
 	healthy := err == nil
 	var caps *enginev1alpha.CapabilitiesResponse
+	problem := ""
 	if healthy && !s.Healthy() {
 		caps, err = s.client.Capabilities(callCtx, &enginev1alpha.CapabilitiesRequest{})
 		healthy = err == nil
+		if healthy {
+			if verr := version.CheckEngine(caps.GetEngineVersion()); verr != nil {
+				healthy, problem = false, verr.Error()
+			}
+		}
 	}
 
 	s.mu.Lock()
-	was := s.healthy
+	was, wasProblem := s.healthy, s.problem
 	s.healthy = healthy
 	s.health = health
+	s.problem = problem
 	if caps != nil {
 		s.caps = caps
 	}
 	s.mu.Unlock()
 
+	if problem != "" && problem != wasProblem {
+		slog.Error("not using the engine", "socket", s.socket, "err", problem)
+	}
 	switch {
 	case healthy && !was:
 		slog.Info("engine up", "socket", s.socket, "engine", caps.GetEngineVersion(),

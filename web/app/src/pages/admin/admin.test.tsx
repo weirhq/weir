@@ -230,3 +230,17 @@ it('shows the engine and the recent jobs', async () => {
     ['Scan', 'Films', 'Done']
   ])
 })
+
+it('says why the server won’t use the engine', async () => {
+  const admin = new FakeAdmin()
+  admin.healthy = false
+  admin.engineVersion = '0.2.0'
+  admin.problem =
+    'weir-engine 0.2.0 doesn’t work with weir-server 0.1.0, which needs an engine from 0.1.0 up to but not including 0.2.0'
+  renderSignedIn('/admin/status', new FakeBrowse(), { admin })
+  const engine = await screen.findByRole('region', { name: 'Engine' })
+  expect((await within(engine).findByRole('status')).textContent).toBe(
+    'Not compatible'
+  )
+  expect(within(engine).getByRole('alert').textContent).toBe(admin.problem)
+})

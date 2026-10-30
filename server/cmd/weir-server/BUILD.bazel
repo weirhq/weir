@@ -23,6 +23,7 @@ go_library(
         "//server/internal/metadata",
         "//server/internal/playback",
         "//server/internal/store",
+        "//server/internal/version",
         "//server/internal/web",
         "//server/internal/web/dist",
         "@com_connectrpc_connect//:connect",

@@ -72,6 +72,8 @@ export class FakeAdmin {
     job('j1', 'scan_library', 'films', JobState.COMPLETED)
   ]
   healthy = true
+  problem = ''
+  engineVersion = '0.1.0'
   scans: string[] = []
   userUpdates: UpdateUserRequest[] = []
   libraryUpdates: UpdateLibraryRequest[] = []
@@ -178,7 +180,8 @@ export class FakeAdmin {
       getServerStatus: guard(() => ({
         engine: {
           healthy: this.healthy,
-          engineVersion: '0.1.0',
+          problem: this.problem,
+          engineVersion: this.engineVersion,
           ffmpegVersion: '9.0.2',
           maxSessions: 4,
           activeSessions: 1,

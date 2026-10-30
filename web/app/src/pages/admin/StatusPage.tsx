@@ -52,10 +52,19 @@ export function StatusPage() {
               className={engine.healthy ? styles.ok : styles.bad}
               role="status"
             >
-              {engine.healthy ? 'Running' : 'Not responding'}
+              {engine.healthy
+                ? 'Running'
+                : engine.problem
+                  ? 'Not compatible'
+                  : 'Not responding'}
             </span>
           )}
         </div>
+        {engine?.problem && (
+          <p role="alert" className={styles.error}>
+            {engine.problem}
+          </p>
+        )}
         {engine && (
           <dl className={styles.facts}>
             <dt>Version</dt>

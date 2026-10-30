@@ -89,11 +89,43 @@ func TestTracksHealthAndRereadsCapabilities(t *testing.T) {
 	waitFor(t, "engine down", func() bool { return !sup.Healthy() })
 
 	os.Remove(socket)
-	second := serveFake(t, socket, "0.2.0")
+	second := serveFake(t, socket, "0.1.1")
 	t.Cleanup(second.Stop)
 	waitFor(t, "engine back up", sup.Healthy)
-	if v := sup.Capabilities().GetEngineVersion(); v != "0.2.0" {
+	if v := sup.Capabilities().GetEngineVersion(); v != "0.1.1" {
 		t.Fatalf("capabilities not re-read after restart: version %q", v)
+	}
+}
+
+func TestRefusesAnIncompatibleEngine(t *testing.T) {
+	socket := socketPath(t)
+	sup, err := New(socket, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sup.interval = 20 * time.Millisecond
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() { sup.Run(ctx); close(done) }()
+	t.Cleanup(func() { cancel(); <-done })
+
+	newer := serveFake(t, socket, "0.2.0")
+	waitFor(t, "a problem", func() bool { return sup.Problem() != "" })
+	if sup.Healthy() {
+		t.Error("healthy with an incompatible engine")
+	}
+	if v := sup.Capabilities().GetEngineVersion(); v != "0.2.0" {
+		t.Errorf("capabilities not kept for the status page: version %q", v)
+	}
+
+	// Replacing it with a compatible build clears the problem.
+	newer.Stop()
+	os.Remove(socket)
+	fixed := serveFake(t, socket, "0.1.0")
+	t.Cleanup(fixed.Stop)
+	waitFor(t, "engine up", sup.Healthy)
+	if p := sup.Problem(); p != "" {
+		t.Errorf("problem %q after a compatible engine came up", p)
 	}
 }
 

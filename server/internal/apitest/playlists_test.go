@@ -114,6 +114,17 @@ func TestServerStatus(t *testing.T) {
 	if !e.Healthy || e.EngineVersion != "0.1.0" || e.ActiveSessions != 1 || len(e.Hardware) != 1 || e.Hardware[0] != "VAAPI: Intel UHD Graphics 770" {
 		t.Errorf("engine %v", e)
 	}
+	if e.Problem != "" {
+		t.Errorf("problem %q for a compatible engine", e.Problem)
+	}
+	h.engineStatus.healthy, h.engineStatus.problem = false, "weir-engine 0.2.0 doesn't work with weir-server 0.1.0"
+	again, err := adm.GetServerStatus(ctx, connect.NewRequest(&apiv1alpha.GetServerStatusRequest{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e := again.Msg.Engine; e.Healthy || e.Problem != h.engineStatus.problem {
+		t.Errorf("incompatible engine reported as %v", e)
+	}
 	if j := resp.Msg.RecentJobs; len(j) != 1 || j[0].Kind != "scan_library" || j[0].State != apiv1alpha.JobState_JOB_STATE_WAITING || j[0].LibraryId == "" {
 		t.Errorf("jobs %v", j)
 	}

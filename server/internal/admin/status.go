@@ -23,6 +23,7 @@ type Engine interface {
 	Healthy() bool
 	Capabilities() *enginev1alpha.CapabilitiesResponse
 	LastHealth() *enginev1alpha.HealthResponse
+	Problem() string
 }
 
 // Jobs queues and lists background work.
@@ -39,6 +40,7 @@ func (s *Service) GetServerStatus(ctx context.Context, _ *connect.Request[apiv1a
 	if s.engine != nil {
 		e := resp.Engine
 		e.Healthy = s.engine.Healthy()
+		e.Problem = s.engine.Problem()
 		caps := s.engine.Capabilities()
 		e.EngineVersion, e.FfmpegVersion, e.MaxSessions = caps.GetEngineVersion(), caps.GetFfmpegVersion(), caps.GetMaxSessions()
 		for _, d := range caps.GetDevices() {

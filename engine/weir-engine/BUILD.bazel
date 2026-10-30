@@ -1,10 +1,12 @@
 load("@crates//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+load("//engine:version.bzl", "ENGINE_VERSION")
 
 rust_library(
     name = "weir_engine",
     srcs = ["src/lib.rs"],
     edition = "2024",
+    version = ENGINE_VERSION,
     deps = all_crate_deps(normal = True) + [
         "//engine/crates/probe",
         "//engine/crates/proto:engine_proto",
@@ -16,6 +18,7 @@ rust_binary(
     name = "weir-engine",
     srcs = ["src/main.rs"],
     edition = "2024",
+    version = ENGINE_VERSION,
     visibility = ["//visibility:public"],
     deps = all_crate_deps(normal = True) + [
         ":weir_engine",
@@ -27,6 +30,7 @@ rust_test(
     name = "socket_test",
     srcs = ["tests/socket.rs"],
     edition = "2024",
+    version = ENGINE_VERSION,
     deps = all_crate_deps(normal = True, normal_dev = True) + [
         ":weir_engine",
         "//engine/crates/proto:engine_proto",

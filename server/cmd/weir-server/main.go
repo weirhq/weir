@@ -32,11 +32,9 @@ import (
 	"github.com/weirhq/weir/server/internal/metadata"
 	"github.com/weirhq/weir/server/internal/playback"
 	"github.com/weirhq/weir/server/internal/store"
+	"github.com/weirhq/weir/server/internal/version"
 	"github.com/weirhq/weir/server/internal/web"
 )
-
-// version is the server's release version, set by release builds.
-var version = "0.0.0-dev"
 
 func main() {
 	configPath := flag.String("config", envOr("WEIR_CONFIG", "weir.toml"), "path to weir.toml; empty to use only environment variables")
@@ -161,7 +159,7 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 
 	errc := make(chan error, 1)
 	go func() {
-		slog.Info("listening", "addr", cfg.Listen, "base_url", cfg.BaseURL)
+		slog.Info("listening", "version", version.Server, "addr", cfg.Listen, "base_url", cfg.BaseURL)
 		errc <- srv.ListenAndServe()
 	}()
 	select {
@@ -183,7 +181,7 @@ func newRefresher(st *store.Store, cfg config.Metadata) *metadata.Refresher {
 	}
 	var mb *metadata.MusicBrainz
 	if cfg.MusicBrainz.Contact != "" {
-		mb = metadata.NewMusicBrainz(cfg.MusicBrainz.Contact, version)
+		mb = metadata.NewMusicBrainz(cfg.MusicBrainz.Contact, version.Server)
 	}
 	slog.Info("metadata providers", "tmdb", tmdb != nil, "musicbrainz", mb != nil, "language", cfg.Language)
 	return metadata.NewRefresher(st, tmdb, mb)

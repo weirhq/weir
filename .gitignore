@@ -23,6 +23,9 @@ node_modules/
 .idea/
 .vscode/
 
+# Playwright MCP snapshots and logs
+/.playwright-mcp/
+
 # Generated for the non-Bazel dev loop (`mise run generate`)
 /proto/**/*.go
 /server/internal/store/dbgen/*.go

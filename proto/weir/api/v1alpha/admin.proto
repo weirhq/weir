@@ -81,6 +81,9 @@ message ListLibrariesRequest {}
 
 message ListLibrariesResponse {
   repeated Library libraries = 1;
+  // The server's configured library_paths. Every library folder must be
+  // one of these or under one.
+  repeated string library_paths = 2;
 }
 
 message CreateLibraryRequest {

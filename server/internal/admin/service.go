@@ -26,6 +26,8 @@ var (
 )
 
 type Service struct {
+	// RPCs not implemented yet answer Unimplemented.
+	apiv1alpha.UnimplementedAdminHandler
 	store *store.Store
 	// The server's library_paths: every library folder must be inside one.
 	roots []string

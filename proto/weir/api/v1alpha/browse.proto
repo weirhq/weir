@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package weir.api.v1alpha;
+
+import "weir/api/v1alpha/library.proto";
+import "weir/api/v1alpha/playback.proto";
+
+option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
+
+// Browsing what the caller may see. Admins see every library; members see
+// the ones they have view access to.
+service Browse {
+  rpc ListVisibleLibraries(ListVisibleLibrariesRequest) returns (ListVisibleLibrariesResponse);
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
+  rpc GetItem(GetItemRequest) returns (GetItemResponse);
+  // Titles, original titles, overviews and cast, forgiving of typos.
+  rpc Search(SearchRequest) returns (SearchResponse);
+}
+
+message ListVisibleLibrariesRequest {}
+
+message ListVisibleLibrariesResponse {
+  repeated Library libraries = 1;
+}
+
+enum ItemKind {
+  ITEM_KIND_UNSPECIFIED = 0;
+  ITEM_KIND_MOVIE = 1;
+  ITEM_KIND_SHOW = 2;
+  ITEM_KIND_SEASON = 3;
+  ITEM_KIND_EPISODE = 4;
+  ITEM_KIND_ARTIST = 5;
+  ITEM_KIND_ALBUM = 6;
+  ITEM_KIND_TRACK = 7;
+}
+
+// What a grid or list needs to show an item.
+message ItemSummary {
+  string id = 1;
+  ItemKind kind = 2;
+  string title = 3;
+  // Zero when unknown.
+  int32 year = 4;
+  // Season, episode or track number; zero when unknown.
+  uint32 index_number = 5;
+  uint32 disc_number = 6;
+  string library_id = 7;
+  // Empty for top-level items.
+  string parent_id = 8;
+}
+
+enum ItemSort {
+  ITEM_SORT_UNSPECIFIED = 0;
+  // Ignoring a leading article.
+  ITEM_SORT_TITLE = 1;
+  // Newest first.
+  ITEM_SORT_YEAR = 2;
+  // Most recently added first.
+  ITEM_SORT_ADDED = 3;
+  // Season, episode, or disc and track order.
+  ITEM_SORT_INDEX = 4;
+}
+
+message ListItemsRequest {
+  // One of library_id and parent_id. A library lists its top-level items; a
+  // parent lists its children (a show's seasons, an album's tracks).
+  string library_id = 1;
+  string parent_id = 2;
+  // Only these kinds; empty means all.
+  repeated ItemKind kinds = 3;
+  // Unspecified sorts by title, or by index under a parent.
+  ItemSort sort = 4;
+  // At most 500; zero means 100.
+  uint32 page_size = 5;
+  string page_token = 6;
+}
+
+message ListItemsResponse {
+  repeated ItemSummary items = 1;
+  // Empty on the last page.
+  string next_page_token = 2;
+  // Items across all pages.
+  uint32 total = 3;
+}
+
+message GetItemRequest {
+  string id = 1;
+}
+
+message GetItemResponse {
+  Item item = 1;
+}
+
+// Everything about one item, each field from the best metadata source.
+message Item {
+  ItemSummary summary = 1;
+  string original_title = 2;
+  string overview = 3;
+  string tagline = 4;
+  // YYYY-MM-DD, or empty.
+  string release_date = 5;
+  uint32 runtime_minutes = 6;
+  // 0 to 10; zero when unknown.
+  float rating = 7;
+  string content_rating = 8;
+  repeated string genres = 9;
+  repeated Person cast = 10;
+  // e.g. {"tmdb": "329865", "imdb": "tt2543164"}.
+  map<string, string> external_ids = 11;
+  // Playable copies, for movies, episodes and tracks.
+  repeated Version versions = 12;
+  // The item's ancestors, top first (a season's show), for breadcrumbs.
+  repeated ItemSummary ancestors = 13;
+}
+
+message Person {
+  string name = 1;
+  string role = 2;
+}
+
+message Version {
+  string id = 1;
+  // e.g. "Director's Cut"; empty for an unlabelled copy.
+  string edition = 2;
+  string container = 3;
+  uint64 duration_ms = 4;
+  uint64 size_bytes = 5;
+  repeated StreamInfo streams = 6;
+}
+
+enum StreamKind {
+  STREAM_KIND_UNSPECIFIED = 0;
+  STREAM_KIND_VIDEO = 1;
+  STREAM_KIND_AUDIO = 2;
+  STREAM_KIND_SUBTITLE = 3;
+  STREAM_KIND_DATA = 4;
+}
+
+message StreamInfo {
+  uint32 index = 1;
+  StreamKind kind = 2;
+  string codec = 3;
+  string profile = 4;
+  // BCP 47; empty when the file doesn't say.
+  string language = 5;
+  string title = 6;
+  bool default = 7;
+  bool forced = 8;
+  // Video only.
+  HdrFormat hdr_format = 9;
+  uint32 width = 10;
+  uint32 height = 11;
+  // Audio only.
+  uint32 channels = 12;
+}
+
+message SearchRequest {
+  string query = 1;
+  // At most 100; zero means 20.
+  uint32 limit = 2;
+}
+
+message SearchResponse {
+  // Best matches first.
+  repeated ItemSummary items = 1;
+}

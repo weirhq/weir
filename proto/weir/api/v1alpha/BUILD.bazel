@@ -10,6 +10,7 @@ proto_library(
     srcs = [
         "admin.proto",
         "auth.proto",
+        "browse.proto",
         "library.proto",
         "playback.proto",
         "user.proto",

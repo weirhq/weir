@@ -27,6 +27,13 @@ service Admin {
   // Queues a scan. A scan already queued or running for the library absorbs
   // the request.
   rpc ScanLibrary(ScanLibraryRequest) returns (ScanLibraryResponse);
+
+  // What a member may do in each library. Admins can do everything
+  // everywhere and have no access rows.
+  rpc GetLibraryAccess(GetLibraryAccessRequest) returns (GetLibraryAccessResponse);
+  // Replaces the user's access with the list given; libraries left out are
+  // closed to them.
+  rpc SetLibraryAccess(SetLibraryAccessRequest) returns (SetLibraryAccessResponse);
 }
 
 message ListUsersRequest {}
@@ -105,3 +112,28 @@ message ScanLibraryRequest {
 }
 
 message ScanLibraryResponse {}
+
+message LibraryAccess {
+  string library_id = 1;
+  // See the library and its items.
+  bool view = 2;
+  // Play them; implies view.
+  bool play = 3;
+  // Change the library's folders and scan it; implies view.
+  bool manage = 4;
+}
+
+message GetLibraryAccessRequest {
+  string user_id = 1;
+}
+
+message GetLibraryAccessResponse {
+  repeated LibraryAccess access = 1;
+}
+
+message SetLibraryAccessRequest {
+  string user_id = 1;
+  repeated LibraryAccess access = 2;
+}
+
+message SetLibraryAccessResponse {}

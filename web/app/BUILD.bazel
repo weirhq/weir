@@ -17,6 +17,7 @@ genrule(
     outs = [
         "src/gen/weir/api/v1alpha/admin_pb.ts",
         "src/gen/weir/api/v1alpha/auth_pb.ts",
+        "src/gen/weir/api/v1alpha/browse_pb.ts",
         "src/gen/weir/api/v1alpha/library_pb.ts",
         "src/gen/weir/api/v1alpha/playback_pb.ts",
         "src/gen/weir/api/v1alpha/user_pb.ts",

@@ -16,6 +16,7 @@ import (
 
 	apiv1alpha "github.com/weirhq/weir/proto/weir/api/v1alpha"
 	enginev1alpha "github.com/weirhq/weir/proto/weir/engine/v1alpha"
+	"github.com/weirhq/weir/server/internal/access"
 	"github.com/weirhq/weir/server/internal/auth"
 	"github.com/weirhq/weir/server/internal/media"
 	"github.com/weirhq/weir/server/internal/store"
@@ -56,10 +57,21 @@ func (s *Service) Start(ctx context.Context, req *connect.Request[apiv1alpha.Sta
 	if err != nil {
 		return nil, errNoItem
 	}
-	if _, err := s.store.GetItem(ctx, itemID); errors.Is(err, pgx.ErrNoRows) {
+	item, err := s.store.GetItem(ctx, itemID)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNoItem
 	} else if err != nil {
 		return nil, auth.Internal(ctx, "load item", err)
+	}
+	caller, err := access.Load(ctx, s.store)
+	if err != nil {
+		return nil, err
+	}
+	switch perms := caller.In(item.LibraryID); {
+	case !perms.View:
+		return nil, errNoItem
+	case !perms.Play:
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("you may browse this library but not play from it"))
 	}
 	versions, err := s.store.ItemVersions(ctx, itemID)
 	if err != nil {

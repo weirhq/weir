@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "browse",
+    srcs = ["service.go"],
+    importpath = "github.com/weirhq/weir/server/internal/browse",
+    visibility = ["//server:__subpackages__"],
+    deps = [
+        "//proto/weir/api/v1alpha",
+        "//server/internal/access",
+        "//server/internal/auth",
+        "//server/internal/store",
+        "//server/internal/store/dbgen",
+        "@com_connectrpc_connect//:connect",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+    ],
+)

@@ -4,6 +4,7 @@ go_test(
     name = "apitest_test",
     srcs = [
         "apitest_test.go",
+        "browse_test.go",
         "libraries_test.go",
         "playback_test.go",
     ],
@@ -12,6 +13,7 @@ go_test(
         "//proto/weir/engine/v1alpha",
         "//server/internal/admin",
         "//server/internal/auth",
+        "//server/internal/browse",
         "//server/internal/jobs",
         "//server/internal/library",
         "//server/internal/media",

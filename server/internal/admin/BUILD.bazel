@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "admin",
     srcs = [
+        "access.go",
         "libraries.go",
         "service.go",
     ],
@@ -10,6 +11,7 @@ go_library(
     visibility = ["//server:__subpackages__"],
     deps = [
         "//proto/weir/api/v1alpha",
+        "//server/internal/access",
         "//server/internal/auth",
         "//server/internal/library",
         "//server/internal/store",

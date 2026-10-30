@@ -13,6 +13,7 @@ go_library(
         "//proto/weir/api/v1alpha",
         "//server/internal/admin",
         "//server/internal/auth",
+        "//server/internal/browse",
         "//server/internal/config",
         "//server/internal/engine",
         "//server/internal/jobs",

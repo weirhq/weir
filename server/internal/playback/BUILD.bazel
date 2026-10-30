@@ -13,6 +13,7 @@ go_library(
     deps = [
         "//proto/weir/api/v1alpha",
         "//proto/weir/engine/v1alpha",
+        "//server/internal/access",
         "//server/internal/auth",
         "//server/internal/media",
         "//server/internal/store",

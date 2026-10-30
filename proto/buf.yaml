@@ -1,0 +1,12 @@
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  except:
+    # Service names follow the spec (Engine, Auth, Admin), not FooService.
+    - SERVICE_SUFFIX
+breaking:
+  use:
+    - FILE

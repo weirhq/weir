@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package weir.api.v1alpha;
+
+option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
+
+message User {
+  // UUIDv7.
+  string id = 1;
+  string username = 2;
+  string display_name = 3;
+  Role role = 4;
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_ADMIN = 1;
+  ROLE_MEMBER = 2;
+}

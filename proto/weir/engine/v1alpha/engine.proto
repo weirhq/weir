@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+// The contract between weir-server and weir-engine. The engine takes file
+// paths, never bytes: both processes share a filesystem.
+package weir.engine.v1alpha;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/weirhq/weir/proto/weir/engine/v1alpha;enginev1alpha";
+
+service Engine {
+  // What this engine build can do on this machine. Called once at engine
+  // start and cached by the server.
+  rpc Capabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
+
+  // Full stream inventory for one file, including HDR and Dolby Vision
+  // metadata beyond what ffprobe reports.
+  rpc Probe(ProbeRequest) returns (ProbeResponse);
+
+  // Liveness plus load. The server polls this every 10 s.
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message CapabilitiesRequest {}
+
+message CapabilitiesResponse {
+  string engine_version = 1;
+  string ffmpeg_version = 2;
+  repeated HardwareDevice devices = 3;
+  // The Vulkan device libplacebo runs on, if one was found.
+  optional VulkanDevice vulkan = 4;
+  // Session budget. A 4K Dolby Vision session counts as 2.
+  uint32 max_sessions = 5;
+  // Dolby Vision profiles the probe can parse (e.g. 5, 7, 8).
+  repeated uint32 dv_profiles_readable = 6;
+  repeated DvConversion dv_conversions = 7;
+  // HDR formats the engine can tonemap to.
+  repeated HdrFormat tonemap_targets = 8;
+}
+
+message HardwareDevice {
+  HardwareApi api = 1;
+  // Human-readable device name, e.g. "Intel UHD Graphics 770".
+  string name = 2;
+  // Device node or adapter id, e.g. "/dev/dri/renderD128".
+  string path = 3;
+  // ffmpeg codec names this device can decode and encode.
+  repeated string decode_codecs = 4;
+  repeated string encode_codecs = 5;
+}
+
+enum HardwareApi {
+  HARDWARE_API_UNSPECIFIED = 0;
+  HARDWARE_API_VAAPI = 1;
+  HARDWARE_API_QSV = 2;
+  HARDWARE_API_NVENC = 3;
+  HARDWARE_API_VIDEOTOOLBOX = 4;
+  HARDWARE_API_D3D11VA = 5;
+  HARDWARE_API_AMF = 6;
+}
+
+message VulkanDevice {
+  string name = 1;
+  string driver_version = 2;
+}
+
+enum DvConversion {
+  DV_CONVERSION_UNSPECIFIED = 0;
+  // Profile 7 to 8.1: strip the enhancement layer, keep the RPU.
+  DV_CONVERSION_P7_TO_P81 = 1;
+  // Strip the RPU (and any enhancement layer), leaving plain HDR10.
+  DV_CONVERSION_TO_HDR10 = 2;
+}
+
+enum HdrFormat {
+  HDR_FORMAT_UNSPECIFIED = 0;
+  HDR_FORMAT_SDR = 1;
+  HDR_FORMAT_HDR10 = 2;
+  HDR_FORMAT_HDR10_PLUS = 3;
+  HDR_FORMAT_HLG = 4;
+  HDR_FORMAT_DOLBY_VISION = 5;
+}
+
+message ProbeRequest {
+  // Absolute path on the filesystem the server and engine share.
+  string path = 1;
+}
+
+message ProbeResponse {
+  // Hash of the probe output, not the file. Tells the server whether cached
+  // playback decisions are still valid after a file is replaced.
+  string probe_hash = 1;
+  // ffmpeg format name, e.g. "matroska,webm" or "mov,mp4,m4a,3gp,3g2,mj2".
+  string container = 2;
+  google.protobuf.Duration duration = 3;
+  uint64 size_bytes = 4;
+  uint64 bit_rate = 5;
+  repeated Stream streams = 6;
+  repeated Chapter chapters = 7;
+  repeated Attachment attachments = 8;
+}
+
+message Stream {
+  // Index within the container, as ffmpeg numbers it.
+  uint32 index = 1;
+  StreamKind kind = 2;
+  // ffmpeg codec name, e.g. "hevc", "truehd", "hdmv_pgs_subtitle".
+  string codec = 3;
+  // ffmpeg profile name, e.g. "Main 10" or "DTS-HD MA".
+  string profile = 4;
+  // BCP 47 language tag, or empty when the file doesn't say.
+  string language = 5;
+  string title = 6;
+  StreamFlags flags = 7;
+  oneof detail {
+    VideoDetail video = 8;
+    AudioDetail audio = 9;
+    SubtitleDetail subtitle = 10;
+  }
+}
+
+enum StreamKind {
+  STREAM_KIND_UNSPECIFIED = 0;
+  STREAM_KIND_VIDEO = 1;
+  STREAM_KIND_AUDIO = 2;
+  STREAM_KIND_SUBTITLE = 3;
+  STREAM_KIND_DATA = 4;
+}
+
+message StreamFlags {
+  bool default = 1;
+  bool forced = 2;
+  bool hearing_impaired = 3;
+  bool visual_impaired = 4;
+  bool commentary = 5;
+}
+
+message VideoDetail {
+  uint32 width = 1;
+  uint32 height = 2;
+  Rational frame_rate = 3;
+  uint32 level = 4;
+  uint32 bit_depth = 5;
+  string pixel_format = 6;
+  // ffmpeg color names, e.g. "bt2020", "smpte2084", "bt2020nc", "tv".
+  string color_primaries = 7;
+  string color_transfer = 8;
+  string color_matrix = 9;
+  string color_range = 10;
+  HdrFormat hdr_format = 11;
+  optional DolbyVision dolby_vision = 12;
+  optional MasteringDisplay mastering_display = 13;
+  optional ContentLight content_light = 14;
+  // HDR10+ dynamic metadata present alongside the base format.
+  bool hdr10_plus = 15;
+}
+
+message Rational {
+  uint32 numerator = 1;
+  uint32 denominator = 2;
+}
+
+message DolbyVision {
+  uint32 profile = 1;
+  uint32 level = 2;
+  // Base-layer signal compatibility id: 0 none, 1 HDR10, 2 SDR, 4 HLG.
+  uint32 bl_compat_id = 3;
+  bool rpu_present = 4;
+  bool el_present = 5;
+  bool bl_present = 6;
+}
+
+// SMPTE ST 2086 mastering display colour volume.
+message MasteringDisplay {
+  Chromaticity red = 1;
+  Chromaticity green = 2;
+  Chromaticity blue = 3;
+  Chromaticity white_point = 4;
+  // Luminance in cd/m².
+  double min_luminance = 5;
+  double max_luminance = 6;
+}
+
+message Chromaticity {
+  double x = 1;
+  double y = 2;
+}
+
+// CTA-861.3 content light level, in cd/m².
+message ContentLight {
+  uint32 max_cll = 1;
+  uint32 max_fall = 2;
+}
+
+message AudioDetail {
+  uint32 channels = 1;
+  // ffmpeg layout name, e.g. "5.1(side)" or "7.1".
+  string channel_layout = 2;
+  uint32 sample_rate = 3;
+  uint32 bit_depth = 4;
+  // Object audio carried in the stream: Atmos as TrueHD or E-AC-3 JOC, DTS:X.
+  bool atmos = 5;
+  bool dts_x = 6;
+  optional ReplayGain replay_gain = 7;
+}
+
+message ReplayGain {
+  optional double track_gain_db = 1;
+  optional double track_peak = 2;
+  optional double album_gain_db = 3;
+  optional double album_peak = 4;
+}
+
+message SubtitleDetail {
+  // Image subtitles (PGS, VOBSUB) need burn-in or OCR for most clients.
+  bool image_based = 1;
+}
+
+message Chapter {
+  google.protobuf.Duration start = 1;
+  google.protobuf.Duration end = 2;
+  string title = 3;
+}
+
+// Attached files, mostly fonts that ASS subtitles reference.
+message Attachment {
+  uint32 index = 1;
+  string filename = 2;
+  string mime_type = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  uint32 active_sessions = 1;
+  // Zero when there is no GPU or the driver doesn't report it.
+  uint64 gpu_memory_used_bytes = 2;
+  uint64 gpu_memory_total_bytes = 3;
+}

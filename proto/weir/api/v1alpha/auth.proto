@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package weir.api.v1alpha;
+
+import "google/protobuf/timestamp.proto";
+import "weir/api/v1alpha/user.proto";
+
+option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
+
+// Sign-in for every client. Signing in also registers the device: refresh
+// tokens are bound to a device row.
+service Auth {
+  // Whether this server still needs its first admin account.
+  rpc GetSetupState(GetSetupStateRequest) returns (GetSetupStateResponse);
+
+  // Creates the first admin account and signs it in. Only allowed while
+  // GetSetupState reports needs_bootstrap.
+  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+
+  rpc Login(LoginRequest) returns (LoginResponse);
+
+  // Exchanges a refresh token for new credentials. The refresh token is
+  // rotated: the one sent is no longer valid afterwards.
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+
+  // Revokes the calling device's refresh token.
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+}
+
+message GetSetupStateRequest {}
+
+message GetSetupStateResponse {
+  bool needs_bootstrap = 1;
+}
+
+message BootstrapRequest {
+  string username = 1;
+  string password = 2;
+  string display_name = 3;
+  DeviceInfo device = 4;
+}
+
+message BootstrapResponse {
+  Credentials credentials = 1;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+  DeviceInfo device = 3;
+}
+
+message LoginResponse {
+  Credentials credentials = 1;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  Credentials credentials = 1;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message GetCurrentUserRequest {}
+
+message GetCurrentUserResponse {
+  User user = 1;
+}
+
+message DeviceInfo {
+  // The id a previous login returned. Empty registers a new device.
+  string device_id = 1;
+  // Shown in the user's device list, e.g. "Firefox on Linux".
+  string name = 2;
+  // Client name and version, e.g. "weir-web" and "0.1.0".
+  string client = 3;
+  string client_version = 4;
+}
+
+message Credentials {
+  // Short-lived JWT, sent as a bearer token.
+  string access_token = 1;
+  google.protobuf.Timestamp access_token_expires_at = 2;
+  // Opaque; send only to Refresh.
+  string refresh_token = 3;
+  google.protobuf.Timestamp refresh_token_expires_at = 4;
+  string device_id = 5;
+  User user = 6;
+}

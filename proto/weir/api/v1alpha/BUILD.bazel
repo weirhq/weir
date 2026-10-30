@@ -1,0 +1,23 @@
+load("@rules_buf//buf:defs.bzl", "buf_lint_test")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "apiv1alpha_proto",
+    srcs = [
+        "admin.proto",
+        "auth.proto",
+        "user.proto",
+    ],
+    strip_import_prefix = "/proto",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@protobuf//:field_mask_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
+
+buf_lint_test(
+    name = "apiv1alpha_proto_lint",
+    config = "//proto:buf.yaml",
+    targets = [":apiv1alpha_proto"],
+)

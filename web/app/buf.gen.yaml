@@ -1,0 +1,6 @@
+# Dev-loop generation (`pnpm generate`); Bazel generates its own copy.
+version: v2
+plugins:
+  - local: protoc-gen-es
+    out: src/gen
+    opt: target=ts

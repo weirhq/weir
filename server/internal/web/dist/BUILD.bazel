@@ -1,0 +1,18 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+# Gazelle skips this package: its embedded files are a build output.
+
+copy_to_directory(
+    name = "files",
+    srcs = ["//web/app:dist"],
+    replace_prefixes = {"web/app/dist": ""},
+)
+
+go_library(
+    name = "dist",
+    srcs = ["dist.go"],
+    embedsrcs = [":files"],
+    importpath = "github.com/weirhq/weir/server/internal/web/dist",
+    visibility = ["//server:__subpackages__"],
+)

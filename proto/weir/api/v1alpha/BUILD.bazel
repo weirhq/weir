@@ -43,3 +43,10 @@ go_library(
     importpath = "github.com/weirhq/weir/proto/weir/api/v1alpha",
     visibility = ["//visibility:public"],
 )
+
+# Read by the web client's protobuf-es generation.
+filegroup(
+    name = "protos",
+    srcs = glob(["*.proto"]),
+    visibility = ["//web/app:__pkg__"],
+)

@@ -1,0 +1,90 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//web:typescript/package_json.bzl", typescript = "bin")
+load("@npm//web/app:@bufbuild/protoc-gen-es/package_json.bzl", protoc_gen_es = "bin")
+load("@npm//web/app:vite/package_json.bzl", vite = "bin")
+load("@npm//web/app:vitest/package_json.bzl", vitest = "bin")
+
+npm_link_all_packages(name = "node_modules")
+
+protoc_gen_es.protoc_gen_es_binary(name = "protoc_gen_es")
+
+# The same output `pnpm generate` writes for the dev loop, from the pinned
+# protoc. BAZEL_BINDIR lets the plugin's js_binary launcher find itself.
+genrule(
+    name = "proto_es",
+    srcs = ["//proto/weir/api/v1alpha:protos"],
+    outs = [
+        "src/gen/weir/api/v1alpha/admin_pb.ts",
+        "src/gen/weir/api/v1alpha/auth_pb.ts",
+        "src/gen/weir/api/v1alpha/user_pb.ts",
+    ],
+    cmd = """
+        export BAZEL_BINDIR=$(BINDIR)
+        $(execpath //tools/protoc) \
+            --plugin=protoc-gen-es=$$PWD/$(execpath :protoc_gen_es) \
+            --es_out=$$PWD/$(RULEDIR)/src/gen --es_opt=target=ts \
+            -Iproto $(SRCS)
+    """,
+    tools = [
+        ":protoc_gen_es",
+        "//tools/protoc",
+    ],
+)
+
+js_library(
+    name = "srcs",
+    srcs = glob(
+        [
+            "src/**/*.ts",
+            "src/**/*.tsx",
+            "src/**/*.css",
+        ],
+        exclude = [
+            "src/gen/**",
+            "src/**/*.test.*",
+            "src/test/**",
+        ],
+    ) + [
+        "index.html",
+        "package.json",
+        "tsconfig.json",
+        "vite.config.ts",
+        ":proto_es",
+        "//web:tsconfig",
+    ],
+)
+
+vite.vite(
+    name = "dist",
+    srcs = [
+        ":node_modules",
+        ":srcs",
+    ],
+    args = ["build"],
+    chdir = package_name(),
+    out_dirs = ["dist"],
+    # Rolldown resolves real paths natively, which in a sandbox point outside
+    # it and make index.html look like it's outside the project root.
+    tags = ["no-sandbox"],
+    visibility = ["//server/internal/web/dist:__pkg__"],
+)
+
+TEST_DATA = glob(["src/**/*.test.*", "src/test/**"]) + [
+    ":node_modules",
+    ":srcs",
+]
+
+typescript.tsc_test(
+    name = "typecheck",
+    args = ["--noEmit"],
+    chdir = package_name(),
+    data = TEST_DATA + ["//web:node_modules/typescript"],
+)
+
+vitest.vitest_test(
+    name = "test",
+    args = ["run"],
+    chdir = package_name(),
+    data = TEST_DATA,
+)

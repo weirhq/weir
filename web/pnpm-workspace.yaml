@@ -1,0 +1,8 @@
+packages:
+  - app
+  - ui
+
+# No dependency needs an install script; rules_js requires saying so.
+allowBuilds: {}
+patchedDependencies:
+  '@material/material-color-utilities@0.4.0': patches/@material__material-color-utilities@0.4.0.patch

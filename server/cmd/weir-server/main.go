@@ -22,6 +22,7 @@ import (
 	"github.com/weirhq/weir/server/internal/config"
 	"github.com/weirhq/weir/server/internal/engine"
 	"github.com/weirhq/weir/server/internal/store"
+	"github.com/weirhq/weir/server/internal/web"
 )
 
 func main() {
@@ -93,6 +94,7 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
+	mux.Handle("/", web.Handler(webFS))
 
 	var protocols http.Protocols
 	protocols.SetHTTP1(true)

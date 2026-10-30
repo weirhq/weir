@@ -75,6 +75,15 @@ cd engine && cargo run -p weir-engine -- --socket /tmp/weir-engine.sock
 Until the bundled ffmpeg build lands, the engine uses the `ffprobe` on `PATH`
 (or `--ffprobe`).
 
+The web client is a pnpm workspace in `web/`. With the server running on
+:8320, `pnpm dev` serves the app on http://localhost:5173 and proxies API calls
+to the server. Bazel builds embed the client in `weir-server`; `go run` builds
+don't.
+
+```sh
+cd web && pnpm install && pnpm dev
+```
+
 ## Rules we hold each other to
 
 - Generated code is never committed. If a generator is too slow for Bazel's

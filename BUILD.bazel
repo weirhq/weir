@@ -1,10 +1,13 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/weirhq/weir
+# gazelle:build_tags webembed
 # gazelle:proto_strip_import_prefix /proto
 # gazelle:exclude proto/**/*.go
 # gazelle:exclude server/internal/store/dbgen
 # gazelle:exclude web
+# gazelle:exclude server/internal/web/dist
+# gazelle:resolve go github.com/weirhq/weir/server/internal/web/dist //server/internal/web/dist
 # gazelle:exclude engine
 # gazelle:exclude desktop
 # gazelle:resolve go github.com/weirhq/weir/server/internal/store/dbgen //server/internal/store/dbgen

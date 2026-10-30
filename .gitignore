@@ -11,7 +11,7 @@
 
 # Node
 node_modules/
-dist/
+/web/app/dist/
 .vite/
 
 # Local config and data
@@ -26,3 +26,5 @@ dist/
 # Generated for the non-Bazel dev loop (`mise run generate`)
 /proto/**/*.go
 /server/internal/store/dbgen/*.go
+/web/app/src/gen/
+/web/ui/src/tokens.gen.css

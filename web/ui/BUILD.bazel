@@ -1,0 +1,72 @@
+load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_run_binary")
+load("@aspect_rules_js//npm:defs.bzl", "npm_package")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//web:typescript/package_json.bzl", typescript = "bin")
+load("@npm//web/ui:vitest/package_json.bzl", vitest = "bin")
+
+npm_link_all_packages(name = "node_modules")
+
+# Node runs the TypeScript generator directly (type stripping).
+js_binary(
+    name = "tokens_gen",
+    data = [
+        "tokens/m3.json",
+        ":node_modules/@material/material-color-utilities",
+    ],
+    entry_point = "scripts/tokens.ts",
+)
+
+js_run_binary(
+    name = "tokens",
+    srcs = ["package.json"],
+    args = ["src/tokens.gen.css"],
+    chdir = package_name(),
+    outs = ["src/tokens.gen.css"],
+    tool = ":tokens_gen",
+)
+
+SRCS = glob(
+    [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.css",
+    ],
+    exclude = [
+        "src/**/*.test.*",
+        "src/tokens.gen.css",
+    ],
+)
+
+# Linked into @weirhq/app's node_modules as @weirhq/ui.
+npm_package(
+    name = "pkg",
+    srcs = SRCS + [
+        "package.json",
+        ":tokens",
+    ],
+    visibility = ["//web:__subpackages__"],
+)
+
+TEST_DATA = SRCS + glob(["src/**/*.test.*"]) + [
+    "package.json",
+    "scripts/tokens.ts",
+    "tokens/m3.json",
+    "tsconfig.json",
+    "vitest.config.ts",
+    "//web:tsconfig",
+    ":node_modules",
+]
+
+typescript.tsc_test(
+    name = "typecheck",
+    args = ["--noEmit"],
+    chdir = package_name(),
+    data = TEST_DATA + ["//web:node_modules/typescript"],
+)
+
+vitest.vitest_test(
+    name = "test",
+    args = ["run"],
+    chdir = package_name(),
+    data = TEST_DATA,
+)

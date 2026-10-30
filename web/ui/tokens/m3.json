@@ -1,0 +1,132 @@
+{
+  "$comment": "Source for src/tokens.gen.css (scripts/tokens.ts). Colour roles come from material-color-utilities with the 2025 (Expressive) spec; typescale and shape are the published M3 baseline values, with M3 Expressive's added corner sizes. Sizes are px.",
+  "color": {
+    "seed": "#2e6f8e",
+    "variant": "tonal-spot",
+    "specVersion": "2025",
+    "contrast": 0
+  },
+  "typeface": {
+    "brand": "'Roboto Flex', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "plain": "'Roboto Flex', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+  },
+  "typescale": {
+    "display-large": {
+      "typeface": "brand",
+      "size": 57,
+      "lineHeight": 64,
+      "weight": 400,
+      "tracking": -0.25
+    },
+    "display-medium": {
+      "typeface": "brand",
+      "size": 45,
+      "lineHeight": 52,
+      "weight": 400,
+      "tracking": 0
+    },
+    "display-small": {
+      "typeface": "brand",
+      "size": 36,
+      "lineHeight": 44,
+      "weight": 400,
+      "tracking": 0
+    },
+    "headline-large": {
+      "typeface": "brand",
+      "size": 32,
+      "lineHeight": 40,
+      "weight": 400,
+      "tracking": 0
+    },
+    "headline-medium": {
+      "typeface": "brand",
+      "size": 28,
+      "lineHeight": 36,
+      "weight": 400,
+      "tracking": 0
+    },
+    "headline-small": {
+      "typeface": "brand",
+      "size": 24,
+      "lineHeight": 32,
+      "weight": 400,
+      "tracking": 0
+    },
+    "title-large": {
+      "typeface": "brand",
+      "size": 22,
+      "lineHeight": 28,
+      "weight": 400,
+      "tracking": 0
+    },
+    "title-medium": {
+      "typeface": "plain",
+      "size": 16,
+      "lineHeight": 24,
+      "weight": 500,
+      "tracking": 0.15
+    },
+    "title-small": {
+      "typeface": "plain",
+      "size": 14,
+      "lineHeight": 20,
+      "weight": 500,
+      "tracking": 0.1
+    },
+    "body-large": {
+      "typeface": "plain",
+      "size": 16,
+      "lineHeight": 24,
+      "weight": 400,
+      "tracking": 0.5
+    },
+    "body-medium": {
+      "typeface": "plain",
+      "size": 14,
+      "lineHeight": 20,
+      "weight": 400,
+      "tracking": 0.25
+    },
+    "body-small": {
+      "typeface": "plain",
+      "size": 12,
+      "lineHeight": 16,
+      "weight": 400,
+      "tracking": 0.4
+    },
+    "label-large": {
+      "typeface": "plain",
+      "size": 14,
+      "lineHeight": 20,
+      "weight": 500,
+      "tracking": 0.1
+    },
+    "label-medium": {
+      "typeface": "plain",
+      "size": 12,
+      "lineHeight": 16,
+      "weight": 500,
+      "tracking": 0.5
+    },
+    "label-small": {
+      "typeface": "plain",
+      "size": 11,
+      "lineHeight": 16,
+      "weight": 500,
+      "tracking": 0.5
+    }
+  },
+  "shape": {
+    "corner-none": 0,
+    "corner-extra-small": 4,
+    "corner-small": 8,
+    "corner-medium": 12,
+    "corner-large": 16,
+    "corner-large-increased": 20,
+    "corner-extra-large": 28,
+    "corner-extra-large-increased": 32,
+    "corner-extra-extra-large": 48,
+    "corner-full": 9999
+  }
+}

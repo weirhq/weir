@@ -1,0 +1,17 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+
+npm_link_all_packages(name = "node_modules")
+
+exports_files([
+    "package.json",
+    "patches/@material__material-color-utilities@0.4.0.patch",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+])
+
+js_library(
+    name = "tsconfig",
+    srcs = ["tsconfig.base.json"],
+    visibility = ["//web:__subpackages__"],
+)

@@ -1,0 +1,4 @@
+dist
+**/src/gen
+*.gen.css
+pnpm-lock.yaml

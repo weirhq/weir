@@ -1,0 +1,81 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-radius 150ms;
+}
+
+/* State layer: the content colour at the M3 hover and pressed opacities. */
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 100ms;
+}
+.button:hover::before {
+  opacity: 0.08;
+}
+.button:active::before,
+.button:focus-visible::before {
+  opacity: 0.1;
+}
+/* M3 Expressive: pressed buttons morph toward a squarer corner. */
+.button:active {
+  border-radius: var(--md-sys-shape-corner-small);
+}
+.button:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+.button:disabled {
+  cursor: default;
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 10%,
+    transparent
+  );
+}
+.button:disabled::before {
+  opacity: 0;
+}
+
+.filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+.tonal {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+.outlined {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  outline: 1px solid var(--md-sys-color-outline-variant);
+  outline-offset: -1px;
+}
+.text {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  padding: 0 12px;
+}
+.outlined:disabled,
+.text:disabled {
+  background: transparent;
+}

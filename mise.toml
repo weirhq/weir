@@ -5,7 +5,7 @@ go = "1.27.3"
 node = "24.22.2"
 pnpm = "12.16.1"
 protoc = "36.2"
-rust = "1.99.1"
+rust = { version = "1.99.1", components = "rustfmt,clippy" }
 sqlc = "1.31.1"
 
 [env]

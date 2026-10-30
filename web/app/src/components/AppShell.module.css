@@ -1,4 +1,6 @@
 .shell {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
@@ -77,12 +79,26 @@
 }
 
 .main {
+  flex: 1;
   padding: 24px 16px 48px;
 }
 
 @media (max-width: 720px) {
   .bar {
     flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .nav {
+    flex: 1;
+    min-width: 0;
+  }
+  /* Search gets a row of its own. */
+  .search {
+    order: 1;
+    flex-basis: 100%;
+  }
+  .searchInput {
+    width: 100%;
   }
   .user span {
     display: none;

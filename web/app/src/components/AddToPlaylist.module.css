@@ -1,0 +1,65 @@
+.wrap {
+  position: relative;
+}
+
+.status {
+  margin: 8px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.panel {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, calc(100vw - 32px));
+  padding: 8px;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container-high);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: none;
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.choice:hover {
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-on-surface) 8%,
+    transparent
+  );
+}
+
+.create {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px;
+}
+.create > :first-child {
+  flex: 1;
+}
+
+.error {
+  margin: 0;
+  padding: 8px 16px;
+  color: var(--md-sys-color-error);
+}

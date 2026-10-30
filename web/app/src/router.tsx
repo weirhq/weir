@@ -14,6 +14,8 @@ import { ItemPage } from './pages/ItemPage'
 import { LibraryPage } from './pages/LibraryPage'
 import { PlayerPage } from './player/PlayerPage'
 import { LoginPage } from './pages/LoginPage'
+import { PlaylistPage } from './pages/PlaylistPage'
+import { PlaylistsPage } from './pages/PlaylistsPage'
 import { SearchPage } from './pages/SearchPage'
 import { SetupPage } from './pages/SetupPage'
 import type { Session } from './session'
@@ -93,6 +95,18 @@ export const searchRoute = createRoute({
   component: SearchPage
 })
 
+const playlistsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/playlists',
+  component: PlaylistsPage
+})
+
+export const playlistRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/playlist/$playlistId',
+  component: PlaylistPage
+})
+
 // Full screen, without the app's header, but still signed in.
 export const playRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -109,7 +123,14 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   setupRoute,
   playRoute,
-  appRoute.addChildren([homeRoute, libraryRoute, itemRoute, searchRoute])
+  appRoute.addChildren([
+    homeRoute,
+    libraryRoute,
+    itemRoute,
+    searchRoute,
+    playlistsRoute,
+    playlistRoute
+  ])
 ])
 
 export function createAppRouter(

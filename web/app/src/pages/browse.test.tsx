@@ -16,14 +16,15 @@ it('shows continue watching, recently added and the libraries', async () => {
   ).toEqual([
     expect.stringContaining('Arrival'),
     expect.stringContaining('Zodiac'),
-    expect.stringContaining('Severance')
+    expect.stringContaining('Severance'),
+    expect.stringContaining('Boards of Canada')
   ])
   const nav = screen.getByRole('navigation', { name: 'Libraries' })
   expect(
     within(nav)
       .getAllByRole('link')
       .map((a) => a.textContent)
-  ).toEqual(['Films', 'TV'])
+  ).toEqual(['Films', 'TV', 'Music', 'Playlists'])
 })
 
 it('lists a library as a grid', async () => {

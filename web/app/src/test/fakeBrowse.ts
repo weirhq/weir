@@ -21,8 +21,20 @@ import {
   type StartRequest,
   type StopRequest
 } from '../gen/weir/api/v1alpha/playback_pb'
+import {
+  PlaylistSchema,
+  Playlists,
+  type Playlist
+} from '../gen/weir/api/v1alpha/playlists_pb'
 
-/** A small library to browse: two films, and a show with one season. */
+type FakePlaylist = Omit<Playlist, 'itemCount' | '$typeName'> & {
+  itemIds: string[]
+}
+
+/**
+ * A small library to browse: two films, a show with one season, and an
+ * album; and two playlists, one of them someone else's.
+ */
 export class FakeBrowse {
   libraries = [
     create(LibrarySchema, {
@@ -30,7 +42,12 @@ export class FakeBrowse {
       name: 'Films',
       kind: LibraryKind.MOVIES
     }),
-    create(LibrarySchema, { id: 'tv', name: 'TV', kind: LibraryKind.SHOWS })
+    create(LibrarySchema, { id: 'tv', name: 'TV', kind: LibraryKind.SHOWS }),
+    create(LibrarySchema, {
+      id: 'music',
+      name: 'Music',
+      kind: LibraryKind.MUSIC
+    })
   ]
   summaries: ItemSummary[] = [
     summary('arrival', ItemKind.MOVIE, 'Arrival', {
@@ -62,7 +79,44 @@ export class FakeBrowse {
       libraryId: 'tv',
       parentId: 's1',
       indexNumber: 2
-    })
+    }),
+    summary('boc', ItemKind.ARTIST, 'Boards of Canada', {
+      libraryId: 'music'
+    }),
+    summary('mhtrtc', ItemKind.ALBUM, 'Music Has the Right to Children', {
+      year: 1998,
+      libraryId: 'music',
+      parentId: 'boc'
+    }),
+    ...[
+      'Wildlife Analysis',
+      'An Eagle in Your Mind',
+      'The Color of the Fire'
+    ].map((title, i) =>
+      summary(`t${i + 1}`, ItemKind.TRACK, title, {
+        libraryId: 'music',
+        parentId: 'mhtrtc',
+        indexNumber: i + 1
+      })
+    )
+  ]
+  playlists: FakePlaylist[] = [
+    {
+      id: 'rainy',
+      name: 'Rainy day',
+      ownerId: 'u1',
+      ownerName: 'Luna',
+      shared: false,
+      itemIds: ['t2', 'arrival', 't3']
+    },
+    {
+      id: 'mix',
+      name: 'Road trip',
+      ownerId: 'u2',
+      ownerName: 'Ana',
+      shared: true,
+      itemIds: ['t1']
+    }
   ]
   watchedCalls: { itemId: string; watched: boolean }[] = []
   // What Playback.Start answers, or the error it throws.
@@ -97,39 +151,73 @@ export class FakeBrowse {
         id === 'arrival' ? [{ name: 'Amy Adams', role: 'Louise Banks' }] : [],
       ancestors,
       versions:
-        s.kind === ItemKind.MOVIE || s.kind === ItemKind.EPISODE
+        s.kind === ItemKind.TRACK
           ? [
               {
                 id: `${id}-v1`,
-                edition: id === 'arrival' ? '4K' : '',
-                container: 'matroska,webm',
-                sizeBytes: 54_200_000_000n,
+                container: 'flac',
                 streams: [
                   {
                     index: 0,
-                    kind: StreamKind.VIDEO,
-                    codec: 'hevc',
-                    height: 2160,
-                    hdrFormat: HdrFormat.DOLBY_VISION
-                  },
-                  {
-                    index: 1,
                     kind: StreamKind.AUDIO,
-                    codec: 'truehd',
-                    language: 'en',
-                    channels: 8
-                  },
-                  {
-                    index: 2,
-                    kind: StreamKind.SUBTITLE,
-                    codec: 'subrip',
-                    language: 'en'
+                    codec: 'flac',
+                    channels: 2
                   }
                 ]
               }
             ]
-          : []
+          : s.kind === ItemKind.MOVIE || s.kind === ItemKind.EPISODE
+            ? [
+                {
+                  id: `${id}-v1`,
+                  edition: id === 'arrival' ? '4K' : '',
+                  container: 'matroska,webm',
+                  sizeBytes: 54_200_000_000n,
+                  streams: [
+                    {
+                      index: 0,
+                      kind: StreamKind.VIDEO,
+                      codec: 'hevc',
+                      height: 2160,
+                      hdrFormat: HdrFormat.DOLBY_VISION
+                    },
+                    {
+                      index: 1,
+                      kind: StreamKind.AUDIO,
+                      codec: 'truehd',
+                      language: 'en',
+                      channels: 8
+                    },
+                    {
+                      index: 2,
+                      kind: StreamKind.SUBTITLE,
+                      codec: 'subrip',
+                      language: 'en'
+                    }
+                  ]
+                }
+              ]
+            : []
     })
+  }
+
+  playlist(id: string): FakePlaylist {
+    const p = this.playlists.find((x) => x.id === id)
+    if (!p) throw new ConnectError('no such playlist', Code.NotFound)
+    return p
+  }
+
+  playlistProto(p: FakePlaylist): Playlist {
+    const { itemIds, ...rest } = p
+    return create(PlaylistSchema, { ...rest, itemCount: itemIds.length })
+  }
+
+  // Everyone in these tests is u1, the fake's admin.
+  owned(id: string): FakePlaylist {
+    const p = this.playlist(id)
+    if (p.ownerId !== 'u1')
+      throw new ConnectError('not your playlist', Code.PermissionDenied)
+    return p
   }
 
   register(router: ConnectRouter) {
@@ -161,6 +249,46 @@ export class FakeBrowse {
       listRecentlyAdded: () => ({
         items: this.summaries.filter((s) => !s.parentId)
       })
+    })
+    router.service(Playlists, {
+      listPlaylists: () => ({
+        playlists: this.playlists
+          .filter((p) => p.ownerId === 'u1' || p.shared)
+          .map((p) => this.playlistProto(p))
+      }),
+      getPlaylist: (req) => {
+        const p = this.playlist(req.id)
+        return {
+          playlist: this.playlistProto(p),
+          items: p.itemIds.map((id) => this.get(id))
+        }
+      },
+      createPlaylist: (req) => {
+        const p: FakePlaylist = {
+          id: `p${this.playlists.length + 1}`,
+          name: req.name,
+          ownerId: 'u1',
+          ownerName: 'Luna',
+          shared: req.shared,
+          itemIds: req.itemIds
+        }
+        this.playlists.push(p)
+        return { playlist: this.playlistProto(p) }
+      },
+      updatePlaylist: (req) => {
+        const p = this.owned(req.id)
+        for (const f of req.updateMask?.paths ?? []) {
+          if (f === 'name') p.name = req.name
+          if (f === 'shared') p.shared = req.shared
+          if (f === 'item_ids') p.itemIds = req.itemIds
+        }
+        return { playlist: this.playlistProto(p) }
+      },
+      deletePlaylist: (req) => {
+        this.owned(req.id)
+        this.playlists = this.playlists.filter((p) => p.id !== req.id)
+        return {}
+      }
     })
     router.service(Playback, {
       start: (req) => {

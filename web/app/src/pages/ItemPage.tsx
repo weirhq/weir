@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
 import { Button } from '@weirhq/ui'
+import { AddToPlaylist } from '../components/AddToPlaylist'
 import { PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'
 import {
@@ -12,6 +13,7 @@ import {
 } from '../gen/weir/api/v1alpha/browse_pb'
 import { HdrFormat } from '../gen/weir/api/v1alpha/playback_pb'
 import { srcSet, sized } from '../art'
+import { useQueue } from '../player/queue'
 import { itemRoute } from '../router'
 import styles from './ItemPage.module.css'
 
@@ -29,6 +31,7 @@ export function ItemPage() {
   const { itemId } = itemRoute.useParams()
   const { api } = useRouteContext({ from: '__root__' })
   const queryClient = useQueryClient()
+  const startQueue = useQueue((q) => q.start)
   const item = useQuery({
     queryKey: ['item', itemId],
     queryFn: async () => (await api.browse.getItem({ id: itemId })).item
@@ -89,12 +92,26 @@ export function ItemPage() {
           {it.tagline && <p className={styles.tagline}>{it.tagline}</p>}
           {it.overview && <p className={styles.overview}>{it.overview}</p>}
           <div className={styles.actions}>
+            {sum.kind === ItemKind.TRACK && it.versions.length > 0 && (
+              <Button onClick={() => startQueue([sum])}>Play</Button>
+            )}
+            {sum.kind === ItemKind.ALBUM &&
+              (children.data?.length ?? 0) > 0 && (
+                <Button onClick={() => startQueue(children.data!)}>
+                  Play album
+                </Button>
+              )}
+            {playable.has(sum.kind) &&
+              sum.kind !== ItemKind.TRACK &&
+              it.versions.length > 0 && (
+                <Button asChild>
+                  <Link to="/play/$itemId" params={{ itemId }}>
+                    {resumeMs > 0 ? `Resume from ${clock(resumeMs)}` : 'Play'}
+                  </Link>
+                </Button>
+              )}
             {playable.has(sum.kind) && it.versions.length > 0 && (
-              <Button asChild>
-                <Link to="/play/$itemId" params={{ itemId }}>
-                  {resumeMs > 0 ? `Resume from ${clock(resumeMs)}` : 'Play'}
-                </Link>
-              </Button>
+              <AddToPlaylist itemId={itemId} />
             )}
             {sum.kind !== ItemKind.ARTIST &&
               sum.kind !== ItemKind.ALBUM &&
@@ -115,7 +132,14 @@ export function ItemPage() {
         <section className={cards.section}>
           <h2 className={cards.heading}>{childHeading[kind]}</h2>
           {kind === ItemKind.SEASON || kind === ItemKind.ALBUM ? (
-            <TrackList items={children.data ?? []} />
+            <TrackList
+              items={children.data ?? []}
+              onPlay={
+                kind === ItemKind.ALBUM
+                  ? (i) => startQueue(children.data!, i)
+                  : undefined
+              }
+            />
           ) : (
             <div className={cards.grid}>
               {(children.data ?? []).map((c) => (
@@ -198,12 +222,26 @@ function Facts({ item }: { item: Item }) {
   ) : null
 }
 
-/** Episodes and tracks: a numbered list rather than a grid of cards. */
-function TrackList({ items }: { items: ItemSummary[] }) {
+/**
+ * Episodes and tracks: a numbered list rather than a grid of cards. With
+ * onPlay, each row plays the list from there.
+ */
+function TrackList({
+  items,
+  onPlay
+}: {
+  items: ItemSummary[]
+  onPlay?: (index: number) => void
+}) {
+  const playing = useQueue((q) => q.tracks[q.index]?.id)
   return (
     <ol className={styles.tracks}>
-      {items.map((t) => (
-        <li key={t.id}>
+      {items.map((t, i) => (
+        <li
+          key={t.id}
+          className={styles.trackRow}
+          aria-current={t.id === playing ? 'true' : undefined}
+        >
           <Link
             to="/item/$itemId"
             params={{ itemId: t.id }}
@@ -213,6 +251,15 @@ function TrackList({ items }: { items: ItemSummary[] }) {
             <span className={styles.trackTitle}>{t.title}</span>
             {t.userData?.watched && <span aria-label="Watched">✓</span>}
           </Link>
+          {onPlay && (
+            <Button
+              variant="text"
+              aria-label={`Play ${t.title}`}
+              onClick={() => onPlay(i)}
+            >
+              ▶
+            </Button>
+          )}
         </li>
       ))}
     </ol>

@@ -7,11 +7,15 @@ import {
 } from '@tanstack/react-router'
 import { Button } from '@weirhq/ui'
 import { useState, useSyncExternalStore, type FormEvent } from 'react'
+import { MiniPlayer } from '../player/MiniPlayer'
 import styles from './AppShell.module.css'
 
 export const librariesKey = ['libraries'] as const
 
-/** The header every signed-in page shares: libraries, search, account. */
+/**
+ * What every signed-in page shares: the header with libraries, search and
+ * account, and the mini-player.
+ */
 export function AppShell() {
   const { api, session } = useRouteContext({ from: '__root__' })
   const navigate = useNavigate()
@@ -51,6 +55,13 @@ export function AppShell() {
               {l.name}
             </Link>
           ))}
+          <Link
+            to="/playlists"
+            className={styles.navLink}
+            activeProps={{ 'aria-current': 'page' }}
+          >
+            Playlists
+          </Link>
         </nav>
         <form role="search" className={styles.search} onSubmit={search}>
           <input
@@ -72,6 +83,7 @@ export function AppShell() {
       <main className={styles.main}>
         <Outlet />
       </main>
+      <MiniPlayer />
     </div>
   )
 }

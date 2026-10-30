@@ -11,6 +11,7 @@ proto_library(
         "admin.proto",
         "auth.proto",
         "library.proto",
+        "playback.proto",
         "user.proto",
     ],
     strip_import_prefix = "/proto",

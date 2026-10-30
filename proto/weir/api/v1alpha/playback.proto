@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package weir.api.v1alpha;
+
+option go_package = "github.com/weirhq/weir/proto/weir/api/v1alpha;apiv1alpha";
+
+// The server decides how each item plays, and always says why.
+service Playback {
+  // Picks a version and streams for the client and returns how to play
+  // them.
+  rpc Start(StartRequest) returns (StartResponse);
+}
+
+message StartRequest {
+  string item_id = 1;
+  // Empty lets the server pick the version that plays best on this client.
+  string version_id = 2;
+  ClientCapabilities capabilities = 3;
+  // Override the server's stream choice for this play.
+  optional uint32 audio_stream_index = 4;
+  // -1 turns subtitles off.
+  optional int32 subtitle_stream_index = 5;
+}
+
+message StartResponse {
+  PlaybackPlan plan = 1;
+}
+
+// What a client can play, declared by the client. Codec and container names
+// are ffmpeg's ("hevc", "eac3", "matroska", "mp4").
+message ClientCapabilities {
+  repeated string containers = 1;
+  repeated VideoCodecSupport video_codecs = 2;
+  // HDR formats the client can display, besides SDR.
+  repeated HdrFormat hdr_formats = 3;
+  // Dolby Vision profiles the client can display, when DOLBY_VISION is in
+  // hdr_formats.
+  repeated uint32 dolby_vision_profiles = 4;
+  repeated AudioCodecSupport audio_codecs = 5;
+  // Audio codecs the client can send to a receiver untouched (TrueHD, DTS-HD).
+  repeated string passthrough_codecs = 6;
+  // Subtitle codecs the client renders itself.
+  repeated string subtitle_codecs = 7;
+  // Zero means no limit.
+  uint32 max_width = 8;
+  uint32 max_height = 9;
+  // Bits per second.
+  uint64 max_bitrate = 10;
+  // Whether the client can play a file from a plain URL, or only HLS.
+  bool plain_url = 11;
+  bool hls = 12;
+}
+
+message VideoCodecSupport {
+  string codec = 1;
+  // ffmpeg profile names, e.g. "Main 10". Empty means any.
+  repeated string profiles = 2;
+  // In ffmpeg's numbering (H.264 5.1 is 51, HEVC 5.1 is 153). Zero means any.
+  uint32 max_level = 3;
+  // Zero means 8.
+  uint32 max_bit_depth = 4;
+}
+
+message AudioCodecSupport {
+  string codec = 1;
+  // Zero means any.
+  uint32 max_channels = 2;
+}
+
+enum HdrFormat {
+  HDR_FORMAT_UNSPECIFIED = 0;
+  HDR_FORMAT_SDR = 1;
+  HDR_FORMAT_HDR10 = 2;
+  HDR_FORMAT_HDR10_PLUS = 3;
+  HDR_FORMAT_HLG = 4;
+  HDR_FORMAT_DOLBY_VISION = 5;
+}
+
+message PlaybackPlan {
+  string version_id = 1;
+  PlaybackMethod method = 2;
+  // A signed URL for the file or the HLS playlist. Empty while the method
+  // needs an engine session the server can't start yet.
+  string url = 3;
+  repeated StreamDecision streams = 4;
+  OutputFormat output = 5;
+  repeated PlaybackWarning warnings = 6;
+}
+
+enum PlaybackMethod {
+  PLAYBACK_METHOD_UNSPECIFIED = 0;
+  // The file itself, from a plain URL.
+  PLAYBACK_METHOD_DIRECT_PLAY = 1;
+  // Streams copied into fMP4 HLS, nothing re-encoded.
+  PLAYBACK_METHOD_REMUX = 2;
+  // Audio re-encoded, video copied.
+  PLAYBACK_METHOD_AUDIO_TRANSCODE = 3;
+  // Video re-encoded.
+  PLAYBACK_METHOD_VIDEO_TRANSCODE = 4;
+}
+
+message StreamDecision {
+  // The stream's index in the file.
+  uint32 index = 1;
+  StreamAction action = 2;
+  // Why the stream isn't played as it is. Empty for DIRECT.
+  repeated PlaybackReason reasons = 3;
+}
+
+enum StreamAction {
+  STREAM_ACTION_UNSPECIFIED = 0;
+  STREAM_ACTION_DIRECT = 1;
+  // Copied into a new container, or rewritten without re-encoding (Dolby
+  // Vision 7 to 8.1, stripping an RPU).
+  STREAM_ACTION_REMUX = 2;
+  STREAM_ACTION_TRANSCODE = 3;
+  // An image subtitle drawn into the video.
+  STREAM_ACTION_BURN_IN = 4;
+  // A text subtitle served as a separate track.
+  STREAM_ACTION_SIDECAR = 5;
+}
+
+enum PlaybackReason {
+  PLAYBACK_REASON_UNSPECIFIED = 0;
+  PLAYBACK_REASON_CONTAINER_UNSUPPORTED = 1;
+  PLAYBACK_REASON_CLIENT_NEEDS_HLS = 2;
+  PLAYBACK_REASON_VIDEO_CODEC_UNSUPPORTED = 3;
+  PLAYBACK_REASON_VIDEO_PROFILE_UNSUPPORTED = 4;
+  PLAYBACK_REASON_VIDEO_LEVEL_UNSUPPORTED = 5;
+  PLAYBACK_REASON_VIDEO_BIT_DEPTH_UNSUPPORTED = 6;
+  PLAYBACK_REASON_HDR_FORMAT_UNSUPPORTED = 7;
+  PLAYBACK_REASON_DOLBY_VISION_PROFILE_UNSUPPORTED = 8;
+  PLAYBACK_REASON_RESOLUTION_ABOVE_LIMIT = 9;
+  PLAYBACK_REASON_BITRATE_ABOVE_LIMIT = 10;
+  PLAYBACK_REASON_AUDIO_CODEC_UNSUPPORTED = 11;
+  PLAYBACK_REASON_AUDIO_CHANNELS_ABOVE_LIMIT = 12;
+  PLAYBACK_REASON_SUBTITLE_NEEDS_BURN_IN = 13;
+}
+
+message OutputFormat {
+  string container = 1;
+  string video_codec = 2;
+  HdrFormat hdr_format = 3;
+  uint32 width = 4;
+  uint32 height = 5;
+  // Bits per second; zero when copied.
+  uint64 bitrate = 6;
+  string audio_codec = 7;
+  uint32 audio_channels = 8;
+}
+
+enum PlaybackWarning {
+  PLAYBACK_WARNING_UNSPECIFIED = 0;
+  // No hardware encoder fits; the server's CPU does the work.
+  PLAYBACK_WARNING_SOFTWARE_TRANSCODE = 1;
+  // A software transcode at 4K, which most CPUs can't keep up with.
+  PLAYBACK_WARNING_SOFTWARE_4K = 2;
+  // HDR to SDR without the engine's tonemapping: colours will look washed
+  // out.
+  PLAYBACK_WARNING_TONEMAP_UNAVAILABLE = 3;
+}

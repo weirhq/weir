@@ -30,6 +30,8 @@ var errNoItem = connect.NewError(connect.CodeNotFound, errors.New("no such item"
 
 // Service implements weir.api.v1alpha.Playback.
 type Service struct {
+	// Heartbeat and Stop answer Unimplemented until sessions exist.
+	apiv1alpha.UnimplementedPlaybackHandler
 	store  *store.Store
 	signer *media.Signer
 	// The engine's last reported capabilities; nil until it has reported.

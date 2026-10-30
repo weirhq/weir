@@ -19,6 +19,15 @@ service Engine {
 
   // Liveness plus load. The server polls this every 10 s.
   rpc Health(HealthRequest) returns (HealthResponse);
+
+  // Starts writing a file as fMP4 HLS segments into a directory, and
+  // reports each segment as it completes. The session ends when the stream
+  // does: on Stop, on failure, when the server goes away, or when no
+  // heartbeat arrives for 30 s or no segment for 20 s.
+  rpc StartSession(StartSessionRequest) returns (stream StartSessionResponse);
+
+  // Steers a running session.
+  rpc ControlSession(ControlSessionRequest) returns (ControlSessionResponse);
 }
 
 message CapabilitiesRequest {}
@@ -240,3 +249,119 @@ message HealthResponse {
   uint64 gpu_memory_used_bytes = 2;
   uint64 gpu_memory_total_bytes = 3;
 }
+
+message StartSessionRequest {
+  // Chosen by the server; names the session in ControlSession.
+  string session_id = 1;
+  // The file to read, on the shared filesystem.
+  string path = 2;
+  OutputProfile output = 3;
+  // Where in the file to start.
+  google.protobuf.Duration start_offset = 4;
+  // Target segment length. Segments start on keyframes, so copied video
+  // gives somewhat longer ones.
+  google.protobuf.Duration segment_duration = 5;
+  // An empty directory the engine owns until the session ends.
+  string output_dir = 6;
+  // The number of the first segment, so segments after a seek continue the
+  // server's numbering.
+  uint32 start_segment = 7;
+}
+
+// What a session writes. A stream without a matching output is copied.
+message OutputProfile {
+  uint32 video_stream = 1;
+  optional uint32 audio_stream = 2;
+  // An image subtitle stream to draw into the video. Requires video output.
+  optional uint32 burn_in_subtitle_stream = 3;
+  // Re-encode the video; absent copies it.
+  optional VideoOutput video = 4;
+  // Re-encode the audio; absent copies it.
+  optional AudioOutput audio = 5;
+}
+
+message VideoOutput {
+  // ffmpeg codec name: "h264", "hevc" or "av1".
+  string codec = 1;
+  HdrFormat hdr_format = 2;
+  uint32 width = 3;
+  uint32 height = 4;
+  // Bits per second.
+  uint64 bitrate = 5;
+}
+
+message AudioOutput {
+  // ffmpeg codec name: "aac", "opus" or "eac3".
+  string codec = 1;
+  uint32 channels = 2;
+  // Bits per second; zero picks a default for the codec and channels.
+  uint64 bitrate = 3;
+}
+
+message StartSessionResponse {
+  SessionEvent event = 1;
+}
+
+message SessionEvent {
+  oneof event {
+    SessionReady ready = 1;
+    SegmentReady segment = 2;
+    SessionProgress progress = 3;
+    SessionWarning warning = 4;
+    SessionFailed failed = 5;
+    // The file has been written to its end.
+    SessionFinished finished = 6;
+  }
+}
+
+message SessionReady {
+  // The fMP4 initialization segment, inside output_dir.
+  string init_segment = 1;
+}
+
+message SegmentReady {
+  uint32 index = 1;
+  // Inside output_dir.
+  string path = 2;
+  google.protobuf.Duration duration = 3;
+}
+
+message SessionProgress {
+  // Position in the file reached so far.
+  google.protobuf.Duration position = 1;
+  // Multiple of real time; above 1 is faster than playback.
+  double speed = 2;
+}
+
+message SessionWarning {
+  string message = 1;
+}
+
+message SessionFailed {
+  string message = 1;
+}
+
+message SessionFinished {}
+
+message ControlSessionRequest {
+  string session_id = 1;
+  oneof command {
+    // Restart from a new offset, numbering segments from start_segment, so
+    // the playlist stays continuous.
+    Seek seek = 2;
+    // The client is still watching.
+    Heartbeat heartbeat = 3;
+    Stop stop = 4;
+  }
+}
+
+message Seek {
+  google.protobuf.Duration offset = 1;
+  uint32 start_segment = 2;
+}
+
+message Heartbeat {}
+
+message Stop {}
+
+message ControlSessionResponse {}

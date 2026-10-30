@@ -6,7 +6,8 @@ use std::path::PathBuf;
 
 use engine_proto::v1alpha::engine_server::{Engine, EngineServer};
 use engine_proto::v1alpha::{
-    CapabilitiesRequest, CapabilitiesResponse, HealthRequest, HealthResponse, ProbeRequest, ProbeResponse,
+    CapabilitiesRequest, CapabilitiesResponse, ControlSessionRequest, ControlSessionResponse, HealthRequest,
+    HealthResponse, ProbeRequest, ProbeResponse, StartSessionRequest, StartSessionResponse,
 };
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
@@ -72,6 +73,23 @@ impl Engine for EngineService {
 
     async fn health(&self, _: Request<HealthRequest>) -> Result<Response<HealthResponse>, Status> {
         Ok(Response::new(HealthResponse::default()))
+    }
+
+    type StartSessionStream =
+        std::pin::Pin<Box<dyn tokio_stream::Stream<Item = Result<StartSessionResponse, Status>> + Send>>;
+
+    async fn start_session(
+        &self,
+        _: Request<StartSessionRequest>,
+    ) -> Result<Response<Self::StartSessionStream>, Status> {
+        Err(Status::unimplemented("sessions are not implemented yet"))
+    }
+
+    async fn control_session(
+        &self,
+        _: Request<ControlSessionRequest>,
+    ) -> Result<Response<ControlSessionResponse>, Status> {
+        Err(Status::unimplemented("sessions are not implemented yet"))
     }
 }
 

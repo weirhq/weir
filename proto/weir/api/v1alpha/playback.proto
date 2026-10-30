@@ -9,7 +9,26 @@ service Playback {
   // Picks a version and streams for the client and returns how to play
   // them.
   rpc Start(StartRequest) returns (StartResponse);
+
+  // Keeps a session alive. Clients send one every 10 s while playing; a
+  // session without one for 30 s is torn down.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // Ends a session early.
+  rpc Stop(StopRequest) returns (StopResponse);
 }
+
+message HeartbeatRequest {
+  string session_id = 1;
+}
+
+message HeartbeatResponse {}
+
+message StopRequest {
+  string session_id = 1;
+}
+
+message StopResponse {}
 
 message StartRequest {
   string item_id = 1;
@@ -85,6 +104,9 @@ message PlaybackPlan {
   repeated StreamDecision streams = 4;
   OutputFormat output = 5;
   repeated PlaybackWarning warnings = 6;
+  // Set when the plan runs through an engine session; send it to Heartbeat
+  // and Stop. Empty for direct play.
+  string session_id = 7;
 }
 
 enum PlaybackMethod {

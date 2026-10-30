@@ -112,5 +112,18 @@ rules_ts_ext.deps(ts_version_from = "//web:package.json")
 use_repo(rules_ts_ext, "npm_typescript")
 
 # BEGIN ffmpeg (written by tools/ffmpeg/pin.sh; see docs/runbooks/ffmpeg.md)
-# Not pinned yet: the first run of the "ffmpeg" workflow publishes the release.
+http_archive(
+    name = "ffmpeg_linux_amd64",
+    build_file_content = 'exports_files(["bin/ffmpeg", "bin/ffprobe"])\nfilegroup(name = "files", srcs = glob(["**"]), visibility = ["//visibility:public"])',
+    sha256 = "5c3bd2d98fdc72c9facd6bd55cda2580663829eb6015524074803dda5e6a33bd",
+    strip_prefix = "weir-ffmpeg-9.0.2-1-linux-amd64",
+    url = "https://github.com/weirhq/weir/releases/download/ffmpeg-9.0.2-1/weir-ffmpeg-9.0.2-1-linux-amd64.tar.gz",
+)
+http_archive(
+    name = "ffmpeg_linux_arm64",
+    build_file_content = 'exports_files(["bin/ffmpeg", "bin/ffprobe"])\nfilegroup(name = "files", srcs = glob(["**"]), visibility = ["//visibility:public"])',
+    sha256 = "521f1448568f82327046f93d8bfbb78f19b244b3bbec1656da8a5a5f3f3c61a5",
+    strip_prefix = "weir-ffmpeg-9.0.2-1-linux-arm64",
+    url = "https://github.com/weirhq/weir/releases/download/ffmpeg-9.0.2-1/weir-ffmpeg-9.0.2-1-linux-arm64.tar.gz",
+)
 # END ffmpeg

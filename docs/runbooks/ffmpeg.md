@@ -19,9 +19,8 @@ everything that takes.
 A release is published only if its tag doesn't exist yet. The workflow never
 replaces assets, because a pinned sha256 would stop matching.
 
-Pinning needs `weirhq/weir` to be public. Bazel and `pin.sh` download release
-assets without credentials, which a private repository refuses. Until then,
-`ffmpeg-9.0.2-1` is published but deliberately not pinned.
+`ffmpeg-9.0.2-1` is pinned. Bazel and `pin.sh` download release assets
+without credentials, so pinning only works while `weirhq/weir` is public.
 
 ## Rebuild and pin
 

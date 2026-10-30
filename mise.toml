@@ -1,0 +1,11 @@
+[tools]
+bazelisk = "1.30.0"
+buf = "1.75.0"
+go = "1.27.3"
+node = "24.22.2"
+pnpm = "12.16.1"
+rust = "1.99.1"
+sqlc = "1.31.1"
+
+[env]
+_.path = ["{{config_root}}/tools/bin"]

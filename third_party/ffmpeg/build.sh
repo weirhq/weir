@@ -110,7 +110,7 @@ done
 cp COPYING.GPLv3 "$prefix/LICENSE"
 {
     echo "ffmpeg ${FFMPEG_VERSION} (weir build ${BUILD_REVISION}), linux/${arch}"
-    echo "built on $(. /etc/os-release && echo "$PRETTY_NAME"), $(ldd --version | head -1)"
+    echo "built on $(. /etc/os-release && echo "$PRETTY_NAME"), $(ldd --version | sed -n 1p)"
     echo
     echo "configure:"
     printf '  %s\n' "${args[@]}"
@@ -120,8 +120,10 @@ cp COPYING.GPLv3 "$prefix/LICENSE"
 } >"$prefix/BUILDINFO"
 
 # Fails the build if a bundled library is missing or the binary can't start.
-LD_LIBRARY_PATH='' "$prefix/bin/ffmpeg" -hide_banner -version | head -1
-LD_LIBRARY_PATH='' "$prefix/bin/ffmpeg" -hide_banner -filters | grep -q libplacebo
+# (No `head` or `grep -q`: they close the pipe early, and with pipefail the
+# writer's SIGPIPE fails the build.)
+LD_LIBRARY_PATH='' "$prefix/bin/ffmpeg" -hide_banner -version | sed -n 1p
+LD_LIBRARY_PATH='' "$prefix/bin/ffmpeg" -hide_banner -filters | grep libplacebo >/dev/null
 
 tar -C "$work" --owner=0 --group=0 --sort=name -czf "$out/$name.tar.gz" "$name"
 (cd "$out" && sha256sum "$name.tar.gz" >"$name.tar.gz.sha256")

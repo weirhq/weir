@@ -8,6 +8,7 @@ export const iconNames = [
   'delete',
   'edit',
   'favorite',
+  'keyboard_arrow_down',
   'more_vert',
   'pause',
   'play_arrow',

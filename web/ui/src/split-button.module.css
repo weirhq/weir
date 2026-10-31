@@ -1,0 +1,192 @@
+/* M3 Expressive split buttons: a leading button for the action and a
+   trailing one for its menu, joined by small inner corners. Both are the
+   package's Button, reshaped and repadded through its private properties
+   with doubled classes to outrank its own rules. Citations are to
+   SplitButton.kt at the pinned commit. */
+
+.split {
+  display: inline-flex;
+  align-items: center;
+}
+
+.xs {
+  gap: var(--md-comp-split-button-x-small-between-space);
+  --_i-rest: var(--md-comp-split-button-x-small-inner-corner-corner-size);
+  --_i-hover: var(
+    --md-comp-split-button-x-small-inner-hovered-corner-corner-size
+  );
+  --_i-press: var(
+    --md-comp-split-button-x-small-inner-pressed-corner-corner-size
+  );
+  --_lead-start: var(
+    --md-comp-split-button-x-small-leading-button-leading-space
+  );
+  --_lead-end: var(
+    --md-comp-split-button-x-small-leading-button-trailing-space
+  );
+  --_trail-start: var(
+    --md-comp-split-button-x-small-trailing-button-leading-space
+  );
+  --_trail-end: var(
+    --md-comp-split-button-x-small-trailing-button-trailing-space
+  );
+  --_chevron: var(--md-comp-split-button-x-small-trailing-icon-size);
+}
+
+.s {
+  gap: var(--md-comp-split-button-small-between-space);
+  --_i-rest: var(--md-comp-split-button-small-inner-corner-corner-size);
+  --_i-hover: var(
+    --md-comp-split-button-small-inner-hovered-corner-corner-size
+  );
+  --_i-press: var(
+    --md-comp-split-button-small-inner-pressed-corner-corner-size
+  );
+  --_lead-start: var(--md-comp-split-button-small-leading-button-leading-space);
+  --_lead-end: var(--md-comp-split-button-small-leading-button-trailing-space);
+  --_trail-start: var(
+    --md-comp-split-button-small-trailing-button-leading-space
+  );
+  --_trail-end: var(
+    --md-comp-split-button-small-trailing-button-trailing-space
+  );
+  --_chevron: var(--md-comp-split-button-small-trailing-icon-size);
+}
+
+.m {
+  gap: var(--md-comp-split-button-medium-between-space);
+  --_i-rest: var(--md-comp-split-button-medium-inner-corner-corner-size);
+  --_i-hover: var(
+    --md-comp-split-button-medium-inner-hovered-corner-corner-size
+  );
+  --_i-press: var(
+    --md-comp-split-button-medium-inner-pressed-corner-corner-size
+  );
+  --_lead-start: var(
+    --md-comp-split-button-medium-leading-button-leading-space
+  );
+  --_lead-end: var(--md-comp-split-button-medium-leading-button-trailing-space);
+  --_trail-start: var(
+    --md-comp-split-button-medium-trailing-button-leading-space
+  );
+  --_trail-end: var(
+    --md-comp-split-button-medium-trailing-button-trailing-space
+  );
+  --_chevron: var(--md-comp-split-button-medium-trailing-icon-size);
+}
+
+.l {
+  gap: var(--md-comp-split-button-large-between-space);
+  --_i-rest: var(--md-comp-split-button-large-inner-corner-corner-size);
+  --_i-hover: var(
+    --md-comp-split-button-large-inner-hovered-corner-corner-size
+  );
+  --_i-press: var(
+    --md-comp-split-button-large-inner-pressed-corner-corner-size
+  );
+  --_lead-start: var(--md-comp-split-button-large-leading-button-leading-space);
+  --_lead-end: var(--md-comp-split-button-large-leading-button-trailing-space);
+  --_trail-start: var(
+    --md-comp-split-button-large-trailing-button-leading-space
+  );
+  --_trail-end: var(
+    --md-comp-split-button-large-trailing-button-trailing-space
+  );
+  --_chevron: var(--md-comp-split-button-large-trailing-icon-size);
+}
+
+.xl {
+  gap: var(--md-comp-split-button-x-large-between-space);
+  --_i-rest: var(--md-comp-split-button-x-large-inner-corner-corner-size);
+  --_i-hover: var(
+    --md-comp-split-button-x-large-inner-hovered-corner-corner-size
+  );
+  --_i-press: var(
+    --md-comp-split-button-x-large-inner-pressed-corner-corner-size
+  );
+  --_lead-start: var(
+    --md-comp-split-button-x-large-leading-button-leading-space
+  );
+  --_lead-end: var(
+    --md-comp-split-button-x-large-leading-button-trailing-space
+  );
+  --_trail-start: var(
+    --md-comp-split-button-x-large-trailing-button-leading-space
+  );
+  --_trail-end: var(
+    --md-comp-split-button-x-large-trailing-button-trailing-space
+  );
+  --_chevron: var(--md-comp-split-button-x-large-trailing-icon-size);
+}
+
+/* Both halves: round outer corners, inner ones that widen on hover and
+   press, from the shapes in SplitButtonDefaults. */
+.leading.leading,
+.trailing.trailing {
+  --_i: var(--_i-rest);
+  --_round: calc(var(--_height) / 2);
+  /* LeadingButtonMinWidth, for both halves. */
+  min-width: 48px;
+}
+
+@media (hover: hover) {
+  .leading.leading:hover,
+  .trailing.trailing:hover {
+    --_i: var(--_i-hover);
+  }
+}
+
+.leading.leading:active,
+.trailing.trailing:active {
+  --_i: var(--_i-press);
+}
+
+.leading.leading,
+.split:dir(rtl) .trailing.trailing {
+  --_shape: var(--_round) var(--_i) var(--_i) var(--_round);
+  --_pressed: var(--_shape);
+}
+
+.trailing.trailing,
+.split:dir(rtl) .leading.leading {
+  --_shape: var(--_i) var(--_round) var(--_round) var(--_i);
+  --_pressed: var(--_shape);
+}
+
+.leading.leading {
+  --_leading: var(--_lead-start);
+  --_trailing: var(--_lead-end);
+}
+
+.trailing.trailing {
+  --_leading: var(--_trail-start);
+  --_trailing: var(--_trail-end);
+  --_icon-size: var(--_chevron);
+}
+
+/* With its menu open the trailing half is a circle (TrailingCheckedShape)
+   and keeps the pressed state layer (TrailingButtonStateLayerAlpha). */
+.trailing.trailing[aria-expanded='true'] {
+  --_shape: var(--_round);
+  --_pressed: var(--_round);
+}
+
+.trailing[aria-expanded='true']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  pointer-events: none;
+}
+
+/* The chevron turns over when the menu opens, as in Compose's samples. */
+.chevron {
+  transition: rotate var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+
+.trailing[aria-expanded='true'] .chevron {
+  rotate: 180deg;
+}

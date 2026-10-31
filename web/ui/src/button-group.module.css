@@ -1,0 +1,45 @@
+/* M3 Expressive button groups. A group's items are the package's buttons
+   and icon buttons; connected groups reshape them through the private
+   --_shape properties those components read, using doubled classes to
+   outrank their own shape rules. Citations are to ButtonGroup.kt at the
+   pinned commit. */
+
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-comp-button-group-small-between-space);
+}
+
+.connected {
+  gap: var(--md-comp-connected-button-group-small-between-space);
+}
+
+/* ButtonGroupDefaults.connected*ButtonShapes: round outer corners, small
+   inner ones that tighten when pressed, and fully round when checked. */
+.connected.connected > * {
+  --_i: var(--md-comp-connected-button-group-small-inner-corner-corner-size);
+  --_ip: var(
+    --md-comp-connected-button-group-small-pressed-inner-corner-corner-size
+  );
+  --_round: calc(var(--_height) / 2);
+  --_shape: var(--_i);
+  --_pressed: var(--_ip);
+  --_shape-selected: var(--_round);
+}
+
+.connected.connected > :first-child,
+.connected.connected:dir(rtl) > :last-child {
+  --_shape: var(--_round) var(--_i) var(--_i) var(--_round);
+  --_pressed: var(--_round) var(--_ip) var(--_ip) var(--_round);
+}
+
+.connected.connected > :last-child,
+.connected.connected:dir(rtl) > :first-child {
+  --_shape: var(--_i) var(--_round) var(--_round) var(--_i);
+  --_pressed: var(--_ip) var(--_round) var(--_round) var(--_ip);
+}
+
+.connected.connected > :only-child {
+  --_shape: var(--_round);
+  --_pressed: var(--_round);
+}

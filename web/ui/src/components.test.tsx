@@ -1,6 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
-import { Button, Dialog, ExtendedFab, Fab, IconButton, TextField } from '.'
+import {
+  Button,
+  ButtonGroup,
+  ConnectedButtonGroup,
+  Dialog,
+  ExtendedFab,
+  Fab,
+  IconButton,
+  SplitButton,
+  TextField
+} from '.'
 
 it('renders button variants and passes props through', () => {
   render(
@@ -173,4 +183,97 @@ it('renders its child as the icon button with asChild', () => {
   const link = screen.getByRole('link', { name: 'Play Arrival' })
   expect(link.getAttribute('href')).toBe('/play/arrival')
   expect(link.querySelector('[translate="no"]')!.textContent).toBe('play_arrow')
+})
+
+it('groups buttons under a label', () => {
+  render(
+    <ConnectedButtonGroup label="View">
+      <Button selected>Grid</Button>
+      <Button selected={false}>List</Button>
+    </ConnectedButtonGroup>
+  )
+  const group = screen.getByRole('group', { name: 'View' })
+  expect(group.classList).toContain('md-comp-connected-button-group-small')
+  expect(
+    screen.getByRole('button', { name: 'Grid' }).getAttribute('aria-pressed')
+  ).toBe('true')
+})
+
+describe('pressing an item in a button group', () => {
+  // jsdom has no layout or Web Animations; give each item a width and
+  // record what it would animate to.
+  const targets = new Map<string, string>()
+  beforeEach(() => {
+    targets.clear()
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 100
+    } as DOMRect)
+    HTMLElement.prototype.animate = vi.fn(function (
+      this: HTMLElement,
+      frames: Keyframe[]
+    ) {
+      targets.set(this.textContent!, String(frames.at(-1)!.width))
+      return {
+        cancel() {},
+        finished: Promise.resolve()
+      } as unknown as Animation
+    })
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+    delete (HTMLElement.prototype as Partial<HTMLElement>).animate
+  })
+
+  function renderGroup() {
+    render(
+      <ButtonGroup>
+        <Button>One</Button>
+        <Button>Two</Button>
+        <Button>Three</Button>
+      </ButtonGroup>
+    )
+  }
+
+  it('widens a middle item by 15% from both neighbours', () => {
+    renderGroup()
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Two' }), {
+      button: 0
+    })
+    expect(Object.fromEntries(targets)).toEqual({
+      One: '92.5px',
+      Two: '115px',
+      Three: '92.5px'
+    })
+  })
+
+  it('widens an end item from its one neighbour', () => {
+    renderGroup()
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'One' }), {
+      button: 0
+    })
+    expect(Object.fromEntries(targets)).toEqual({ One: '115px', Two: '85px' })
+  })
+})
+
+it('splits an action from its menu button', () => {
+  const { rerender } = render(
+    <SplitButton icon="edit" menuLabel="More edit options" menuOpen={false}>
+      Edit
+    </SplitButton>
+  )
+  expect(
+    screen.getByRole('button', { name: 'Edit' }).hasAttribute('aria-expanded')
+  ).toBe(false)
+  const menu = screen.getByRole('button', { name: 'More edit options' })
+  expect(menu.getAttribute('aria-haspopup')).toBe('menu')
+  expect(menu.getAttribute('aria-expanded')).toBe('false')
+  rerender(
+    <SplitButton icon="edit" menuLabel="More edit options" menuOpen>
+      Edit
+    </SplitButton>
+  )
+  expect(menu.getAttribute('aria-expanded')).toBe('true')
+  expect(menu.closest('[role=group]')!.classList).toContain(
+    'md-comp-split-button-small'
+  )
 })

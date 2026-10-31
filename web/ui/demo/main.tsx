@@ -4,6 +4,9 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   Button,
+  ButtonGroup,
+  ConnectedButtonGroup,
+  SplitButton,
   type ButtonProps,
   type ButtonSize,
   ExtendedFab,
@@ -48,6 +51,43 @@ function IconToggle(props: Omit<IconButtonProps, 'selected' | 'onClick'>) {
 }
 
 const iconVariants = ['standard', 'filled', 'tonal', 'outlined'] as const
+
+function Choice({ size }: { size: ButtonSize }) {
+  const [view, setView] = useState('Week')
+  return (
+    <ConnectedButtonGroup label={`View, ${size}`}>
+      {['Day', 'Week', 'Month'].map((v) => (
+        <Button
+          key={v}
+          variant="tonal"
+          size={size}
+          selected={view === v}
+          onClick={() => setView(v)}
+        >
+          {v}
+        </Button>
+      ))}
+    </ConnectedButtonGroup>
+  )
+}
+
+function Split(props: {
+  variant: 'filled' | 'tonal' | 'elevated' | 'outlined'
+  size: ButtonSize
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <SplitButton
+      {...props}
+      icon="edit"
+      menuLabel={`More edit options, ${props.variant} ${props.size}`}
+      menuOpen={open}
+      onMenuClick={() => setOpen(!open)}
+    >
+      Edit
+    </SplitButton>
+  )
+}
 
 function Demo() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -185,6 +225,45 @@ function Demo() {
               <ExtendedFab key={size} color={color} size={size} icon="edit">
                 Extended {size}
               </ExtendedFab>
+            ))}
+          </div>
+        ))}
+      </section>
+
+      <section aria-labelledby="groups">
+        <h2 id="groups">Button groups</h2>
+        <div className="row" data-testid="group-buttons">
+          <ButtonGroup label="Formatting">
+            <Button variant="tonal">Bold</Button>
+            <Button variant="tonal">Italic</Button>
+            <Button variant="tonal">Underline</Button>
+          </ButtonGroup>
+          <ButtonGroup label="Transport">
+            <IconButton variant="tonal" icon="skip_previous" label="Previous" />
+            <IconButton
+              variant="filled"
+              width="wide"
+              icon="play_arrow"
+              label="Play"
+            />
+            <IconButton variant="tonal" icon="skip_next" label="Next" />
+          </ButtonGroup>
+        </div>
+        {(['xs', 's', 'm'] as const).map((size) => (
+          <div className="row" key={size} data-testid={`connected-${size}`}>
+            <span className="label">connected {size}</span>
+            <Choice size={size} />
+          </div>
+        ))}
+      </section>
+
+      <section aria-labelledby="splits">
+        <h2 id="splits">Split buttons</h2>
+        {toggleVariants.map((variant) => (
+          <div className="row" key={variant} data-testid={`splits-${variant}`}>
+            <span className="label">{variant}</span>
+            {sizes.map((size) => (
+              <Split key={size} variant={variant} size={size} />
             ))}
           </div>
         ))}

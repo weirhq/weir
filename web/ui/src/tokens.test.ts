@@ -366,3 +366,34 @@ describe('icon button and FAB token assumptions', () => {
     expect(differing).toEqual([])
   })
 })
+
+// button-group.module.css and split-button.module.css rely on these.
+describe('group and split button token assumptions', () => {
+  const props = (name: string) =>
+    Object.fromEntries(
+      tokens.objects.get(name)!.props.map((p) => [p.name, p.expr])
+    )
+
+  it('connected groups round their outer corners and selected buttons fully', () => {
+    const p = props('ConnectedButtonGroupSmallTokens')
+    expect(p.ContainerShape).toBe('ShapeKeyTokens.CornerFull')
+    expect(parseFloat(p.SelectedInnerCornerCornerSizePercent!)).toBe(50)
+  })
+
+  it.each([
+    'SplitButtonXSmallTokens',
+    'SplitButtonSmallTokens',
+    'SplitButtonMediumTokens',
+    'SplitButtonLargeTokens',
+    'SplitButtonXLargeTokens'
+  ])(
+    '%s rounds its outer corners and its open trailing button fully',
+    (name) => {
+      const p = props(name)
+      expect(p.ContainerShape).toBe('ShapeKeyTokens.CornerFull')
+      expect(parseFloat(p.TrailingInnerSelectedCornerCornerSizePercent!)).toBe(
+        50
+      )
+    }
+  )
+})

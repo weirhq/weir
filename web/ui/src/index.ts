@@ -5,6 +5,12 @@ export {
   type IconButtonSize
 } from './icon-button'
 export { ExtendedFab, Fab, type ExtendedFabProps, type FabProps } from './fab'
+export {
+  ButtonGroup,
+  ConnectedButtonGroup,
+  type ButtonGroupProps
+} from './button-group'
+export { SplitButton, type SplitButtonProps } from './split-button'
 export { TextField, type TextFieldProps } from './text-field'
 export { Dialog, type DialogProps } from './dialog'
 export { Icon, type IconProps } from './icon'

@@ -9,13 +9,16 @@ import {
 import { FakeBrowse } from '../test/fakeBrowse'
 import { renderSignedIn } from '../test/render'
 
+// List items keep their parts apart with spaces, so they read as words.
+const text = (el: Element) => el.textContent!.replace(/\s+/g, ' ').trim()
+
 it('lists playlists, and creates one', async () => {
   const user = userEvent.setup()
   const { browse } = renderSignedIn('/playlists')
   const rainy = await screen.findByRole('link', { name: /Rainy day/ })
-  expect(rainy.textContent).toBe('Rainy day3 items')
-  expect(screen.getByRole('link', { name: /Road trip/ }).textContent).toBe(
-    'Road trip1 item · shared by Ana'
+  expect(text(rainy)).toBe('Rainy day 3 items')
+  expect(text(screen.getByRole('link', { name: /Road trip/ }))).toBe(
+    'Road trip 1 item · shared by Ana'
   )
 
   await user.type(screen.getByLabelText('New playlist'), 'Late night')
@@ -42,8 +45,12 @@ it('plays, edits, shares and deletes your own playlist', async () => {
   expect(
     within(list)
       .getAllByRole('link', { name: /^(?!Play)/ })
-      .map((a) => a.textContent)
-  ).toEqual(['An Eagle in Your Mind', 'Arrival', 'The Color of the Fire'])
+      .map(text)
+  ).toEqual([
+    '1 An Eagle in Your Mind Track',
+    '2 Arrival Film',
+    '3 The Color of the Fire Track'
+  ])
 
   // Only the tracks go to the mini-player; the film plays full screen.
   await user.click(screen.getByRole('button', { name: 'Play all tracks' }))
@@ -98,7 +105,7 @@ it('adds an item to a playlist from its page, or to a new one', async () => {
   // Only your own playlists take additions.
   expect(
     (await within(panel).findAllByRole('button', { name: /day|trip/ })).map(
-      (b) => b.textContent
+      text
     )
   ).toEqual(['Rainy day'])
   await user.click(within(panel).getByRole('button', { name: 'Rainy day' }))

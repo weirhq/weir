@@ -66,8 +66,11 @@ it('walks from a show to its episodes, with breadcrumbs back', async () => {
   await user.click(await screen.findByText('Season 1'))
   await screen.findByRole('heading', { name: 'Episodes' })
   await screen.findByText('Half Loop')
-  const episodes = screen.getAllByRole('listitem').map((li) => li.textContent)
-  expect(episodes).toEqual(['1Good News About Hell✓', '2Half Loop'])
+  // List items keep their parts apart with spaces, so they read as words.
+  const episodes = screen
+    .getAllByRole('listitem')
+    .map((li) => li.textContent!.replace(/\s+/g, ' ').trim())
+  expect(episodes).toEqual(['1 Good News About Hell ✓', '2 Half Loop'])
 
   await user.click(screen.getByText('Half Loop'))
   await screen.findByRole('heading', { name: 'Half Loop', level: 1 })

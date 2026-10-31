@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
-import { Button, TextField } from '@weirhq/m3e'
+import { Button, List, ListItem, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import cards from '../components/Cards.module.css'
 import { errorMessage } from '../errors'
@@ -47,27 +47,25 @@ export function PlaylistsPage() {
           No playlists yet. Add films, episodes or tracks from their pages.
         </p>
       )}
-      <ul className={styles.list}>
+      <List className={styles.list}>
         {playlists.data?.map((p) => (
-          <li key={p.id}>
-            <Link
-              to="/playlist/$playlistId"
-              params={{ playlistId: p.id }}
-              className={styles.row}
-            >
-              <span className={styles.name}>{p.name}</span>
-              <span className={styles.meta}>
-                {count(p.itemCount)}
-                {p.ownerId !== session.user?.id
-                  ? ` · shared by ${p.ownerName}`
-                  : p.shared
-                    ? ' · shared'
-                    : ''}
-              </span>
-            </Link>
-          </li>
+          <ListItem
+            key={p.id}
+            asChild
+            headline={p.name}
+            supporting={
+              count(p.itemCount) +
+              (p.ownerId !== session.user?.id
+                ? ` · shared by ${p.ownerName}`
+                : p.shared
+                  ? ' · shared'
+                  : '')
+            }
+          >
+            <Link to="/playlist/$playlistId" params={{ playlistId: p.id }} />
+          </ListItem>
         ))}
-      </ul>
+      </List>
     </section>
   )
 }

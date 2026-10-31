@@ -1,0 +1,261 @@
+/* M3 lists. Following Compose (ListItem.kt and ListItemDefaults.kt at the
+   pinned commit), a plain item has the classic layout (8dp above and
+   below, 12dp at three lines, 16dp gaps), and an item you can press has
+   the Expressive one: 10dp above and below, 12dp gaps, a shape that
+   morphs as it's hovered, pressed, focused or selected (FastSpatial), and
+   selected colours. Heights follow the line count: 56, 72 or 88dp. */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ListItemDefaults.segmentedShapes, SegmentedGap apart. */
+.segmented {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-comp-list-segmented-gap);
+}
+
+.item {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--md-comp-list-item-one-line-container-height);
+  padding: 8px var(--md-comp-list-item-trailing-space) 8px
+    var(--md-comp-list-item-leading-space);
+  border-radius: var(--_shape, 0);
+  background: var(--_container, var(--md-comp-list-item-container-color));
+  color: var(--md-comp-list-item-label-text-color);
+  --_icon: var(--md-comp-list-item-leading-icon-color);
+  --_trailing-icon: var(--md-comp-list-item-trailing-icon-color);
+  --_supporting: var(--md-comp-list-item-supporting-text-color);
+  --_overline: var(--md-comp-list-item-overline-color);
+  --_trailing-text: var(--md-comp-list-item-trailing-supporting-text-color);
+  --md-icon-size: var(--md-comp-list-item-leading-icon-size);
+}
+
+.twoLine {
+  min-height: var(--md-comp-list-item-two-line-container-height);
+}
+
+/* Three lines: taller, top-aligned, 12dp above and below. */
+.threeLine {
+  align-items: flex-start;
+  min-height: var(--md-comp-list-item-three-line-container-height);
+  padding-block: 12px;
+}
+
+.segmented > .item {
+  background: var(
+    --_container,
+    var(--md-comp-list-item-segmented-container-color)
+  );
+}
+
+/* The parts. The action, when there is one, holds everything but the
+   trailing content, and its ::after covers the item. */
+.action {
+  display: flex;
+  flex: 1;
+  align-items: inherit;
+  gap: inherit;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.action:focus-visible {
+  outline: none;
+}
+
+.leading {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--_icon);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.overline {
+  color: var(--_overline);
+  font-family: var(--md-comp-list-item-overline-font);
+  font-size: var(--md-comp-list-item-overline-size);
+  line-height: var(--md-comp-list-item-overline-line-height);
+  font-weight: var(--md-comp-list-item-overline-weight);
+  letter-spacing: var(--md-comp-list-item-overline-tracking);
+}
+
+.headline {
+  overflow: hidden;
+  font-family: var(--md-comp-list-item-label-text-font);
+  font-size: var(--md-comp-list-item-label-text-size);
+  line-height: var(--md-comp-list-item-label-text-line-height);
+  font-weight: var(--md-comp-list-item-label-text-weight);
+  letter-spacing: var(--md-comp-list-item-label-text-tracking);
+  text-overflow: ellipsis;
+}
+
+.supporting {
+  color: var(--_supporting);
+  font-family: var(--md-comp-list-item-supporting-text-font);
+  font-size: var(--md-comp-list-item-supporting-text-size);
+  line-height: var(--md-comp-list-item-supporting-text-line-height);
+  font-weight: var(--md-comp-list-item-supporting-text-weight);
+  letter-spacing: var(--md-comp-list-item-supporting-text-tracking);
+}
+
+.trailingText {
+  flex: none;
+  color: var(--_trailing-text);
+  font-family: var(--md-comp-list-item-trailing-supporting-text-font);
+  font-size: var(--md-comp-list-item-trailing-supporting-text-size);
+  line-height: var(--md-comp-list-item-trailing-supporting-text-line-height);
+  font-weight: var(--md-comp-list-item-trailing-supporting-text-weight);
+  letter-spacing: var(--md-comp-list-item-trailing-supporting-text-tracking);
+}
+
+/* Trailing content sits above the action, so its buttons get presses. */
+.trailing {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  color: var(--_trailing-icon);
+}
+
+/* Interactive: the Expressive item. */
+
+.interactive {
+  gap: var(--md-comp-list-item-between-space);
+  padding-block: var(--md-comp-list-item-top-space)
+    var(--md-comp-list-item-bottom-space);
+  --_rest: var(--md-comp-list-item-container-expressive-shape);
+  --_shape: var(--_rest);
+  --md-icon-size: var(--md-comp-list-item-leading-icon-expressive-size);
+  transition:
+    border-radius var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    background-color var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects);
+}
+
+.interactive.threeLine {
+  padding-block: var(--md-comp-list-item-top-space)
+    var(--md-comp-list-item-bottom-space);
+}
+
+/* In a segmented list the ends round outward; the states below still
+   take their own shapes, as Compose's segmentedShapes leaves them. */
+.segmented > .interactive:first-child {
+  --_rest: var(--md-comp-list-container-shape)
+    var(--md-comp-list-container-shape)
+    var(--md-comp-list-item-container-expressive-shape)
+    var(--md-comp-list-item-container-expressive-shape);
+}
+
+.segmented > .interactive:last-child {
+  --_rest: var(--md-comp-list-item-container-expressive-shape)
+    var(--md-comp-list-item-container-expressive-shape)
+    var(--md-comp-list-container-shape) var(--md-comp-list-container-shape);
+}
+
+.segmented > .interactive:only-child {
+  --_rest: var(--md-comp-list-container-shape);
+}
+
+@media (hover: hover) {
+  .interactive:hover {
+    --_shape: var(--md-comp-list-item-hovered-container-expressive-shape);
+  }
+}
+
+.interactive:has(.action:focus-visible) {
+  --_shape: var(--md-comp-list-item-focused-container-expressive-shape);
+  outline: 3px solid var(--md-comp-list-focus-indicator-color);
+  outline-offset: -3px;
+}
+
+.interactive:has(.action:active) {
+  --_shape: var(--md-comp-list-item-pressed-container-expressive-shape);
+}
+
+.selected {
+  --_shape: var(--md-comp-list-item-selected-container-expressive-shape);
+  --_container: var(--md-comp-list-item-selected-container-color);
+  color: var(--md-comp-list-item-selected-label-text-color);
+  --_icon: var(--md-comp-list-item-selected-leading-icon-color);
+  --_trailing-icon: var(--md-comp-list-item-selected-trailing-icon-color);
+  --_supporting: var(--md-comp-list-item-selected-supporting-text-color);
+  --_overline: var(--md-comp-list-item-selected-overline-color);
+  --_trailing-text: var(
+    --md-comp-list-item-selected-trailing-supporting-text-color
+  );
+}
+
+/* Hovered, pressed and focused selected items keep the selected shape. */
+.selected.selected:is(:hover, :has(.action:active, .action:focus-visible)) {
+  --_shape: var(--md-comp-list-item-selected-container-expressive-shape);
+}
+
+.interactive:has(.action:disabled, .action[aria-disabled='true']) {
+  --_shape: var(--md-comp-list-item-disabled-container-expressive-shape);
+  color: color-mix(
+    in srgb,
+    var(--md-comp-list-item-disabled-label-text-color)
+      calc(var(--md-comp-list-item-disabled-label-text-opacity) * 100%),
+    transparent
+  );
+  --_icon: color-mix(
+    in srgb,
+    var(--md-comp-list-item-disabled-leading-icon-color)
+      calc(var(--md-comp-list-item-disabled-leading-icon-opacity) * 100%),
+    transparent
+  );
+  --_supporting: color-mix(
+    in srgb,
+    var(--md-comp-list-item-disabled-supporting-text-color)
+      calc(var(--md-comp-list-item-disabled-supporting-text-opacity) * 100%),
+    transparent
+  );
+}
+
+.interactive:has(.action:disabled) .action {
+  cursor: default;
+}
+
+/* ListTokens' divider insets. */
+.divider {
+  height: var(--md-comp-divider-thickness);
+  margin: var(--md-comp-list-divider-top-space)
+    var(--md-comp-list-divider-trailing-space)
+    var(--md-comp-list-divider-bottom-space)
+    var(--md-comp-list-divider-leading-space);
+  border: 0;
+  background: var(--md-comp-divider-color);
+}

@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
-import { Button, IconButton, Switch, TextField } from '@weirhq/m3e'
+import {
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  Switch,
+  TextField
+} from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import cards from '../components/Cards.module.css'
 import { errorMessage } from '../errors'
@@ -160,44 +167,46 @@ export function PlaylistPage() {
           {errorMessage(failed)}
         </p>
       )}
-      <ol className={styles.list}>
+      <List ordered className={styles.list}>
         {items.map((item, i) => (
-          <li key={`${i}-${item.id}`} className={styles.item}>
-            <span className={styles.number}>{i + 1}</span>
-            <Link
-              to="/item/$itemId"
-              params={{ itemId: item.id }}
-              className={styles.name}
-            >
-              {item.title}
-            </Link>
-            <span className={styles.meta}>{kindNames[item.kind]}</span>
-            {item.kind === ItemKind.TRACK ? (
-              <IconButton
-                icon="play_arrow"
-                label={`Play ${item.title}`}
-                onClick={() => playFrom(item)}
-              />
-            ) : (
-              <IconButton
-                asChild
-                icon="play_arrow"
-                label={`Play ${item.title}`}
-              >
-                <Link to="/play/$itemId" params={{ itemId: item.id }} />
-              </IconButton>
-            )}
-            {owned && (
-              <IconButton
-                icon="close"
-                label={`Remove ${item.title}`}
-                disabled={update.isPending}
-                onClick={() => without(i)}
-              />
-            )}
-          </li>
+          <ListItem
+            key={`${i}-${item.id}`}
+            asChild
+            leading={<span className={styles.number}>{i + 1}</span>}
+            headline={item.title}
+            supporting={kindNames[item.kind]}
+            trailing={
+              <>
+                {item.kind === ItemKind.TRACK ? (
+                  <IconButton
+                    icon="play_arrow"
+                    label={`Play ${item.title}`}
+                    onClick={() => playFrom(item)}
+                  />
+                ) : (
+                  <IconButton
+                    asChild
+                    icon="play_arrow"
+                    label={`Play ${item.title}`}
+                  >
+                    <Link to="/play/$itemId" params={{ itemId: item.id }} />
+                  </IconButton>
+                )}
+                {owned && (
+                  <IconButton
+                    icon="close"
+                    label={`Remove ${item.title}`}
+                    disabled={update.isPending}
+                    onClick={() => without(i)}
+                  />
+                )}
+              </>
+            }
+          >
+            <Link to="/item/$itemId" params={{ itemId: item.id }} />
+          </ListItem>
         ))}
-      </ol>
+      </List>
     </section>
   )
 }

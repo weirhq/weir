@@ -75,3 +75,27 @@ h2 {
   gap: 16px;
   width: min(320px, 100%);
 }
+
+.lists {
+  align-items: flex-start;
+}
+
+.lists > ul {
+  width: min(320px, 100%);
+}
+
+.lists > ul[aria-label='Segmented'] {
+  padding: 8px;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}

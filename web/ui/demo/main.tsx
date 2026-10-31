@@ -18,6 +18,9 @@ import {
   IconButton,
   type IconButtonProps,
   InputChip,
+  List,
+  ListDivider,
+  ListItem,
   Menu,
   MenuDivider,
   MenuItem,
@@ -275,6 +278,63 @@ function Menus() {
           disabled
         />
       </div>
+    </div>
+  )
+}
+
+function Lists() {
+  const [picked, setPicked] = useState('Wi-Fi')
+  const [seg, setSeg] = useState('Week')
+  const avatar = (
+    <span className="avatar" aria-hidden>
+      A
+    </span>
+  )
+  return (
+    <div className="row lists">
+      <List aria-label="Plain" data-testid="list-plain">
+        <ListItem leading="settings" headline="One line" trailingText="100+" />
+        <ListItem
+          leading={avatar}
+          headline="Two lines"
+          supporting="Supporting text"
+          trailing={<IconButton icon="more_vert" label="More" />}
+        />
+        <ListDivider />
+        <ListItem
+          overline="Overline"
+          headline="Three lines"
+          supporting="Supporting text"
+        />
+        <ListItem
+          headline="Three lines"
+          supporting="Supporting text that wraps onto a second line"
+          threeLine
+        />
+      </List>
+      <List aria-label="Interactive" data-testid="list-interactive">
+        {['Wi-Fi', 'Bluetooth', 'Cast'].map((n) => (
+          <ListItem
+            key={n}
+            leading="settings"
+            headline={n}
+            supporting={n === picked ? 'Selected' : undefined}
+            selected={n === picked}
+            onClick={() => setPicked(n)}
+          />
+        ))}
+        <ListItem headline="Disabled" disabled onClick={() => {}} />
+      </List>
+      <List aria-label="Segmented" segmented data-testid="list-segmented">
+        {['Day', 'Week', 'Month'].map((n) => (
+          <ListItem
+            key={n}
+            headline={n}
+            selected={n === seg}
+            onClick={() => setSeg(n)}
+          />
+        ))}
+      </List>
     </div>
   )
 }
@@ -605,6 +665,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="lists">
+        <h2 id="lists">Lists</h2>
+        <Lists />
       </section>
 
       <section aria-labelledby="links">

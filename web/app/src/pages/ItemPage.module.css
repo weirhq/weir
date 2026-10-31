@@ -101,37 +101,11 @@
   padding-left: 20px;
 }
 
-.tracks {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.trackRow {
-  display: flex;
-  align-items: center;
-  border-radius: var(--md-sys-shape-corner-medium);
-}
-.trackRow[aria-current='true'] {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
-.track {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 40px 1fr auto;
-  align-items: center;
-  gap: 16px;
-  min-height: 56px;
-  padding: 0 16px;
-  border-radius: var(--md-sys-shape-corner-medium);
-  color: inherit;
-  text-decoration: none;
-}
-.track:hover {
-  background: var(--md-sys-color-surface-container);
-}
+/* Track and episode numbers, in a column. */
 .trackNumber {
-  color: var(--md-sys-color-on-surface-variant);
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 @media (max-width: 720px) {

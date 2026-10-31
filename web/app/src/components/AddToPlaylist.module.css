@@ -23,29 +23,8 @@
 }
 
 .list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.choice {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 16px;
-  border: none;
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: none;
-  color: var(--md-sys-color-on-surface);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.choice:hover {
-  background: color-mix(
-    in srgb,
-    var(--md-sys-color-on-surface) 8%,
-    transparent
-  );
+  /* Items on the panel's own colour. */
+  --md-comp-list-item-container-color: transparent;
 }
 
 .create {

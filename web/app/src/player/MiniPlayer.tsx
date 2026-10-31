@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { IconButton } from '@weirhq/m3e'
+import { IconButton, List, ListItem } from '@weirhq/m3e'
 import { useState } from 'react'
 import { sized } from '../art'
 import { useQueue } from './queue'
@@ -27,20 +27,17 @@ export function MiniPlayer() {
   return (
     <section className={styles.bar} aria-label="Now playing">
       {showQueue && (
-        <ol className={styles.queue} aria-label="Queue">
+        <List ordered className={styles.queue} aria-label="Queue">
           {tracks.map((t, i) => (
-            <li key={`${i}-${t.id}`}>
-              <button
-                type="button"
-                className={styles.queueItem}
-                aria-current={i === index ? 'true' : undefined}
-                onClick={() => skipTo(i)}
-              >
-                {t.title}
-              </button>
-            </li>
+            <ListItem
+              key={`${i}-${t.id}`}
+              headline={t.title}
+              onClick={() => skipTo(i)}
+              selected={i === index}
+              aria-current={i === index ? 'true' : undefined}
+            />
           ))}
-        </ol>
+        </List>
       )}
       <div className={styles.row}>
         {track.posterUrl && (

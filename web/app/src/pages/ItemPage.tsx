@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
-import { Button, IconButton } from '@weirhq/m3e'
+import { Button, IconButton, List, ListItem } from '@weirhq/m3e'
 import { AddToPlaylist } from '../components/AddToPlaylist'
 import { PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'
@@ -235,32 +235,34 @@ function TrackList({
 }) {
   const playing = useQueue((q) => q.tracks[q.index]?.id)
   return (
-    <ol className={styles.tracks}>
+    <List ordered>
       {items.map((t, i) => (
-        <li
+        <ListItem
           key={t.id}
-          className={styles.trackRow}
+          asChild
+          leading={
+            <span className={styles.trackNumber}>{t.indexNumber || ''}</span>
+          }
+          headline={t.title}
+          trailingText={
+            t.userData?.watched && <span aria-label="Watched">✓</span>
+          }
+          trailing={
+            onPlay && (
+              <IconButton
+                icon="play_arrow"
+                label={`Play ${t.title}`}
+                onClick={() => onPlay(i)}
+              />
+            )
+          }
+          selected={t.id === playing}
           aria-current={t.id === playing ? 'true' : undefined}
         >
-          <Link
-            to="/item/$itemId"
-            params={{ itemId: t.id }}
-            className={styles.track}
-          >
-            <span className={styles.trackNumber}>{t.indexNumber || ''}</span>
-            <span className={styles.trackTitle}>{t.title}</span>
-            {t.userData?.watched && <span aria-label="Watched">✓</span>}
-          </Link>
-          {onPlay && (
-            <IconButton
-              icon="play_arrow"
-              label={`Play ${t.title}`}
-              onClick={() => onPlay(i)}
-            />
-          )}
-        </li>
+          <Link to="/item/$itemId" params={{ itemId: t.id }} />
+        </ListItem>
       ))}
-    </ol>
+    </List>
   )
 }
 

@@ -12,6 +12,9 @@ import {
   FilterChip,
   IconButton,
   InputChip,
+  List,
+  ListDivider,
+  ListItem,
   Menu,
   MenuItem,
   Radio,
@@ -534,5 +537,73 @@ describe('menus', () => {
     fireEvent.keyDown(box, { key: 'Enter' })
     fireEvent.click(await screen.findByRole('option', { name: 'Shows' }))
     expect(changed).toHaveBeenCalledWith('shows')
+  })
+})
+
+describe('List', () => {
+  it('lists plain items with their text in order', () => {
+    render(
+      <List aria-label="Tracks" ordered>
+        <ListItem
+          leading={<span>1</span>}
+          headline="Good News About Hell"
+          trailingText="57 min"
+        />
+        <ListDivider />
+        <ListItem headline="Half Loop" supporting="Season 1" />
+      </List>
+    )
+    const list = screen.getByRole('list', { name: 'Tracks' })
+    expect(list.tagName).toBe('OL')
+    expect(
+      screen
+        .getAllByRole('listitem')
+        .map((li) => li.textContent!.replace(/\s+/g, ' ').trim())
+    ).toEqual(['1 Good News About Hell 57 min', 'Half Loop Season 1'])
+    expect(screen.getByRole('separator')).toBeTruthy()
+  })
+
+  it('makes an item a button, marking the current one', () => {
+    const pick = vi.fn()
+    render(
+      <List>
+        <ListItem
+          headline="Track one"
+          onClick={pick}
+          selected
+          aria-current="true"
+        />
+      </List>
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Track one' }))
+    expect(pick).toHaveBeenCalledOnce()
+    expect(screen.getByRole('listitem').getAttribute('aria-current')).toBe(
+      'true'
+    )
+  })
+
+  it('puts the content in a link with asChild, and trailing buttons beside it', () => {
+    const play = vi.fn()
+    render(
+      <List>
+        <ListItem
+          asChild
+          headline="Arrival"
+          supporting="Film"
+          trailing={
+            <IconButton icon="play_arrow" label="Play Arrival" onClick={play} />
+          }
+        >
+          <a href="/item/arrival" />
+        </ListItem>
+      </List>
+    )
+    const link = screen.getByRole('link', { name: 'Arrival Film' })
+    expect(link.getAttribute('href')).toBe('/item/arrival')
+    // The button is beside the link, not inside it.
+    const button = screen.getByRole('button', { name: 'Play Arrival' })
+    expect(link.contains(button)).toBe(false)
+    fireEvent.click(button)
+    expect(play).toHaveBeenCalledOnce()
   })
 })

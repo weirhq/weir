@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, TextField } from '@weirhq/m3e'
+import { Button, List, ListItem, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../errors'
 import { appendToPlaylist, playlistsKey } from '../pages/playlists'
@@ -72,20 +72,16 @@ export function AddToPlaylist({ itemId }: { itemId: string }) {
       {open && (
         <div className={styles.panel} role="group" aria-label="Add to playlist">
           {own.length > 0 && (
-            <ul className={styles.list}>
+            <List className={styles.list}>
               {own.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className={styles.choice}
-                    disabled={add.isPending}
-                    onClick={() => add.mutate(p)}
-                  >
-                    {p.name}
-                  </button>
-                </li>
+                <ListItem
+                  key={p.id}
+                  headline={p.name}
+                  disabled={add.isPending}
+                  onClick={() => add.mutate(p)}
+                />
               ))}
-            </ul>
+            </List>
           )}
           <form className={styles.create} onSubmit={submit}>
             <TextField

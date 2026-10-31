@@ -5,3 +5,12 @@ This product includes design tokens from Jetpack Compose Material 3
 (tokens/androidx), developed by The Android Open Source Project and
 licensed under the Apache License, Version 2.0. The generated CSS in
 src/tokens.gen.css and src/tokens/ is derived from them.
+
+This product bundles two typefaces in src/fonts, unmodified as served by
+Google Fonts and licensed under the SIL Open Font License, Version 1.1,
+not the Apache License:
+
+- Google Sans Flex (google-sans-flex-OFL.txt). "Google Sans Flex" is a
+  trademark of Google LLC; see google-sans-flex-TRADEMARKS.md. Its use
+  here implies no affiliation with or endorsement by Google.
+- Roboto Flex (roboto-flex-OFL.txt).

@@ -6,12 +6,16 @@ load("@npm//web/ui:vitest/package_json.bzl", vitest = "bin")
 
 npm_link_all_packages(name = "node_modules")
 
-TOKEN_SOURCES = glob(["tokens/androidx/*"]) + ["tokens/m3.json"]
+TOKEN_SOURCES = glob(["tokens/androidx/*"]) + [
+    "src/fonts/PIN.json",
+    "tokens/m3.json",
+]
 
 # Node runs the TypeScript generator directly (type stripping).
 js_binary(
     name = "tokens_gen",
     data = TOKEN_SOURCES + [
+        "scripts/fonts.ts",
         "scripts/kotlin.ts",
         "scripts/spring.ts",
         ":node_modules/@material/material-color-utilities",
@@ -35,8 +39,11 @@ SRCS = glob(
         "src/**/*.ts",
         "src/**/*.tsx",
         "src/**/*.css",
+        # The bundled typefaces and their licences.
+        "src/fonts/*",
     ],
     exclude = [
+        "src/fonts/PIN.json",
         "src/**/*.test.*",
         "src/tokens.gen.css",
         "src/tokens/**",
@@ -58,6 +65,7 @@ npm_package(
 TEST_DATA = SRCS + TOKEN_SOURCES + glob(["src/**/*.test.*"]) + [
     "package.json",
     "scripts/androidx.ts",
+    "scripts/fonts.ts",
     "scripts/kotlin.ts",
     "scripts/spring.ts",
     "scripts/tokens.ts",

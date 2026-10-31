@@ -1,5 +1,5 @@
 {
-  "$comment": "Theme choices for scripts/tokens.ts; every other token comes from Jetpack Compose (tokens/androidx). Colour roles come from material-color-utilities with the 2025 (Expressive) spec. motion picks the expressive or standard spring scheme.",
+  "$comment": "Theme choices for scripts/tokens.ts; every other token comes from Jetpack Compose (tokens/androidx). Colour roles come from material-color-utilities with the 2025 (Expressive) spec. The typefaces are bundled (src/fonts): Google Sans Flex, then Roboto Flex for the Cyrillic and Greek it lacks. motion picks the expressive or standard spring scheme.",
   "color": {
     "seed": "#2e6f8e",
     "variant": "tonal-spot",
@@ -7,8 +7,8 @@
     "contrast": 0
   },
   "typeface": {
-    "brand": "'Roboto Flex', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif",
-    "plain": "'Roboto Flex', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    "brand": "'Google Sans Flex', 'Roboto Flex', system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "plain": "'Google Sans Flex', 'Roboto Flex', system-ui, -apple-system, 'Segoe UI', sans-serif"
   },
   "motion": "expressive"
 }

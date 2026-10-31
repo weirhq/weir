@@ -1,10 +1,12 @@
 // @vitest-environment node
 import { checkPin, readPin } from '../scripts/androidx'
+import { checkFontPin, readFontPin } from '../scripts/fonts'
 import { parseTokenFile } from '../scripts/kotlin'
 import { settleTime, springEasing } from '../scripts/spring'
 import {
   buildComponentCss,
   buildSystemCss,
+  fontFaces,
   colorRoles,
   componentObjects,
   kebab,
@@ -200,5 +202,37 @@ describe('component tokens', () => {
       )
       .filter((name) => !defined.has(name))
     expect([...new Set(missing)]).toEqual([])
+  })
+})
+
+describe('fonts', () => {
+  const pin = readFontPin()
+
+  it('match their pin', () => {
+    expect(checkFontPin()).toEqual([])
+  })
+
+  it('cover Latin and Vietnamese in Google Sans Flex, Cyrillic and Greek in Roboto Flex', () => {
+    expect(pin.faces.map((f) => `${f.family}: ${f.subset}`)).toEqual([
+      'Google Sans Flex: latin',
+      'Google Sans Flex: latin-ext',
+      'Google Sans Flex: vietnamese',
+      'Roboto Flex: cyrillic',
+      'Roboto Flex: cyrillic-ext',
+      'Roboto Flex: greek'
+    ])
+  })
+
+  it('get one @font-face each, loaded from the package', () => {
+    const css = fontFaces(pin)
+    expect(css.match(/@font-face/g)).toHaveLength(pin.faces.length)
+    for (const f of pin.faces)
+      expect(css).toContain(`src: url('./fonts/${f.file}') format('woff2');`)
+    expect(css).not.toContain('googleapis')
+    expect(css).not.toContain('gstatic')
+  })
+
+  it('are what the theme asks for first', () => {
+    expect(theme.typeface.plain).toMatch(/^'Google Sans Flex', 'Roboto Flex', /)
   })
 })

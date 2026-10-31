@@ -131,4 +131,5 @@ parts are Apache-2.0:
   clients and alternative engines can implement it without AGPL obligations.
 - The Material 3 Expressive components in `web/ui`, `@weirhq/m3e`
   ([license](web/ui/LICENSE)), so they can leave Weir as a library of their
-  own.
+  own. The typefaces bundled with them, Google Sans Flex and Roboto Flex,
+  are OFL-1.1 ([notice](web/ui/NOTICE)).

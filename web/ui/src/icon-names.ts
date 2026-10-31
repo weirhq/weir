@@ -3,6 +3,7 @@
 export const iconNames = [
   'add',
   'arrow_back',
+  'arrow_drop_down',
   'check',
   'close',
   'delete',

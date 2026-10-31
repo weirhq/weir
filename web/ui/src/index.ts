@@ -28,3 +28,11 @@ export {
   type InputChipProps
 } from './chip'
 export { Slider, type SliderProps } from './slider'
+export {
+  Menu,
+  MenuDivider,
+  MenuItem,
+  type MenuItemProps,
+  type MenuProps
+} from './menu'
+export { Select, type SelectOption, type SelectProps } from './select'

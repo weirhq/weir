@@ -1,0 +1,169 @@
+/* M3 menus, for Menu and Select. Compose's DropdownMenu (Menu.kt and
+   MenuDefaults.kt at the pinned commit) takes its container from
+   MenuTokens and its items from ListTokens; sizes not in the tokens are
+   Compose's: 8dp above and below the items, 48dp items with 12dp sides
+   and a 12dp icon gap, 112 to 280dp wide. It opens by scaling up from
+   0.8 (FastSpatial) as it fades in (FastEffects). */
+
+.menu {
+  box-sizing: border-box;
+  min-width: 112px;
+  max-width: 280px;
+  max-height: var(
+    --radix-dropdown-menu-content-available-height,
+    var(--radix-select-content-available-height)
+  );
+  overflow-y: auto;
+  padding-block: 8px;
+  border-radius: var(--md-comp-menu-container-shape);
+  background: var(--md-comp-menu-container-color);
+  box-shadow: var(--md-comp-menu-container-shadow);
+  transform-origin: var(
+    --radix-dropdown-menu-content-transform-origin,
+    var(--radix-select-content-transform-origin)
+  );
+  z-index: 10;
+}
+
+.menu[data-state='open'] {
+  animation:
+    scale-in var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.menu[data-state='closed'] {
+  animation:
+    scale-out var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    fade-out var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.8);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes scale-out {
+  to {
+    transform: scale(0.8);
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu[data-state] {
+    animation: none;
+  }
+}
+
+/* A select's menu is as wide as its field (exposedDropdownSize). */
+.select {
+  width: var(--radix-select-trigger-width);
+  max-width: none;
+}
+
+.item {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding-inline: 12px;
+  outline: none;
+  color: var(--md-comp-list-item-label-text-color);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  --md-icon-size: var(--md-comp-list-item-leading-icon-size);
+}
+
+.leading {
+  color: var(--md-comp-list-item-leading-icon-color);
+}
+
+.trailing {
+  margin-inline-start: auto;
+  color: var(--md-comp-list-item-trailing-icon-color);
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Radix moves focus to the highlighted item; its state layer, the item's
+   first child, shows it. */
+.item[data-highlighted] > :first-child::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+.item[data-disabled] {
+  cursor: default;
+  color: color-mix(
+    in srgb,
+    var(--md-comp-list-item-disabled-label-text-color)
+      calc(var(--md-comp-list-item-disabled-label-text-opacity) * 100%),
+    transparent
+  );
+}
+
+.item[data-disabled] .leading {
+  color: color-mix(
+    in srgb,
+    var(--md-comp-list-item-disabled-leading-icon-color)
+      calc(var(--md-comp-list-item-disabled-leading-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.item[data-disabled] .trailing {
+  color: color-mix(
+    in srgb,
+    var(--md-comp-list-item-disabled-trailing-icon-color)
+      calc(var(--md-comp-list-item-disabled-trailing-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+/* The chosen option in a select's menu (MenuTokens' selected item). */
+.item[data-state='checked'] {
+  background: var(--md-comp-menu-list-item-selected-container-color);
+  color: var(--md-comp-menu-list-item-selected-label-text-color);
+}
+
+.item[data-state='checked'] :is(.leading, .trailing) {
+  color: var(--md-comp-menu-list-item-selected-leading-trailing-icon-color);
+}
+
+.divider {
+  height: var(--md-comp-divider-thickness);
+  margin-block: 8px;
+  background: var(--md-comp-divider-color);
+}
+
+/* ExposedDropdownMenuDefaults.TrailingIcon: turned over while open, with
+   no animation. */
+.open {
+  rotate: 180deg;
+}

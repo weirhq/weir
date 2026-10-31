@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Dialog, TextField } from '@weirhq/m3e'
-import { useId, useState, type FormEvent } from 'react'
+import { Button, Dialog, Select, TextField } from '@weirhq/m3e'
+import { useState, type FormEvent } from 'react'
 import { librariesKey } from '../../components/AppShell'
 import { errorMessage } from '../../errors'
 import { JobState, type Job } from '../../gen/weir/api/v1alpha/admin_pb'
@@ -213,7 +213,6 @@ function LibraryForm({
   const [name, setName] = useState(initial?.name ?? '')
   const [kind, setKind] = useState(initial?.kind ?? LibraryKind.MOVIES)
   const [paths, setPaths] = useState(initial?.paths.join('\n') ?? '')
-  const kindId = useId()
   const list = paths
     .split('\n')
     .map((p) => p.trim())
@@ -233,25 +232,16 @@ function LibraryForm({
       />
       {/* The kind is fixed once a library exists. */}
       {!initial && (
-        <div className={styles.field}>
-          <label htmlFor={kindId} className={styles.label}>
-            Kind
-          </label>
-          <select
-            id={kindId}
-            className={styles.select}
-            value={kind}
-            onChange={(e) => setKind(Number(e.target.value) as LibraryKind)}
-          >
-            {[LibraryKind.MOVIES, LibraryKind.SHOWS, LibraryKind.MUSIC].map(
-              (k) => (
-                <option key={k} value={k}>
-                  {kindNames[k]}
-                </option>
-              )
-            )}
-          </select>
-        </div>
+        <Select
+          label="Kind"
+          value={String(kind)}
+          onValueChange={(v) => setKind(Number(v) as LibraryKind)}
+          options={[
+            LibraryKind.MOVIES,
+            LibraryKind.SHOWS,
+            LibraryKind.MUSIC
+          ].map((k) => ({ value: String(k), label: kindNames[k] }))}
+        />
       )}
       <TextField
         label="Folders, one per line"

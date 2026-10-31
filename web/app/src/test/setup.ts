@@ -7,6 +7,11 @@ configure({ asyncUtilTimeout: 5000 })
 // jsdom has no layout, so the router's scroll restoration has nothing to do.
 window.scrollTo = () => {}
 
+// Radix's menus and selects use browser APIs jsdom lacks.
+Element.prototype.scrollIntoView = () => {}
+Element.prototype.hasPointerCapture = () => false
+Element.prototype.releasePointerCapture = () => {}
+
 // jsdom has media elements but no media.
 window.HTMLMediaElement.prototype.play = () => Promise.resolve()
 window.HTMLMediaElement.prototype.load = () => {}

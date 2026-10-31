@@ -4,6 +4,7 @@ import {
   type InputHTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type RefObject,
   type TextareaHTMLAttributes
 } from 'react'
 import { Icon } from './icon'
@@ -12,7 +13,7 @@ import styles from './text-field.module.css'
 import './tokens/filled-text-field.gen.css'
 import './tokens/outlined-text-field.gen.css'
 
-type Common = {
+export type FieldCommonProps = {
   label?: string
   variant?: 'filled' | 'outlined'
   /** Help shown under the field. */
@@ -30,7 +31,7 @@ type Common = {
   suffix?: string
 }
 
-export type TextFieldProps = Common &
+export type TextFieldProps = FieldCommonProps &
   (
     | ({ multiline?: false } & InputHTMLAttributes<HTMLInputElement>)
     | ({ multiline: true } & TextareaHTMLAttributes<HTMLTextAreaElement>)
@@ -39,41 +40,58 @@ export type TextFieldProps = Common &
 const iconOf = (i: IconName | ReactElement) =>
   typeof i === 'string' ? <Icon name={i} /> : i
 
+/** What a field's control takes from the frame around it. */
+export type FieldControlProps = {
+  id: string
+  ref: RefObject<
+    (HTMLInputElement & HTMLTextAreaElement & HTMLButtonElement) | null
+  >
+  className: string
+  placeholder: string
+  'aria-invalid': true | undefined
+  'aria-describedby': string | undefined
+}
+
 /**
- * An M3 text field, filled or outlined (the default), with a label that
- * floats when the field is focused or has text. Set multiline for a
- * textarea.
+ * The parts of a text field around its control: label, icons, outline or
+ * indicator, and supporting text. TextField and Select draw their own
+ * control inside it.
+ * @internal
  */
-export function TextField(props: TextFieldProps) {
-  const {
-    label,
-    variant = 'outlined',
-    supportingText,
-    error,
-    leadingIcon,
-    trailingIcon,
-    prefix,
-    suffix,
-    multiline,
-    id,
-    className,
-    placeholder,
-    ...rest
-  } = props
+export function FieldFrame({
+  label,
+  variant = 'outlined',
+  supportingText,
+  error,
+  leadingIcon,
+  trailingIcon,
+  prefix,
+  suffix,
+  multiline,
+  id,
+  className,
+  placeholder,
+  onBoxPress,
+  boxControl = false,
+  control
+}: FieldCommonProps & {
+  multiline?: boolean
+  id?: string
+  className?: string
+  placeholder?: string
+  /** Presses on the box outside the control; focuses it by default. */
+  onBoxPress?: () => void
+  /** The control covers the whole box, as a select's trigger does. */
+  boxControl?: boolean
+  control: (props: FieldControlProps) => ReactNode
+}) {
   const fallbackId = useId()
   const inputId = id ?? fallbackId
   const helpId = `${inputId}-help`
   const help = error ?? supportingText
-  const input = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
-  const shared = {
-    id: inputId,
-    ref: input,
-    className: styles.input,
-    // :placeholder-shown tells an empty field, so there must be one.
-    placeholder: placeholder ?? ' ',
-    'aria-invalid': error ? true : undefined,
-    'aria-describedby': help ? helpId : undefined
-  }
+  const ref = useRef<
+    HTMLInputElement & HTMLTextAreaElement & HTMLButtonElement
+  >(null)
   return (
     <div
       className={[
@@ -83,6 +101,7 @@ export function TextField(props: TextFieldProps) {
         leadingIcon && styles.hasLeading,
         trailingIcon && styles.hasTrailing,
         multiline && styles.multiline,
+        boxControl && styles.boxControl,
         error && styles.error,
         `md-comp-${variant}-text-field`,
         className
@@ -92,14 +111,15 @@ export function TextField(props: TextFieldProps) {
     >
       <div
         className={styles.container}
-        // Clicks on the box, outside the input itself, focus it.
+        // Presses on the box, outside the control itself, focus it.
         onMouseDown={(e) => {
           if (
-            e.target !== input.current &&
+            e.target !== ref.current &&
             !(e.target as Element).closest('button')
           ) {
             e.preventDefault()
-            input.current?.focus()
+            ref.current?.focus()
+            onBoxPress?.()
           }
         }}
       >
@@ -114,17 +134,15 @@ export function TextField(props: TextFieldProps) {
           )}
           <div className={styles.row}>
             {prefix && <span className={styles.prefix}>{prefix}</span>}
-            {multiline ? (
-              <textarea
-                {...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)}
-                {...shared}
-              />
-            ) : (
-              <input
-                {...(rest as InputHTMLAttributes<HTMLInputElement>)}
-                {...shared}
-              />
-            )}
+            {control({
+              id: inputId,
+              ref,
+              className: styles.input!,
+              // :placeholder-shown tells an empty field, so there must be one.
+              placeholder: placeholder ?? ' ',
+              'aria-invalid': error ? true : undefined,
+              'aria-describedby': help ? helpId : undefined
+            })}
             {suffix && <span className={styles.suffix}>{suffix}</span>}
           </div>
         </div>
@@ -153,5 +171,47 @@ export function TextField(props: TextFieldProps) {
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * An M3 text field, filled or outlined (the default), with a label that
+ * floats when the field is focused or has text. Set multiline for a
+ * textarea.
+ */
+export function TextField(props: TextFieldProps) {
+  const {
+    label,
+    variant,
+    supportingText,
+    error,
+    leadingIcon,
+    trailingIcon,
+    prefix,
+    suffix,
+    multiline,
+    id,
+    className,
+    placeholder,
+    ...rest
+  } = props
+  return (
+    <FieldFrame
+      {...{ label, variant, supportingText, error, leadingIcon, trailingIcon }}
+      {...{ prefix, suffix, multiline, id, className, placeholder }}
+      control={(shared) =>
+        multiline ? (
+          <textarea
+            {...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)}
+            {...shared}
+          />
+        ) : (
+          <input
+            {...(rest as InputHTMLAttributes<HTMLInputElement>)}
+            {...shared}
+          />
+        )
+      }
+    />
   )
 }

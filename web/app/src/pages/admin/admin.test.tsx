@@ -58,7 +58,8 @@ it('lists libraries with their scans, and scans, edits, adds and deletes', async
       .getAttribute('aria-describedby')
   ).toBe(hint.id)
   await user.type(screen.getByLabelText('Name'), 'Concerts')
-  await user.selectOptions(screen.getByLabelText('Kind'), 'Music')
+  await user.click(screen.getByRole('combobox', { name: 'Kind' }))
+  await user.click(await screen.findByRole('option', { name: 'Music' }))
   await user.type(
     screen.getByLabelText('Folders, one per line'),
     '/media/concerts'
@@ -158,7 +159,8 @@ it('manages users and what members may do in each library', async () => {
     })
   ])
 
-  await user.selectOptions(within(ana).getByLabelText('Role'), 'Admin')
+  await user.click(within(ana).getByRole('combobox', { name: 'Role' }))
+  await user.click(await screen.findByRole('option', { name: 'Admin' }))
   await user.type(within(ana).getByLabelText('New password'), 'new secret')
   expect(
     within(ana).getByText('Setting a password signs them out on every device.')

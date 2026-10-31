@@ -458,3 +458,37 @@
 .field:has(.input:disabled) .container {
   cursor: default;
 }
+
+/* A control covering the whole box (Select's trigger): the box is its
+   containing block, and the label keeps its place. */
+.boxControl .body {
+  position: static;
+}
+
+.boxControl .input {
+  position: absolute;
+  inset: 0;
+  padding-inline: 16px;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.boxControl.hasLeading .input {
+  padding-inline-start: 52px;
+}
+
+.boxControl.hasTrailing .input {
+  padding-inline-end: 52px;
+}
+
+.boxControl:has(.input:disabled) .input {
+  cursor: default;
+}
+
+/* A select with nothing chosen shows its placeholder (Radix marks it). */
+.boxControl .input[data-placeholder] {
+  color: var(--_placeholder-color);
+}

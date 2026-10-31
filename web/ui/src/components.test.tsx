@@ -12,7 +12,10 @@ import {
   FilterChip,
   IconButton,
   InputChip,
+  Menu,
+  MenuItem,
   Radio,
+  Select,
   Slider,
   SplitButton,
   SuggestionChip,
@@ -478,5 +481,58 @@ describe('TextField', () => {
     expect(screen.getByText('#')).toBeTruthy()
     const field = input.closest('.md-comp-outlined-text-field')!
     expect(field.querySelector('[translate="no"]')!.textContent).toBe('search')
+  })
+})
+
+describe('menus', () => {
+  // Radix uses browser APIs jsdom lacks.
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = () => {}
+    Element.prototype.hasPointerCapture = () => false
+    Element.prototype.releasePointerCapture = () => {}
+  })
+
+  it('opens a menu from its trigger and runs the chosen item', async () => {
+    const renamed = vi.fn()
+    render(
+      <Menu trigger={<IconButton icon="more_vert" label="More" />}>
+        <MenuItem icon="edit" onSelect={renamed}>
+          Rename
+        </MenuItem>
+        <MenuItem icon="delete" disabled>
+          Delete
+        </MenuItem>
+      </Menu>
+    )
+    const trigger = screen.getByRole('button', { name: 'More' })
+    fireEvent.keyDown(trigger, { key: 'Enter' })
+    const item = await screen.findByRole('menuitem', { name: 'Rename' })
+    expect(
+      screen
+        .getByRole('menuitem', { name: 'Delete' })
+        .getAttribute('aria-disabled')
+    ).toBe('true')
+    fireEvent.click(item)
+    expect(renamed).toHaveBeenCalledOnce()
+  })
+
+  it('makes a select a labelled combobox showing its value', async () => {
+    const changed = vi.fn()
+    render(
+      <Select
+        label="Kind"
+        value="movies"
+        onValueChange={changed}
+        options={[
+          { value: 'movies', label: 'Films' },
+          { value: 'shows', label: 'Shows' }
+        ]}
+      />
+    )
+    const box = screen.getByRole('combobox', { name: 'Kind' })
+    expect(box.textContent).toBe('Films')
+    fireEvent.keyDown(box, { key: 'Enter' })
+    fireEvent.click(await screen.findByRole('option', { name: 'Shows' }))
+    expect(changed).toHaveBeenCalledWith('shows')
   })
 })

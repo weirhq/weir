@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Checkbox, Dialog, TextField } from '@weirhq/m3e'
-import { useId, useState, type FormEvent } from 'react'
+import { Button, Checkbox, Dialog, Select, TextField } from '@weirhq/m3e'
+import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../errors'
 import { Role, type User } from '../../gen/weir/api/v1alpha/user_pb'
 import { accessKey, adminLibrariesQuery, usersKey } from './keys'
@@ -106,22 +106,16 @@ function RoleSelect({
   value: Role
   onChange: (r: Role) => void
 }) {
-  const id = useId()
   return (
-    <div className={styles.field}>
-      <label htmlFor={id} className={styles.label}>
-        Role
-      </label>
-      <select
-        id={id}
-        className={styles.select}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value) as Role)}
-      >
-        <option value={Role.MEMBER}>Member</option>
-        <option value={Role.ADMIN}>Admin</option>
-      </select>
-    </div>
+    <Select
+      label="Role"
+      value={String(value)}
+      onValueChange={(v) => onChange(Number(v) as Role)}
+      options={[
+        { value: String(Role.MEMBER), label: 'Member' },
+        { value: String(Role.ADMIN), label: 'Admin' }
+      ]}
+    />
   )
 }
 

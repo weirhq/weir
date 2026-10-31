@@ -18,8 +18,12 @@ import {
   IconButton,
   type IconButtonProps,
   InputChip,
+  Menu,
+  MenuDivider,
+  MenuItem,
   iconNames,
   Radio,
+  Select,
   Slider,
   SuggestionChip,
   Switch,
@@ -210,6 +214,67 @@ function Fields({ variant }: { variant: 'filled' | 'outlined' }) {
         supportingText="Multi-line"
       />
       <TextField variant={variant} placeholder="No label" />
+    </div>
+  )
+}
+
+function Menus() {
+  const [last, setLast] = useState('nothing yet')
+  const [kind, setKind] = useState('movies')
+  const [quality, setQuality] = useState('')
+  const kinds = [
+    { value: 'movies', label: 'Films' },
+    { value: 'shows', label: 'Shows' },
+    { value: 'music', label: 'Music' },
+    { value: 'photos', label: 'Photos', disabled: true }
+  ]
+  return (
+    <div className="row" data-testid="menus">
+      <Menu trigger={<IconButton icon="more_vert" label="More" />}>
+        <MenuItem icon="edit" onSelect={() => setLast('Rename')}>
+          Rename
+        </MenuItem>
+        <MenuItem
+          icon="queue_music"
+          trailingIcon={<span>⌘P</span>}
+          onSelect={() => setLast('Add to playlist')}
+        >
+          Add to playlist
+        </MenuItem>
+        <MenuDivider />
+        <MenuItem icon="delete" disabled>
+          Delete
+        </MenuItem>
+      </Menu>
+      <span>Chose: {last}</span>
+      <div className="fields">
+        <Select
+          label="Kind"
+          value={kind}
+          onValueChange={setKind}
+          options={kinds}
+        />
+        <Select
+          variant="filled"
+          label="Quality"
+          leadingIcon="settings"
+          placeholder="Pick one"
+          value={quality}
+          onValueChange={setQuality}
+          options={[
+            { value: 'auto', label: 'Automatic' },
+            { value: 'original', label: 'Original' }
+          ]}
+          supportingText="Filled, with an icon"
+        />
+        <Select
+          label="Disabled"
+          value="movies"
+          onValueChange={() => {}}
+          options={kinds}
+          disabled
+        />
+      </div>
     </div>
   )
 }
@@ -535,6 +600,11 @@ function Demo() {
           <Fields variant="filled" />
           <Fields variant="outlined" />
         </div>
+      </section>
+
+      <section aria-labelledby="menus">
+        <h2 id="menus">Menus</h2>
+        <Menus />
       </section>
 
       <section aria-labelledby="links">

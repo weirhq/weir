@@ -214,8 +214,6 @@ function LibraryForm({
   const [kind, setKind] = useState(initial?.kind ?? LibraryKind.MOVIES)
   const [paths, setPaths] = useState(initial?.paths.join('\n') ?? '')
   const kindId = useId()
-  const pathsId = useId()
-  const rootsId = useId()
   const list = paths
     .split('\n')
     .map((p) => p.trim())
@@ -255,34 +253,31 @@ function LibraryForm({
           </select>
         </div>
       )}
-      <div className={styles.field}>
-        <label htmlFor={pathsId} className={styles.label}>
-          Folders, one per line
-        </label>
-        <textarea
-          id={pathsId}
-          className={styles.textarea}
-          rows={3}
-          placeholder={roots.length ? undefined : '/media/films'}
-          aria-describedby={roots.length ? rootsId : undefined}
-          value={paths}
-          onChange={(e) => setPaths(e.target.value)}
-        />
-        {roots.length > 0 && (
-          <div id={rootsId} className={styles.hint}>
-            {roots.length === 1
-              ? 'Folders must be inside '
-              : 'Folders must be inside one of '}
-            {roots.map((r, i) => (
-              <span key={r}>
-                {i > 0 && ', '}
-                <code>{r}</code>
-              </span>
-            ))}
-            . Change these in the server’s <code>library_paths</code> setting.
-          </div>
-        )}
-      </div>
+      <TextField
+        label="Folders, one per line"
+        className={styles.paths}
+        multiline
+        rows={3}
+        placeholder={roots.length ? undefined : '/media/films'}
+        value={paths}
+        onChange={(e) => setPaths(e.target.value)}
+        supportingText={
+          roots.length > 0 && (
+            <>
+              {roots.length === 1
+                ? 'Folders must be inside '
+                : 'Folders must be inside one of '}
+              {roots.map((r, i) => (
+                <span key={r}>
+                  {i > 0 && ', '}
+                  <code>{r}</code>
+                </span>
+              ))}
+              . Change these in the server’s <code>library_paths</code> setting.
+            </>
+          )
+        }
+      />
       {error && (
         <p role="alert" className={styles.error}>
           {errorMessage(error)}

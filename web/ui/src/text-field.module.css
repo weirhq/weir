@@ -1,44 +1,460 @@
+/* M3 text fields, filled and outlined. Layout and motion follow Compose
+   (TextFieldImpl.kt, TextField.kt, OutlinedTextField.kt at the pinned
+   commit), which reads resting, focused, error and disabled colours but
+   none for hover. The label floats when the field is focused or has text
+   (:placeholder-shown, so autofill counts too); the placeholder, prefix
+   and suffix show only then. The outlined field's notch is a fieldset and
+   legend, the native way to cut a border for a label. */
+
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  min-width: 0;
+  --_label: var(--_label-color);
+  --_input: var(--_input-color);
+  --_icon: var(--_icon-color);
+  --_trailing-icon: var(--_trailing-icon-color);
+  --_supporting: var(--_supporting-color);
+}
+
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--_height, 56px);
+  border-radius: var(--_shape);
+  background: var(--_container, transparent);
+  cursor: text;
+}
+
+.multiline .container {
+  align-items: flex-start;
+}
+
+/* Icons sit in 48dp boxes at the edges, so 12dp in; the text starts 4dp
+   after a box, 16dp from an edge without one (TextFieldPadding). */
+.leading,
+.trailing {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--_icon);
+  --md-icon-size: 24px;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+.trailing {
+  color: var(--_trailing-icon);
+}
+
+.multiline .leading,
+.multiline .trailing {
+  margin-top: 4px;
+}
+
+.body {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  padding-inline: 16px;
+}
+
+.hasLeading .body {
+  padding-inline-start: 4px;
+}
+
+.hasTrailing .body {
+  padding-inline-end: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  height: 100%;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  /* Centred in 56dp without a floated label: 16 + 24 + 16. */
+  padding: 16px 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--_input);
+  caret-color: var(--_caret);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  font-weight: var(--md-sys-typescale-body-large-weight);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  resize: none;
+}
+
+.input::placeholder {
+  color: var(--_placeholder-color);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+.prefix,
+.suffix {
+  flex: none;
+  color: var(--_affix-color);
+  font: inherit;
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+/* PrefixSuffixTextPadding */
+.prefix {
+  padding-inline-end: 2px;
+}
+
+.suffix {
+  padding-inline-start: 2px;
 }
 
 .label {
-  color: var(--md-sys-color-on-surface-variant);
+  position: absolute;
+  top: 16px;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  color: var(--_label);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  letter-spacing: var(--md-sys-typescale-body-large-tracking);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  /* The label moves with FastSpatial, its colour with FastEffects. */
+  transition-property: top, font-size, line-height, letter-spacing, color;
+  transition-duration:
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-effects-duration);
+  transition-timing-function:
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+/* Floated: on focus, or with text. */
+.field:has(.input:focus, .input:not(:placeholder-shown)) {
+  --_floated: 1;
+}
+
+.field:has(.input:focus, .input:not(:placeholder-shown)) .label {
   font-family: var(--md-sys-typescale-body-small-font);
   font-size: var(--md-sys-typescale-body-small-size);
   line-height: var(--md-sys-typescale-body-small-line-height);
   letter-spacing: var(--md-sys-typescale-body-small-tracking);
 }
 
-.input {
-  min-height: 56px;
-  padding: 0 16px;
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-extra-small);
-  background: transparent;
-  color: var(--md-sys-color-on-surface);
-  font-family: var(--md-sys-typescale-body-large-font);
-  font-size: var(--md-sys-typescale-body-large-size);
-  letter-spacing: var(--md-sys-typescale-body-large-tracking);
-}
-.input:hover {
-  border-color: var(--md-sys-color-on-surface);
-}
-.input:focus {
-  outline: none;
-  border: 2px solid var(--md-sys-color-primary);
-  padding: 0 15px;
-}
-.input[aria-invalid] {
-  border-color: var(--md-sys-color-error);
+.field:has(.input:focus) .input::placeholder,
+.field:has(.input:focus, .input:not(:placeholder-shown)) :is(.prefix, .suffix) {
+  opacity: 1;
 }
 
-.error {
-  margin: 0;
-  color: var(--md-sys-color-error);
+/* Without a label, the prefix and suffix always show. */
+.field:not(.hasLabel) :is(.prefix, .suffix) {
+  opacity: 1;
+}
+
+.supporting {
+  /* SupportingTopPadding, and the text field's padding. */
+  padding: 4px 16px 0;
+  color: var(--_supporting);
   font-family: var(--md-sys-typescale-body-small-font);
   font-size: var(--md-sys-typescale-body-small-size);
   line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+}
+
+.supporting p {
+  margin: 0;
+}
+
+/* Filled: a tinted box with an indicator line along the bottom. With a
+   label, TextFieldWithLabelVerticalPadding keeps 8dp above the floated
+   label and below the text, which sits under the label. */
+
+.filled {
+  --_shape: var(--md-comp-filled-text-field-container-shape);
+  --_container: var(--md-comp-filled-text-field-container-color);
+  --_caret: var(--md-comp-filled-text-field-caret-color);
+  --_label-color: var(--md-comp-filled-text-field-label-color);
+  --_input-color: var(--md-comp-filled-text-field-input-color);
+  --_placeholder-color: var(
+    --md-comp-filled-text-field-input-placeholder-color
+  );
+  --_affix-color: var(--md-comp-filled-text-field-input-prefix-color);
+  --_icon-color: var(--md-comp-filled-text-field-leading-icon-color);
+  --_trailing-icon-color: var(--md-comp-filled-text-field-trailing-icon-color);
+  --_supporting-color: var(--md-comp-filled-text-field-supporting-color);
+  --_indicator: var(--md-comp-filled-text-field-active-indicator-color);
+  --_indicator-height: 1px;
+}
+
+.filled.hasLabel .input {
+  padding: 24px 0 8px;
+}
+
+.filled.hasLabel:has(.input:focus, .input:not(:placeholder-shown)) .label {
+  top: 8px;
+}
+
+.indicator {
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--_indicator-height);
+  background: var(--_indicator);
+  pointer-events: none;
+  transition:
+    height var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.filled:has(.input:focus) {
+  --_label: var(--md-comp-filled-text-field-focus-label-color);
+  --_input: var(--md-comp-filled-text-field-focus-input-color);
+  --_icon: var(--md-comp-filled-text-field-focus-leading-icon-color);
+  --_trailing-icon: var(--md-comp-filled-text-field-focus-trailing-icon-color);
+  --_supporting: var(--md-comp-filled-text-field-focus-supporting-color);
+  --_indicator: var(--md-comp-filled-text-field-focus-active-indicator-color);
+  --_indicator-height: 2px;
+}
+
+/* Errors keep their colours when focused, as in Compose. */
+.filled.error,
+.filled.error:has(.input:focus) {
+  --_label: var(--md-comp-filled-text-field-error-label-color);
+  --_input: var(--md-comp-filled-text-field-error-input-color);
+  --_icon: var(--md-comp-filled-text-field-error-leading-icon-color);
+  --_trailing-icon: var(--md-comp-filled-text-field-error-trailing-icon-color);
+  --_supporting: var(--md-comp-filled-text-field-error-supporting-color);
+  --_indicator: var(--md-comp-filled-text-field-error-active-indicator-color);
+  --_caret: var(--md-comp-filled-text-field-error-focus-caret-color);
+}
+
+.filled:has(.input:disabled) {
+  --_container: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-container-color)
+      calc(var(--md-comp-filled-text-field-disabled-container-opacity) * 100%),
+    transparent
+  );
+  --_label: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-label-color)
+      calc(var(--md-comp-filled-text-field-disabled-label-opacity) * 100%),
+    transparent
+  );
+  --_input: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-input-color)
+      calc(var(--md-comp-filled-text-field-disabled-input-opacity) * 100%),
+    transparent
+  );
+  --_icon: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-leading-icon-color)
+      calc(
+        var(--md-comp-filled-text-field-disabled-leading-icon-opacity) * 100%
+      ),
+    transparent
+  );
+  --_trailing-icon: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-trailing-icon-color)
+      calc(
+        var(--md-comp-filled-text-field-disabled-trailing-icon-opacity) * 100%
+      ),
+    transparent
+  );
+  --_supporting: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-supporting-color)
+      calc(var(--md-comp-filled-text-field-disabled-supporting-opacity) * 100%),
+    transparent
+  );
+  --_indicator: color-mix(
+    in srgb,
+    var(--md-comp-filled-text-field-disabled-active-indicator-color)
+      calc(
+        var(--md-comp-filled-text-field-disabled-active-indicator-opacity) *
+          100%
+      ),
+    transparent
+  );
+}
+
+/* Outlined: the floated label sits in a notch in the outline, centred on
+   it, with AboveLabelHorizontalPadding either side. */
+
+.outlined {
+  --_height: var(--md-comp-outlined-text-field-container-height);
+  --_shape: var(--md-comp-outlined-text-field-container-shape);
+  --_caret: var(--md-comp-outlined-text-field-caret-color);
+  --_label-color: var(--md-comp-outlined-text-field-label-color);
+  --_input-color: var(--md-comp-outlined-text-field-input-color);
+  --_placeholder-color: var(
+    --md-comp-outlined-text-field-input-placeholder-color
+  );
+  --_affix-color: var(--md-comp-outlined-text-field-input-prefix-color);
+  --_icon-color: var(--md-comp-outlined-text-field-leading-icon-color);
+  --_trailing-icon-color: var(
+    --md-comp-outlined-text-field-trailing-icon-color
+  );
+  --_supporting-color: var(--md-comp-outlined-text-field-supporting-color);
+  --_outline: var(--md-comp-outlined-text-field-outline-color);
+  --_outline-width: var(--md-comp-outlined-text-field-outline-width);
+}
+
+.outlined.hasLabel:has(.input:focus, .input:not(:placeholder-shown)) .label {
+  /* Half the floated label's line height above the container. */
+  top: calc(var(--md-sys-typescale-body-small-line-height) / -2);
+}
+
+/* Inset by half the legend's line height, so the border runs along the
+   container's top edge through the legend's middle. */
+.outline {
+  position: absolute;
+  inset: calc(var(--md-sys-typescale-body-small-line-height) / -2) 0 0;
+  min-width: 0;
+  margin: 0;
+  /* 16dp to the label, less the notch's 4dp padding and the border,
+     which comes before the padding. */
+  padding: 0 calc(12px - var(--_outline-width));
+  border: var(--_outline-width) solid var(--_outline);
+  border-radius: var(--_shape);
+  pointer-events: none;
+  transition:
+    border-width var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    border-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.hasLeading .outline {
+  padding-inline-start: calc(48px - var(--_outline-width));
+}
+
+.legend {
+  /* The notch: as wide as the floated label, or nothing. */
+  float: unset;
+  width: auto;
+  max-width: 0.01px;
+  height: var(--md-sys-typescale-body-small-line-height);
+  padding: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-family: var(--md-sys-typescale-body-small-font);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  white-space: nowrap;
+  transition: max-width var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+
+.legend > span {
+  padding-inline: 4px;
+}
+
+.outlined:has(.input:focus, .input:not(:placeholder-shown)) .legend {
+  max-width: 100%;
+}
+
+.outlined:has(.input:focus) {
+  --_label: var(--md-comp-outlined-text-field-focus-label-color);
+  --_input: var(--md-comp-outlined-text-field-focus-input-color);
+  --_icon: var(--md-comp-outlined-text-field-focus-leading-icon-color);
+  --_trailing-icon: var(
+    --md-comp-outlined-text-field-focus-trailing-icon-color
+  );
+  --_supporting: var(--md-comp-outlined-text-field-focus-supporting-color);
+  --_outline: var(--md-comp-outlined-text-field-focus-outline-color);
+  --_outline-width: var(--md-comp-outlined-text-field-focus-outline-width);
+}
+
+/* Errors keep their colours when focused, as in Compose. */
+.outlined.error,
+.outlined.error:has(.input:focus) {
+  --_label: var(--md-comp-outlined-text-field-error-label-color);
+  --_input: var(--md-comp-outlined-text-field-error-input-color);
+  --_icon: var(--md-comp-outlined-text-field-error-leading-icon-color);
+  --_trailing-icon: var(
+    --md-comp-outlined-text-field-error-trailing-icon-color
+  );
+  --_supporting: var(--md-comp-outlined-text-field-error-supporting-color);
+  --_outline: var(--md-comp-outlined-text-field-error-outline-color);
+  --_caret: var(--md-comp-outlined-text-field-error-focus-caret-color);
+}
+
+.outlined:has(.input:disabled) {
+  --_label: color-mix(
+    in srgb,
+    var(--md-comp-outlined-text-field-disabled-label-color)
+      calc(var(--md-comp-outlined-text-field-disabled-label-opacity) * 100%),
+    transparent
+  );
+  --_input: color-mix(
+    in srgb,
+    var(--md-comp-outlined-text-field-disabled-input-color)
+      calc(var(--md-comp-outlined-text-field-disabled-input-opacity) * 100%),
+    transparent
+  );
+  --_icon: color-mix(
+    in srgb,
+    var(--md-comp-outlined-text-field-disabled-leading-icon-color)
+      calc(
+        var(--md-comp-outlined-text-field-disabled-leading-icon-opacity) * 100%
+      ),
+    transparent
+  );
+  --_trailing-icon: color-mix(
+    in srgb,
+    var(--md-comp-outlined-text-field-disabled-trailing-icon-color)
+      calc(
+        var(--md-comp-outlined-text-field-disabled-trailing-icon-opacity) * 100%
+      ),
+    transparent
+  );
+  --_supporting: color-mix(
+    in srgb,
+    var(--md-comp-outlined-text-field-disabled-supporting-color)
+      calc(
+        var(--md-comp-outlined-text-field-disabled-supporting-opacity) * 100%
+      ),
+    transparent
+  );
+  --_outline: color-mix(
+    in srgb,
+    var(--md-comp-outlined-text-field-disabled-outline-color)
+      calc(var(--md-comp-outlined-text-field-disabled-outline-opacity) * 100%),
+    transparent
+  );
+}
+
+.field:has(.input:disabled) .container {
+  cursor: default;
 }

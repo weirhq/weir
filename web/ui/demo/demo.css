@@ -69,3 +69,9 @@ h2 {
   width: min(480px, 100%);
   padding-block: 56px 8px;
 }
+
+.fields {
+  display: grid;
+  gap: 16px;
+  width: min(320px, 100%);
+}

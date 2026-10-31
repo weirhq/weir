@@ -22,7 +22,8 @@ import {
   Radio,
   Slider,
   SuggestionChip,
-  Switch
+  Switch,
+  TextField
 } from '../src'
 import '../src/tokens.gen.css'
 import '../src/styles.css'
@@ -166,6 +167,49 @@ function Sliders() {
         onValueChange={() => {}}
         disabled
       />
+    </div>
+  )
+}
+
+function Fields({ variant }: { variant: 'filled' | 'outlined' }) {
+  const [price, setPrice] = useState('')
+  return (
+    <div className="fields" data-testid={`fields-${variant}`}>
+      <TextField variant={variant} label="Title" />
+      <TextField variant={variant} label="Filled in" defaultValue="Arrival" />
+      <TextField
+        variant={variant}
+        label="Search"
+        leadingIcon="search"
+        trailingIcon={
+          <IconButton icon="close" label="Clear" onClick={() => {}} />
+        }
+        placeholder="Films, shows, music"
+      />
+      <TextField
+        variant={variant}
+        label="Price"
+        prefix="£"
+        suffix="per month"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        supportingText="Billed monthly"
+      />
+      <TextField
+        variant={variant}
+        label="Username"
+        defaultValue="a"
+        error="At least three characters"
+      />
+      <TextField variant={variant} label="Disabled" disabled defaultValue="x" />
+      <TextField
+        variant={variant}
+        label="Notes"
+        multiline
+        rows={3}
+        supportingText="Multi-line"
+      />
+      <TextField variant={variant} placeholder="No label" />
     </div>
   )
 }
@@ -482,6 +526,14 @@ function Demo() {
         <div className="row" data-testid="chips-input">
           <span className="label">input</span>
           <People />
+        </div>
+      </section>
+
+      <section aria-labelledby="text-fields">
+        <h2 id="text-fields">Text fields</h2>
+        <div className="row">
+          <Fields variant="filled" />
+          <Fields variant="outlined" />
         </div>
       </section>
 

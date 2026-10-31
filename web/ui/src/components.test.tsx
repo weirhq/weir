@@ -441,3 +441,42 @@ describe('Slider', () => {
     vi.restoreAllMocks()
   })
 })
+
+describe('TextField', () => {
+  it('describes the field with its supporting text, which an error replaces', () => {
+    const { rerender } = render(
+      <TextField label="Name" supportingText="Shown on your profile" />
+    )
+    const input = screen.getByLabelText('Name')
+    expect(
+      document.getElementById(input.getAttribute('aria-describedby')!)!
+        .textContent
+    ).toBe('Shown on your profile')
+    expect(input.hasAttribute('aria-invalid')).toBe(false)
+    rerender(
+      <TextField
+        label="Name"
+        supportingText="Shown on your profile"
+        error="Too long"
+      />
+    )
+    expect(screen.getByRole('alert').textContent).toBe('Too long')
+    expect(screen.queryByText('Shown on your profile')).toBeNull()
+  })
+
+  it('becomes a textarea when multiline', () => {
+    render(<TextField label="Folders" multiline rows={3} variant="filled" />)
+    const area = screen.getByLabelText('Folders')
+    expect(area.tagName).toBe('TEXTAREA')
+    expect(area.closest('.md-comp-filled-text-field')).not.toBeNull()
+  })
+
+  it('keeps an empty placeholder so it can tell when the label floats', () => {
+    render(<TextField label="Search" leadingIcon="search" prefix="#" />)
+    const input = screen.getByLabelText('Search') as HTMLInputElement
+    expect(input.placeholder).toBe(' ')
+    expect(screen.getByText('#')).toBeTruthy()
+    const field = input.closest('.md-comp-outlined-text-field')!
+    expect(field.querySelector('[translate="no"]')!.textContent).toBe('search')
+  })
+})

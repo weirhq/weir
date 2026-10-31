@@ -13,6 +13,7 @@ import {
   IconButton,
   InputChip,
   Radio,
+  Slider,
   SplitButton,
   SuggestionChip,
   Switch,
@@ -251,6 +252,7 @@ describe('pressing an item in a button group', () => {
       Two: '115px',
       Three: '92.5px'
     })
+    fireEvent.pointerUp(window)
   })
 
   it('widens an end item from its one neighbour', () => {
@@ -259,6 +261,7 @@ describe('pressing an item in a button group', () => {
       button: 0
     })
     expect(Object.fromEntries(targets)).toEqual({ One: '115px', Two: '85px' })
+    fireEvent.pointerUp(window)
   })
 })
 
@@ -382,4 +385,59 @@ it('gives an input chip its own remove button', () => {
   ).toBe(false)
   fireEvent.click(screen.getByRole('button', { name: 'Remove Ana' }))
   expect(removed).toHaveBeenCalledOnce()
+})
+
+describe('Slider', () => {
+  function Harness(props: { step?: number; initial?: number }) {
+    const [v, setV] = useState(props.initial ?? 40)
+    return (
+      <Slider
+        aria-label="Volume"
+        value={v}
+        onValueChange={setV}
+        step={props.step}
+        valueLabel={(n) => `${Math.round(n)}%`}
+      />
+    )
+  }
+
+  it('is a native range input with a spoken value', () => {
+    render(<Harness />)
+    const slider = screen.getByRole('slider', {
+      name: 'Volume'
+    }) as HTMLInputElement
+    expect(slider.value).toBe('40')
+    expect(slider.getAttribute('aria-valuetext')).toBe('40%')
+    fireEvent.change(slider, { target: { value: '55' } })
+    expect(slider.value).toBe('55')
+    expect(slider.getAttribute('aria-valuetext')).toBe('55%')
+  })
+
+  it('draws a stop for each step, and the end stop without steps', () => {
+    const { container, unmount } = render(<Harness step={25} />)
+    // Five stops, drawn in both track segments.
+    expect(container.querySelectorAll('[aria-hidden] span')).toHaveLength(10)
+    unmount()
+    const plain = render(<Harness />)
+    expect(plain.container.querySelectorAll('[aria-hidden] span')).toHaveLength(
+      1
+    )
+  })
+
+  it('follows the pointer, snapping to the nearest step', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      width: 200
+    } as DOMRect)
+    HTMLElement.prototype.setPointerCapture = vi.fn()
+    render(<Harness step={25} initial={0} />)
+    const slider = screen.getByRole('slider') as HTMLInputElement
+    const root = slider.parentElement!
+    fireEvent.pointerDown(root, { button: 0, clientX: 140, pointerId: 1 })
+    expect(slider.value).toBe('75')
+    fireEvent.pointerMove(root, { clientX: 20, pointerId: 1 })
+    expect(slider.value).toBe('0')
+    fireEvent.pointerUp(root, { pointerId: 1 })
+    vi.restoreAllMocks()
+  })
 })

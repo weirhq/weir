@@ -20,6 +20,7 @@ import {
   InputChip,
   iconNames,
   Radio,
+  Slider,
   SuggestionChip,
   Switch
 } from '../src'
@@ -129,6 +130,43 @@ function People() {
         Disabled
       </InputChip>
     </>
+  )
+}
+
+function Sliders() {
+  const [volume, setVolume] = useState(40)
+  const [quality, setQuality] = useState(50)
+  const [rating, setRating] = useState(3)
+  return (
+    <div className="sliders">
+      <Slider
+        aria-label="Volume"
+        value={volume}
+        onValueChange={setVolume}
+        valueLabel={(v) => `${Math.round(v)}`}
+      />
+      <Slider
+        aria-label="Quality"
+        value={quality}
+        onValueChange={setQuality}
+        step={25}
+        valueLabel={(v) => `${v}%`}
+      />
+      <Slider
+        aria-label="Rating"
+        value={rating}
+        onValueChange={setRating}
+        min={0}
+        max={5}
+        step={1}
+      />
+      <Slider
+        aria-label="Disabled"
+        value={60}
+        onValueChange={() => {}}
+        disabled
+      />
+    </div>
   )
 }
 
@@ -382,6 +420,10 @@ function Demo() {
           <label className="control">
             <Radio disabled defaultChecked /> Disabled, on
           </label>
+        </div>
+        <div className="row" data-testid="sliders">
+          <span className="label">slider</span>
+          <Sliders />
         </div>
         <div className="row" data-testid="switches">
           <span className="label">switch</span>

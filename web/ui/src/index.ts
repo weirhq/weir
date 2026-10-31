@@ -27,3 +27,4 @@ export {
   type FilterChipProps,
   type InputChipProps
 } from './chip'
+export { Slider, type SliderProps } from './slider'

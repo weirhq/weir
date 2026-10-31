@@ -1,0 +1,200 @@
+/* M3 Expressive sliders: a native range input, invisible, over a drawn
+   track and handle. Geometry follows Compose (Slider.kt at the pinned
+   commit): the handle narrows to half its width while pressed or focused,
+   the track keeps a gap of half the handle plus ActiveHandleLeadingSpace
+   either side of it, and with steps the inner positions are inset by the
+   track's corner radius. Positions are in container query units of the
+   rail, so the stops can be drawn inside each track segment and clipped
+   by it: the gap hides those under the handle, and each takes its
+   segment's colour. */
+
+.slider {
+  position: relative;
+  display: block;
+  height: var(--md-comp-slider-handle-height);
+  /* Half the handle each side, so its centre reaches the track's ends. */
+  padding-inline: calc(var(--md-comp-slider-handle-width) / 2);
+  touch-action: none;
+  cursor: pointer;
+  --_handle-w: var(--md-comp-slider-handle-width);
+  --_corner: calc(var(--md-comp-slider-inactive-track-height) / 2);
+  --_gap: calc(
+    var(--_handle-w) / 2 + var(--md-comp-slider-active-handle-leading-space)
+  );
+  /* Colours, swapped for the stops as Compose does: stops on the active
+     track take the inactive colour and the other way round. */
+  --_active: var(--md-comp-slider-active-track-color);
+  --_inactive: var(--md-comp-slider-inactive-track-color);
+  --_handle: var(--md-comp-slider-handle-color);
+}
+
+.slider:has(.input:focus-visible),
+.dragging {
+  /* ThumbContent: half width while pressed or focused. */
+  --_handle-w: calc(var(--md-comp-slider-handle-width) / 2);
+}
+
+.slider:has(.input:disabled) {
+  cursor: default;
+  --_active: color-mix(
+    in srgb,
+    var(--md-comp-slider-disabled-active-track-color)
+      calc(var(--md-comp-slider-disabled-active-track-opacity) * 100%),
+    transparent
+  );
+  --_inactive: color-mix(
+    in srgb,
+    var(--md-comp-slider-disabled-inactive-track-color)
+      calc(var(--md-comp-slider-disabled-inactive-track-opacity) * 100%),
+    transparent
+  );
+  /* Composited over the surface, so it stays opaque. */
+  --_handle: color-mix(
+    in srgb,
+    var(--md-comp-slider-disabled-handle-color)
+      calc(var(--md-comp-slider-disabled-handle-opacity) * 100%),
+    var(--md-sys-color-surface)
+  );
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rail {
+  position: relative;
+  height: 100%;
+  container-type: inline-size;
+  /* The handle's centre. */
+  --_x: calc(var(--_f) * 100cqw);
+}
+
+/* SliderImpl: with steps, positions other than the first and last are
+   inset by the corner radius. */
+.inset .rail {
+  --_x: calc(var(--_corner) + var(--_f) * (100cqw - 2 * var(--_corner)));
+}
+
+.track {
+  position: absolute;
+  top: calc(50% - var(--md-comp-slider-inactive-track-height) / 2);
+  height: var(--md-comp-slider-inactive-track-height);
+  overflow: hidden;
+  transition:
+    width var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    left var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+/* Round outer ends, TrackInsideCornerSize (2dp) towards the handle. */
+.active {
+  left: 0;
+  width: max(0px, var(--_x) - var(--_gap));
+  border-radius: var(--_corner) 2px 2px var(--_corner);
+  background: var(--_active);
+}
+
+.inactive {
+  left: min(100cqw, var(--_x) + var(--_gap));
+  right: 0;
+  border-radius: 2px var(--_corner) var(--_corner) 2px;
+  background: var(--_inactive);
+}
+
+.dragging .track {
+  transition: none;
+}
+
+/* Stops: StopIndicatorSize dots, at Compose's tick positions. */
+.stop {
+  position: absolute;
+  top: calc(50% - var(--md-comp-slider-stop-indicator-size) / 2);
+  width: var(--md-comp-slider-stop-indicator-size);
+  height: var(--md-comp-slider-stop-indicator-size);
+  border-radius: 50%;
+  --_p: calc(var(--_corner) + var(--_t) * (100cqw - 2 * var(--_corner)));
+}
+
+.active .stop {
+  left: calc(var(--_p) - var(--md-comp-slider-stop-indicator-size) / 2);
+  background: var(--_inactive);
+}
+
+.inactive .stop {
+  left: calc(
+    var(--_p) - var(--md-comp-slider-stop-indicator-size) / 2 -
+      (var(--_x) + var(--_gap))
+  );
+  background: var(--_active);
+}
+
+.handle {
+  position: absolute;
+  top: 0;
+  left: calc(var(--_x) - var(--_handle-w) / 2);
+  width: var(--_handle-w);
+  height: 100%;
+  border-radius: calc(var(--_handle-w) / 2);
+  background: var(--_handle);
+  transition:
+    width var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    left var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.dragging .handle {
+  transition: width var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+
+.slider:has(.input:focus-visible) .handle {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+
+/* The value label rises above the handle while it's held or focused,
+   ValueIndicatorActiveBottomSpace above it. */
+.label {
+  position: absolute;
+  bottom: calc(
+    100% + var(--md-comp-slider-value-indicator-active-bottom-space)
+  );
+  left: var(--_x);
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  height: 44px;
+  padding-inline: 16px;
+  box-sizing: border-box;
+  border-radius: 22px;
+  background: var(--md-comp-slider-value-indicator-container-color);
+  color: var(--md-comp-slider-value-indicator-label-text-color);
+  font-family: var(--md-comp-slider-value-indicator-label-text-font);
+  font-size: var(--md-comp-slider-value-indicator-label-text-size);
+  line-height: var(--md-comp-slider-value-indicator-label-text-line-height);
+  font-weight: var(--md-comp-slider-value-indicator-label-text-weight);
+  letter-spacing: var(--md-comp-slider-value-indicator-label-text-tracking);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.6);
+  transform-origin: bottom center;
+  transition:
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    transform var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial);
+}
+
+.dragging .label,
+.slider:has(.input:focus-visible) .label {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}

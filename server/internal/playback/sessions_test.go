@@ -188,7 +188,7 @@ func TestSessionFolderIsGroupWritable(t *testing.T) {
 	old := syscall.Umask(0o022)
 	t.Cleanup(func() { syscall.Umask(old) })
 	h := newSessionHarness(t, &playbacktest.Engine{})
-	id, _, err := h.sessions.Start(context.Background(), h.user, "/media/film.mkv", time.Minute, &enginev1alpha.OutputProfile{}, true)
+	id, url, err := h.sessions.Start(context.Background(), h.user, "/media/film.mkv", time.Minute, &enginev1alpha.OutputProfile{}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,5 +198,13 @@ func TestSessionFolderIsGroupWritable(t *testing.T) {
 	}
 	if got := info.Mode().Perm(); got != 0o770 {
 		t.Errorf("session folder is %o, want 770", got)
+	}
+	// The fake engine writes three segments; let it finish and end the
+	// session before the test's folder is removed.
+	if code, body := h.get(t, sibling(url, "2.m4s")); code != http.StatusOK {
+		t.Fatalf("segment 2: %d %s", code, body)
+	}
+	if err := h.sessions.Stop(context.Background(), id, h.user); err != nil {
+		t.Fatal(err)
 	}
 }

@@ -63,6 +63,8 @@ jobs:
     name: build and smoke test (linux/${{ matrix.arch }})
     needs: check
     strategy:
+      # One architecture failing shouldn't hide how the other went.
+      fail-fast: false
       matrix:
         include:
           - arch: amd64

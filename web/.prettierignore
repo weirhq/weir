@@ -2,3 +2,6 @@ dist
 **/src/gen
 *.gen.css
 pnpm-lock.yaml
+# Vendored files stay exactly as published.
+ui/src/fonts
+ui/tokens/androidx

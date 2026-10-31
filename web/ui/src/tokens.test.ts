@@ -326,3 +326,43 @@ describe('button token assumptions', () => {
     expect(differing).toEqual([])
   })
 })
+
+// icon-button.module.css and fab.module.css rely on these.
+describe('icon button and FAB token assumptions', () => {
+  const props = (name: string) =>
+    Object.fromEntries(
+      tokens.objects.get(name)!.props.map((p) => [p.name, p.expr])
+    )
+
+  it.each([
+    'XSmallIconButtonTokens',
+    'SmallIconButtonTokens',
+    'MediumIconButtonTokens',
+    'LargeIconButtonTokens',
+    'XLargeIconButtonTokens'
+  ])('%s rounds fully at rest and when a square toggle is selected', (name) => {
+    const p = props(name)
+    expect(p.ContainerShapeRound).toBe('ShapeKeyTokens.CornerFull')
+    expect(p.SelectedContainerShapeSquare).toBe('ShapeKeyTokens.CornerFull')
+  })
+
+  it.each([
+    'StandardIconButtonTokens',
+    'FilledIconButtonTokens',
+    'FilledTonalIconButtonTokens',
+    'OutlinedIconButtonTokens',
+    'FabPrimaryContainerTokens',
+    'FabSecondaryContainerTokens'
+  ])('%s keeps its content colours across hover, focus and press', (name) => {
+    const p = props(name)
+    const differing = Object.keys(p)
+      .map((k) => [
+        k,
+        k.replace(/^(Selected|Unselected)?(Hovered|Focused|Pressed)/, '$1')
+      ])
+      .filter(([k, rest]) => k !== rest && /Color$/.test(k!))
+      .filter(([k]) => !/Container|Outline/.test(k!))
+      .filter(([k, rest]) => rest! in p && p[k!] !== p[rest!])
+    expect(differing).toEqual([])
+  })
+})

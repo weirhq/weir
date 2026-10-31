@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
-import { Button, TextField } from '@weirhq/m3e'
+import { Button, IconButton, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import cards from '../components/Cards.module.css'
 import { errorMessage } from '../errors'
@@ -174,33 +174,27 @@ export function PlaylistPage() {
             </Link>
             <span className={styles.meta}>{kindNames[item.kind]}</span>
             {item.kind === ItemKind.TRACK ? (
-              <Button
-                variant="text"
-                aria-label={`Play ${item.title}`}
+              <IconButton
+                icon="play_arrow"
+                label={`Play ${item.title}`}
                 onClick={() => playFrom(item)}
-              >
-                ▶
-              </Button>
+              />
             ) : (
-              <Button variant="text" asChild>
-                <Link
-                  to="/play/$itemId"
-                  params={{ itemId: item.id }}
-                  aria-label={`Play ${item.title}`}
-                >
-                  ▶
-                </Link>
-              </Button>
+              <IconButton
+                asChild
+                icon="play_arrow"
+                label={`Play ${item.title}`}
+              >
+                <Link to="/play/$itemId" params={{ itemId: item.id }} />
+              </IconButton>
             )}
             {owned && (
-              <Button
-                variant="text"
-                aria-label={`Remove ${item.title}`}
+              <IconButton
+                icon="close"
+                label={`Remove ${item.title}`}
                 disabled={update.isPending}
                 onClick={() => without(i)}
-              >
-                ✕
-              </Button>
+              />
             )}
           </li>
         ))}

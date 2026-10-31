@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Button } from '@weirhq/m3e'
+import { IconButton } from '@weirhq/m3e'
 import { useState } from 'react'
 import { sized } from '../art'
 import { useQueue } from './queue'
@@ -64,14 +64,12 @@ export function MiniPlayer() {
             </span>
           )}
         </div>
-        <Button
-          variant="text"
-          aria-label="Previous track"
+        <IconButton
+          icon="skip_previous"
+          label="Previous track"
           disabled={index === 0}
           onClick={previous}
-        >
-          ⏮
-        </Button>
+        />
         <audio
           ref={media}
           className={styles.audio}
@@ -80,24 +78,19 @@ export function MiniPlayer() {
           onEnded={next}
           onError={() => setMediaError('This browser couldn’t play the track.')}
         />
-        <Button
-          variant="text"
-          aria-label="Next track"
+        <IconButton
+          icon="skip_next"
+          label="Next track"
           disabled={index + 1 >= tracks.length}
           onClick={next}
-        >
-          ⏭
-        </Button>
-        <Button
-          variant="text"
+        />
+        <IconButton
+          icon="queue_music"
+          label="Queue"
           aria-expanded={showQueue}
           onClick={() => setShowQueue(!showQueue)}
-        >
-          Queue
-        </Button>
-        <Button variant="text" aria-label="Close player" onClick={clear}>
-          ✕
-        </Button>
+        />
+        <IconButton icon="close" label="Close player" onClick={clear} />
       </div>
     </section>
   )

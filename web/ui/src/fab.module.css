@@ -1,0 +1,165 @@
+/* M3 Expressive floating action buttons, plain and extended, mapped like
+   button.module.css. Where Compose overrides a token it marks as wrong,
+   the comment cites FloatingActionButton.kt at the pinned commit. FABs
+   have no disabled state in M3. */
+
+.fab {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--_gap);
+  min-width: var(--_height);
+  height: var(--_height);
+  padding-inline: var(--_leading, 0) var(--_trailing, 0);
+  border: 0;
+  border-radius: var(--_shape);
+  background: var(--_container);
+  color: var(--_color);
+  box-shadow: var(--_shadow);
+  font-family: var(--_font);
+  font-size: var(--_size);
+  line-height: var(--_line-height);
+  font-weight: var(--_weight);
+  letter-spacing: var(--_tracking);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: var(--_icon-opsz);
+  transition: box-shadow var(--md-sys-motion-duration-short4)
+    var(--md-sys-motion-easing-standard);
+}
+
+/* Plain FABs: a square with the icon in the middle. */
+
+.small {
+  --_height: var(--md-comp-fab-small-container-height);
+  --_shape: var(--md-comp-fab-small-container-shape);
+  --_icon-size: var(--md-comp-fab-small-icon-size);
+  --_icon-opsz: 24;
+}
+
+.baseline {
+  --_height: var(--md-comp-fab-baseline-container-height);
+  --_shape: var(--md-comp-fab-baseline-container-shape);
+  --_icon-size: var(--md-comp-fab-baseline-icon-size);
+  --_icon-opsz: 24;
+}
+
+.medium {
+  --_height: var(--md-comp-fab-medium-container-height);
+  /* mediumShape: ShapeDefaults.LargeIncreased, as FabMediumTokens has none. */
+  --_shape: var(--md-sys-shape-corner-large-increased);
+  --_icon-size: var(--md-comp-fab-medium-icon-size);
+  --_icon-opsz: 28;
+}
+
+.large {
+  --_height: var(--md-comp-fab-large-container-height);
+  --_shape: var(--md-comp-fab-large-container-shape);
+  /* LargeIconSize: FabLargeTokens.IconSize is marked wrong. */
+  --_icon-size: 36px;
+  --_icon-opsz: 36;
+}
+
+/* Extended FABs: an icon and a label. */
+
+.extended.small {
+  --_height: var(--md-comp-extended-fab-small-container-height);
+  --_shape: var(--md-comp-extended-fab-small-container-shape);
+  --_icon-size: var(--md-comp-extended-fab-small-icon-size);
+  --_icon-opsz: 24;
+  --_leading: var(--md-comp-extended-fab-small-leading-space);
+  --_trailing: var(--md-comp-extended-fab-small-trailing-space);
+  --_gap: var(--md-comp-extended-fab-small-icon-label-space);
+  /* SmallExtendedFabTextStyle */
+  --_font: var(--md-sys-typescale-title-medium-font);
+  --_size: var(--md-sys-typescale-title-medium-size);
+  --_line-height: var(--md-sys-typescale-title-medium-line-height);
+  --_weight: var(--md-sys-typescale-title-medium-weight);
+  --_tracking: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.extended.medium {
+  --_height: var(--md-comp-extended-fab-medium-container-height);
+  /* mediumExtendedFabShape: LargeIncreased, as the tokens have none. */
+  --_shape: var(--md-sys-shape-corner-large-increased);
+  --_icon-size: var(--md-comp-extended-fab-medium-icon-size);
+  --_icon-opsz: 28;
+  --_leading: var(--md-comp-extended-fab-medium-leading-space);
+  --_trailing: var(--md-comp-extended-fab-medium-trailing-space);
+  /* MediumExtendedFabIconPadding: the token's 16dp is marked wrong. */
+  --_gap: 12px;
+  /* MediumExtendedFabTextStyle */
+  --_font: var(--md-sys-typescale-title-large-font);
+  --_size: var(--md-sys-typescale-title-large-size);
+  --_line-height: var(--md-sys-typescale-title-large-line-height);
+  --_weight: var(--md-sys-typescale-title-large-weight);
+  --_tracking: var(--md-sys-typescale-title-large-tracking);
+}
+
+.extended.large {
+  --_height: var(--md-comp-extended-fab-large-container-height);
+  --_shape: var(--md-comp-extended-fab-large-container-shape);
+  --_icon-size: var(--md-comp-extended-fab-large-icon-size);
+  --_icon-opsz: 32;
+  --_leading: var(--md-comp-extended-fab-large-leading-space);
+  --_trailing: var(--md-comp-extended-fab-large-trailing-space);
+  /* LargeExtendedFabIconPadding: 16dp, not the token's 20dp. */
+  --_gap: 16px;
+  /* LargeExtendedFabTextStyle */
+  --_font: var(--md-sys-typescale-headline-small-font);
+  --_size: var(--md-sys-typescale-headline-small-size);
+  --_line-height: var(--md-sys-typescale-headline-small-line-height);
+  --_weight: var(--md-sys-typescale-headline-small-weight);
+  --_tracking: var(--md-sys-typescale-headline-small-tracking);
+}
+
+/* Colours, shared by plain and extended FABs. */
+
+.primary {
+  --_container: var(--md-comp-fab-primary-container-container-color);
+  --_color: var(--md-comp-fab-primary-container-icon-color);
+  --_shadow: var(--md-comp-fab-primary-container-container-shadow);
+  --_shadow-hover: var(
+    --md-comp-fab-primary-container-hovered-container-shadow
+  );
+  --_shadow-focus: var(
+    --md-comp-fab-primary-container-focused-container-shadow
+  );
+  --_shadow-pressed: var(
+    --md-comp-fab-primary-container-pressed-container-shadow
+  );
+}
+
+.secondary {
+  --_container: var(--md-comp-fab-secondary-container-container-color);
+  --_color: var(--md-comp-fab-secondary-container-icon-color);
+  --_shadow: var(--md-comp-fab-secondary-container-container-shadow);
+  --_shadow-hover: var(
+    --md-comp-fab-secondary-container-hovered-container-shadow
+  );
+  --_shadow-focus: var(
+    --md-comp-fab-secondary-container-focused-container-shadow
+  );
+  --_shadow-pressed: var(
+    --md-comp-fab-secondary-container-pressed-container-shadow
+  );
+}
+
+@media (hover: hover) {
+  .fab:hover {
+    box-shadow: var(--_shadow-hover);
+  }
+}
+
+.fab:focus-visible {
+  box-shadow: var(--_shadow-focus);
+}
+
+.fab:active {
+  box-shadow: var(--_shadow-pressed);
+}

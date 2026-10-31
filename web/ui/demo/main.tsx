@@ -6,7 +6,11 @@ import {
   Button,
   type ButtonProps,
   type ButtonSize,
+  ExtendedFab,
+  Fab,
   Icon,
+  IconButton,
+  type IconButtonProps,
   iconNames
 } from '../src'
 import '../src/tokens.gen.css'
@@ -31,6 +35,19 @@ function Toggle(
     />
   )
 }
+
+function IconToggle(props: Omit<IconButtonProps, 'selected' | 'onClick'>) {
+  const [selected, setSelected] = useState(false)
+  return (
+    <IconButton
+      {...props}
+      selected={selected}
+      onClick={() => setSelected(!selected)}
+    />
+  )
+}
+
+const iconVariants = ['standard', 'filled', 'tonal', 'outlined'] as const
 
 function Demo() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -93,6 +110,82 @@ function Demo() {
             <Toggle variant={variant} size="m" icon="favorite">
               Medium
             </Toggle>
+          </div>
+        ))}
+      </section>
+
+      <section aria-labelledby="icon-buttons">
+        <h2 id="icon-buttons">Icon buttons</h2>
+        {iconVariants.map((variant) => (
+          <div
+            className="row"
+            key={variant}
+            data-testid={`icon-buttons-${variant}`}
+          >
+            <span className="label">{variant}</span>
+            {sizes.map((size) => (
+              <IconButton
+                key={size}
+                variant={variant}
+                size={size}
+                icon="play_arrow"
+                label={`Play ${size}`}
+              />
+            ))}
+            <IconButton
+              variant={variant}
+              width="narrow"
+              icon="skip_previous"
+              label="Narrow"
+            />
+            <IconButton
+              variant={variant}
+              width="wide"
+              icon="skip_next"
+              label="Wide"
+            />
+            <IconButton
+              variant={variant}
+              shape="square"
+              icon="settings"
+              label="Square"
+            />
+            <IconToggle variant={variant} icon="favorite" label="Favourite" />
+            <IconToggle
+              variant={variant}
+              shape="square"
+              icon="favorite"
+              label="Favourite, square"
+            />
+            <IconButton
+              variant={variant}
+              icon="delete"
+              label="Disabled"
+              disabled
+            />
+          </div>
+        ))}
+      </section>
+
+      <section aria-labelledby="fabs">
+        <h2 id="fabs">Floating action buttons</h2>
+        {(['primary', 'secondary'] as const).map((color) => (
+          <div className="row" key={color} data-testid={`fabs-${color}`}>
+            <span className="label">{color}</span>
+            {(['small', 'baseline', 'medium', 'large'] as const).map((size) => (
+              <Fab
+                key={size}
+                color={color}
+                size={size}
+                icon="add"
+                label={`New, ${size}`}
+              />
+            ))}
+            {(['small', 'medium', 'large'] as const).map((size) => (
+              <ExtendedFab key={size} color={color} size={size} icon="edit">
+                Extended {size}
+              </ExtendedFab>
+            ))}
           </div>
         ))}
       </section>

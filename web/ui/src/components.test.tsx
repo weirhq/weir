@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
-import { Button, Dialog, TextField } from '.'
+import { Button, Dialog, ExtendedFab, Fab, IconButton, TextField } from '.'
 
 it('renders button variants and passes props through', () => {
   render(
@@ -119,4 +119,58 @@ it('opens a labelled modal dialog and closes it with Escape', () => {
   )
   fireEvent.keyDown(dialog, { key: 'Escape' })
   expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+it('names an icon button by its label, not its icon', () => {
+  render(<IconButton icon="skip_next" label="Next track" />)
+  const button = screen.getByRole('button', { name: 'Next track' })
+  expect(button.hasAttribute('aria-pressed')).toBe(false)
+  expect(button.classList).toContain('md-comp-small-icon-button')
+  expect(button.classList).toContain('md-comp-standard-icon-button')
+})
+
+it('makes a toggle icon button that fills its icon when selected', () => {
+  render(
+    <IconButton
+      icon="favorite"
+      label="Favourite"
+      variant="tonal"
+      size="l"
+      width="wide"
+      selected
+    />
+  )
+  const button = screen.getByRole('button', { name: 'Favourite' })
+  expect(button.getAttribute('aria-pressed')).toBe('true')
+  expect(button.classList).toContain('md-comp-large-icon-button')
+  expect(button.classList).toContain('md-comp-filled-tonal-icon-button')
+  expect(button.querySelector('[translate="no"]')!.className).toMatch(/filled/)
+})
+
+it('names a FAB by its label and an extended FAB by its text', () => {
+  render(
+    <>
+      <Fab icon="add" label="New playlist" size="large" color="secondary" />
+      <ExtendedFab icon="edit" size="medium">
+        Compose
+      </ExtendedFab>
+    </>
+  )
+  const fab = screen.getByRole('button', { name: 'New playlist' })
+  expect(fab.classList).toContain('md-comp-fab-large')
+  expect(fab.classList).toContain('md-comp-fab-secondary-container')
+  const extended = screen.getByRole('button', { name: 'Compose' })
+  expect(extended.classList).toContain('md-comp-extended-fab-medium')
+  expect(extended.classList).toContain('md-comp-fab-primary-container')
+})
+
+it('renders its child as the icon button with asChild', () => {
+  render(
+    <IconButton asChild icon="play_arrow" label="Play Arrival">
+      <a href="/play/arrival" />
+    </IconButton>
+  )
+  const link = screen.getByRole('link', { name: 'Play Arrival' })
+  expect(link.getAttribute('href')).toBe('/play/arrival')
+  expect(link.querySelector('[translate="no"]')!.textContent).toBe('play_arrow')
 })

@@ -1,0 +1,288 @@
+/* M3 Expressive icon buttons, mapped like button.module.css. Compose reads
+   only the resting colour tokens for these, so this does too. Citations are
+   to IconButton.kt and IconButtonDefaults.kt at the pinned commit. */
+
+.iconButton {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  /* IconButtonDefaults.*ContainerSize: the icon plus its spaces. */
+  width: calc(var(--_icon-size) + var(--_leading) + var(--_trailing));
+  height: var(--_height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--_shape);
+  background: var(--_container);
+  color: var(--_color);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: var(--_icon-opsz);
+  /* Icon buttons, toggles included, morph without bounce (DefaultEffects). */
+  transition:
+    border-radius var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+/* Sizes. As with buttons, round is half the height. */
+
+.xs {
+  --_height: var(--md-comp-x-small-icon-button-container-height);
+  --_icon-size: var(--md-comp-x-small-icon-button-icon-size);
+  --_icon-opsz: 20;
+  --_outline-width: var(--md-comp-x-small-icon-button-outlined-outline-width);
+  --_square: var(--md-comp-x-small-icon-button-container-shape-square);
+  --_pressed: var(--md-comp-x-small-icon-button-pressed-container-shape);
+  --_selected-round: var(
+    --md-comp-x-small-icon-button-selected-container-shape-round
+  );
+  --_narrow-leading: var(--md-comp-x-small-icon-button-narrow-leading-space);
+  --_narrow-trailing: var(--md-comp-x-small-icon-button-narrow-trailing-space);
+  --_uniform-leading: var(--md-comp-x-small-icon-button-default-leading-space);
+  --_uniform-trailing: var(
+    --md-comp-x-small-icon-button-default-trailing-space
+  );
+  --_wide-leading: var(--md-comp-x-small-icon-button-wide-leading-space);
+  --_wide-trailing: var(--md-comp-x-small-icon-button-wide-trailing-space);
+}
+
+.s {
+  --_height: var(--md-comp-small-icon-button-container-height);
+  --_icon-size: var(--md-comp-small-icon-button-icon-size);
+  --_icon-opsz: 24;
+  --_outline-width: var(--md-comp-small-icon-button-outlined-outline-width);
+  --_square: var(--md-comp-small-icon-button-container-shape-square);
+  --_pressed: var(--md-comp-small-icon-button-pressed-container-shape);
+  --_selected-round: var(
+    --md-comp-small-icon-button-selected-container-shape-round
+  );
+  --_narrow-leading: var(--md-comp-small-icon-button-narrow-leading-space);
+  --_narrow-trailing: var(--md-comp-small-icon-button-narrow-trailing-space);
+  --_uniform-leading: var(--md-comp-small-icon-button-default-leading-space);
+  --_uniform-trailing: var(--md-comp-small-icon-button-default-trailing-space);
+  --_wide-leading: var(--md-comp-small-icon-button-wide-leading-space);
+  --_wide-trailing: var(--md-comp-small-icon-button-wide-trailing-space);
+}
+
+.m {
+  --_height: var(--md-comp-medium-icon-button-container-height);
+  --_icon-size: var(--md-comp-medium-icon-button-icon-size);
+  --_icon-opsz: 24;
+  --_outline-width: var(--md-comp-medium-icon-button-outlined-outline-width);
+  --_square: var(--md-comp-medium-icon-button-container-shape-square);
+  --_pressed: var(--md-comp-medium-icon-button-pressed-container-shape);
+  --_selected-round: var(
+    --md-comp-medium-icon-button-selected-container-shape-round
+  );
+  --_narrow-leading: var(--md-comp-medium-icon-button-narrow-leading-space);
+  --_narrow-trailing: var(--md-comp-medium-icon-button-narrow-trailing-space);
+  --_uniform-leading: var(--md-comp-medium-icon-button-default-leading-space);
+  --_uniform-trailing: var(--md-comp-medium-icon-button-default-trailing-space);
+  --_wide-leading: var(--md-comp-medium-icon-button-wide-leading-space);
+  --_wide-trailing: var(--md-comp-medium-icon-button-wide-trailing-space);
+}
+
+/* Large has uniform spaces where the others have default ones. */
+.l {
+  --_height: var(--md-comp-large-icon-button-container-height);
+  --_icon-size: var(--md-comp-large-icon-button-icon-size);
+  --_icon-opsz: 32;
+  --_outline-width: var(--md-comp-large-icon-button-outlined-outline-width);
+  --_square: var(--md-comp-large-icon-button-container-shape-square);
+  --_pressed: var(--md-comp-large-icon-button-pressed-container-shape);
+  --_selected-round: var(
+    --md-comp-large-icon-button-selected-container-shape-round
+  );
+  --_narrow-leading: var(--md-comp-large-icon-button-narrow-leading-space);
+  --_narrow-trailing: var(--md-comp-large-icon-button-narrow-trailing-space);
+  --_uniform-leading: var(--md-comp-large-icon-button-uniform-leading-space);
+  --_uniform-trailing: var(--md-comp-large-icon-button-uniform-trailing-space);
+  --_wide-leading: var(--md-comp-large-icon-button-wide-leading-space);
+  --_wide-trailing: var(--md-comp-large-icon-button-wide-trailing-space);
+}
+
+.xl {
+  --_height: var(--md-comp-x-large-icon-button-container-height);
+  --_icon-size: var(--md-comp-x-large-icon-button-icon-size);
+  --_icon-opsz: 40;
+  --_outline-width: var(--md-comp-x-large-icon-button-outlined-outline-width);
+  --_square: var(--md-comp-x-large-icon-button-container-shape-square);
+  --_pressed: var(--md-comp-x-large-icon-button-pressed-container-shape);
+  --_selected-round: var(
+    --md-comp-x-large-icon-button-selected-container-shape-round
+  );
+  --_narrow-leading: var(--md-comp-x-large-icon-button-narrow-leading-space);
+  --_narrow-trailing: var(--md-comp-x-large-icon-button-narrow-trailing-space);
+  --_uniform-leading: var(--md-comp-x-large-icon-button-default-leading-space);
+  --_uniform-trailing: var(
+    --md-comp-x-large-icon-button-default-trailing-space
+  );
+  --_wide-leading: var(--md-comp-x-large-icon-button-wide-leading-space);
+  --_wide-trailing: var(--md-comp-x-large-icon-button-wide-trailing-space);
+}
+
+.narrow {
+  --_leading: var(--_narrow-leading);
+  --_trailing: var(--_narrow-trailing);
+}
+
+.uniform {
+  --_leading: var(--_uniform-leading);
+  --_trailing: var(--_uniform-trailing);
+}
+
+.wide {
+  --_leading: var(--_wide-leading);
+  --_trailing: var(--_wide-trailing);
+}
+
+/* A selected toggle swaps shape. Unlike buttons, icon buttons name the
+   selected shape after the resting one: a round button's selected shape is
+   SelectedContainerShapeRound (IconButtonDefaults.toggleableShapes). */
+.round {
+  --_shape: calc(var(--_height) / 2);
+  --_shape-selected: var(--_selected-round);
+}
+
+.square {
+  --_shape: var(--_square);
+  --_shape-selected: calc(var(--_height) / 2);
+}
+
+/* Variants. */
+
+.standard {
+  --_container: transparent;
+  --_color: var(--md-comp-standard-icon-button-color);
+  --_unselected-container: transparent;
+  --_unselected-color: var(--md-comp-standard-icon-button-unselected-color);
+  --_selected-container: transparent;
+  --_selected-color: var(--md-comp-standard-icon-button-selected-color);
+  --_disabled-container: transparent;
+  --_disabled-container-opacity: 1;
+  --_disabled-color: var(--md-comp-standard-icon-button-disabled-color);
+  --_disabled-opacity: var(--md-comp-standard-icon-button-disabled-opacity);
+}
+
+.filled {
+  --_container: var(--md-comp-filled-icon-button-container-color);
+  --_color: var(--md-comp-filled-icon-button-color);
+  --_unselected-container: var(
+    --md-comp-filled-icon-button-unselected-container-color
+  );
+  --_unselected-color: var(--md-comp-filled-icon-button-unselected-color);
+  --_selected-container: var(
+    --md-comp-filled-icon-button-selected-container-color
+  );
+  --_selected-color: var(--md-comp-filled-icon-button-selected-color);
+  --_disabled-container: var(
+    --md-comp-filled-icon-button-disabled-container-color
+  );
+  --_disabled-container-opacity: var(
+    --md-comp-filled-icon-button-disabled-container-opacity
+  );
+  --_disabled-color: var(--md-comp-filled-icon-button-disabled-color);
+  --_disabled-opacity: var(--md-comp-filled-icon-button-disabled-opacity);
+}
+
+.tonal {
+  --_container: var(--md-comp-filled-tonal-icon-button-container-color);
+  --_color: var(--md-comp-filled-tonal-icon-button-color);
+  --_unselected-container: var(
+    --md-comp-filled-tonal-icon-button-unselected-container-color
+  );
+  --_unselected-color: var(--md-comp-filled-tonal-icon-button-unselected-color);
+  --_selected-container: var(
+    --md-comp-filled-tonal-icon-button-selected-container-color
+  );
+  --_selected-color: var(--md-comp-filled-tonal-icon-button-selected-color);
+  --_disabled-container: var(
+    --md-comp-filled-tonal-icon-button-disabled-container-color
+  );
+  --_disabled-container-opacity: var(
+    --md-comp-filled-tonal-icon-button-disabled-container-opacity
+  );
+  --_disabled-color: var(--md-comp-filled-tonal-icon-button-disabled-color);
+  --_disabled-opacity: var(--md-comp-filled-tonal-icon-button-disabled-opacity);
+}
+
+.outlined {
+  --_container: transparent;
+  --_color: var(--md-comp-outlined-icon-button-color);
+  --_outline: var(--md-comp-outlined-icon-button-outline-color);
+  --_unselected-container: transparent;
+  --_unselected-color: var(--md-comp-outlined-icon-button-unselected-color);
+  --_selected-container: var(
+    --md-comp-outlined-icon-button-selected-container-color
+  );
+  --_selected-color: var(--md-comp-outlined-icon-button-selected-color);
+  --_disabled-container: transparent;
+  --_disabled-container-opacity: 1;
+  --_disabled-color: var(--md-comp-outlined-icon-button-disabled-color);
+  --_disabled-opacity: var(--md-comp-outlined-icon-button-disabled-opacity);
+  --_disabled-outline: var(
+    --md-comp-outlined-icon-button-disabled-outline-color
+  );
+  border: var(--_outline-width) solid var(--_outline);
+}
+
+/* States. */
+
+.toggle[aria-pressed='false'] {
+  --_container: var(--_unselected-container);
+  --_color: var(--_unselected-color);
+}
+
+.toggle[aria-pressed='true'] {
+  --_container: var(--_selected-container);
+  --_color: var(--_selected-color);
+  /* outlinedIconToggleButtonBorder: none when checked. */
+  --_outline: transparent;
+  border-radius: var(--_shape-selected);
+}
+
+.iconButton:active {
+  border-radius: var(--_pressed);
+}
+
+.iconButton:disabled,
+.iconButton[aria-disabled='true'] {
+  cursor: default;
+  background: color-mix(
+    in srgb,
+    var(--_disabled-container) calc(var(--_disabled-container-opacity) * 100%),
+    transparent
+  );
+  color: color-mix(
+    in srgb,
+    var(--_disabled-color) calc(var(--_disabled-opacity) * 100%),
+    transparent
+  );
+  --_outline: var(--_disabled-outline, transparent);
+  border-radius: var(--_shape);
+}
+
+.toggle[aria-pressed='true']:is(:disabled, [aria-disabled='true']) {
+  border-radius: var(--_shape-selected);
+}
+
+.outlined.toggle[aria-pressed='true']:is(:disabled, [aria-disabled='true']) {
+  background: color-mix(
+    in srgb,
+    var(--md-comp-outlined-icon-button-selected-disabled-container-color)
+      calc(
+        var(
+            --md-comp-outlined-icon-button-selected-disabled-container-opacity
+          ) *
+          100%
+      ),
+    transparent
+  );
+}

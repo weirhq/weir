@@ -1,8 +1,8 @@
 {
-  "name": "@weirhq/ui",
+  "name": "@weirhq/m3e",
   "version": "0.0.0",
   "private": true,
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -10,7 +10,8 @@
     "./styles.css": "./src/styles.css"
   },
   "scripts": {
-    "tokens": "node scripts/tokens.ts src/tokens.gen.css",
+    "tokens": "node scripts/tokens.ts src",
+    "pin": "node scripts/androidx.ts pin",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

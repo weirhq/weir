@@ -1,5 +1,5 @@
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Dialog, TextField } from '@weirhq/ui'
+import { Button, Dialog, TextField } from '@weirhq/m3e'
 import { useState, useSyncExternalStore, type FormEvent } from 'react'
 import { deviceInfo } from '../device'
 import { errorMessage } from '../errors'

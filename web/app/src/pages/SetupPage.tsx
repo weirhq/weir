@@ -1,4 +1,4 @@
-import { Button, TextField } from '@weirhq/ui'
+import { Button, TextField } from '@weirhq/m3e'
 import { useNavigate, useRouteContext } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { deviceInfo } from '../device'

@@ -205,7 +205,7 @@ importers:
       '@tanstack/react-router':
         specifier: 1.170.46
         version: 1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@weirhq/ui':
+      '@weirhq/m3e':
         specifier: workspace:*
         version: link:../ui
       hls.js:

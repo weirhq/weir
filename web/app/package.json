@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "generate": "buf generate ../../proto --template buf.gen.yaml --path ../../proto/weir/api",
-    "predev": "pnpm generate && pnpm --filter @weirhq/ui tokens",
+    "predev": "pnpm generate && pnpm --filter @weirhq/m3e tokens",
     "dev": "vite",
-    "prebuild": "pnpm generate && pnpm --filter @weirhq/ui tokens",
+    "prebuild": "pnpm generate && pnpm --filter @weirhq/m3e tokens",
     "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -19,7 +19,7 @@
     "@connectrpc/connect-web": "2.3.0",
     "@tanstack/react-query": "5.105.0",
     "@tanstack/react-router": "1.170.46",
-    "@weirhq/ui": "workspace:*",
+    "@weirhq/m3e": "workspace:*",
     "hls.js": "1.7.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",

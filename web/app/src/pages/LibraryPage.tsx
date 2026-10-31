@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button } from '@weirhq/ui'
+import { Button } from '@weirhq/m3e'
 import { librariesKey } from '../components/AppShell'
 import { PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'

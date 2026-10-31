@@ -124,7 +124,11 @@ The engine's ffmpeg is built by `.github/workflows/ffmpeg.yml`; see
 
 ## License
 
-Every first-party component (server, engine, web, desktop) is
-[AGPL-3.0](LICENSE). The protobuf contract in `proto/` is
-[Apache-2.0](proto/LICENSE) so third-party clients and alternative engines can
-implement it without AGPL obligations.
+The server, engine, web app and desktop client are [AGPL-3.0](LICENSE). Two
+parts are Apache-2.0:
+
+- The protobuf contract in `proto/` ([license](proto/LICENSE)), so third-party
+  clients and alternative engines can implement it without AGPL obligations.
+- The Material 3 Expressive components in `web/ui`, `@weirhq/m3e`
+  ([license](web/ui/LICENSE)), so they can leave Weir as a library of their
+  own.

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
-import { Button } from '@weirhq/ui'
+import { Button } from '@weirhq/m3e'
 import { AddToPlaylist } from '../components/AddToPlaylist'
 import { PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'

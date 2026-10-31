@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Dialog, TextField } from '@weirhq/ui'
+import { Button, Dialog, TextField } from '@weirhq/m3e'
 import { useId, useState, type FormEvent } from 'react'
 import { librariesKey } from '../../components/AppShell'
 import { errorMessage } from '../../errors'

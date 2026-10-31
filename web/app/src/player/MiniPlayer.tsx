@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Button } from '@weirhq/ui'
+import { Button } from '@weirhq/m3e'
 import { useState } from 'react'
 import { sized } from '../art'
 import { useQueue } from './queue'

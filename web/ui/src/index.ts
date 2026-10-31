@@ -1,3 +1,3 @@
-export { Button, type ButtonProps } from './Button'
-export { TextField, type TextFieldProps } from './TextField'
-export { Dialog, type DialogProps } from './Dialog'
+export { Button, type ButtonProps } from './button'
+export { TextField, type TextFieldProps } from './text-field'
+export { Dialog, type DialogProps } from './dialog'

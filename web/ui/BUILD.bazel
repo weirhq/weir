@@ -6,21 +6,26 @@ load("@npm//web/ui:vitest/package_json.bzl", vitest = "bin")
 
 npm_link_all_packages(name = "node_modules")
 
+TOKEN_SOURCES = glob(["tokens/androidx/*"]) + ["tokens/m3.json"]
+
 # Node runs the TypeScript generator directly (type stripping).
 js_binary(
     name = "tokens_gen",
-    data = [
-        "tokens/m3.json",
+    data = TOKEN_SOURCES + [
+        "scripts/kotlin.ts",
+        "scripts/spring.ts",
         ":node_modules/@material/material-color-utilities",
     ],
     entry_point = "scripts/tokens.ts",
 )
 
+# The system tokens, and a folder with one file per component token set.
 js_run_binary(
     name = "tokens",
     srcs = ["package.json"],
-    args = ["src/tokens.gen.css"],
+    args = ["src"],
     chdir = package_name(),
+    out_dirs = ["src/tokens"],
     outs = ["src/tokens.gen.css"],
     tool = ":tokens_gen",
 )
@@ -34,23 +39,28 @@ SRCS = glob(
     exclude = [
         "src/**/*.test.*",
         "src/tokens.gen.css",
+        "src/tokens/**",
     ],
 )
 
-# Linked into @weirhq/app's node_modules as @weirhq/ui.
+# Linked into @weirhq/app's node_modules as @weirhq/m3e.
 npm_package(
     name = "pkg",
     srcs = SRCS + [
+        "LICENSE",
+        "NOTICE",
         "package.json",
         ":tokens",
     ],
     visibility = ["//web:__subpackages__"],
 )
 
-TEST_DATA = SRCS + glob(["src/**/*.test.*"]) + [
+TEST_DATA = SRCS + TOKEN_SOURCES + glob(["src/**/*.test.*"]) + [
     "package.json",
+    "scripts/androidx.ts",
+    "scripts/kotlin.ts",
+    "scripts/spring.ts",
     "scripts/tokens.ts",
-    "tokens/m3.json",
     "tsconfig.json",
     "vitest.config.ts",
     "//web:tsconfig",

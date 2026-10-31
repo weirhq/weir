@@ -1,0 +1,7 @@
+@weirhq/m3e
+Copyright 2026 the Weir authors
+
+This product includes design tokens from Jetpack Compose Material 3
+(tokens/androidx), developed by The Android Open Source Project and
+licensed under the Apache License, Version 2.0. The generated CSS in
+src/tokens.gen.css and src/tokens/ is derived from them.

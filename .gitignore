@@ -31,3 +31,4 @@ node_modules/
 /server/internal/store/dbgen/*.go
 /web/app/src/gen/
 /web/ui/src/tokens.gen.css
+/web/ui/src/tokens/

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, TextField } from '@weirhq/ui'
+import { Button, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../errors'
 import { appendToPlaylist, playlistsKey } from '../pages/playlists'

@@ -1,6 +1,6 @@
 import { Dialog as Radix } from 'radix-ui'
 import type { ReactNode } from 'react'
-import styles from './Dialog.module.css'
+import styles from './dialog.module.css'
 
 export type DialogProps = {
   open: boolean

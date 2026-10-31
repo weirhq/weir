@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    // @weirhq/ui depends on React too; bundle exactly one copy.
+    // @weirhq/m3e depends on React too; bundle exactly one copy.
     dedupe: ['react', 'react-dom']
   },
   build: {

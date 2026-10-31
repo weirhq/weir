@@ -1,5 +1,5 @@
-import '@weirhq/ui/tokens.css'
-import '@weirhq/ui/styles.css'
+import '@weirhq/m3e/tokens.css'
+import '@weirhq/m3e/styles.css'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { QueryClient } from '@tanstack/react-query'

@@ -5,7 +5,7 @@ import {
   useNavigate,
   useRouteContext
 } from '@tanstack/react-router'
-import { Button } from '@weirhq/ui'
+import { Button } from '@weirhq/m3e'
 import { useState, useSyncExternalStore, type FormEvent } from 'react'
 import { Role } from '../gen/weir/api/v1alpha/user_pb'
 import { MiniPlayer } from '../player/MiniPlayer'

@@ -1,6 +1,6 @@
 import { Slot } from 'radix-ui'
 import type { ButtonHTMLAttributes } from 'react'
-import styles from './Button.module.css'
+import styles from './button.module.css'
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'filled' | 'tonal' | 'outlined' | 'text'

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
-import { Button } from '@weirhq/ui'
+import { Button } from '@weirhq/m3e'
 import { useEffect, useState } from 'react'
 import type { PlaybackPlan } from '../gen/weir/api/v1alpha/playback_pb'
 import { playRoute } from '../router'

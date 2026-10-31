@@ -19,3 +19,11 @@ export { focusRing, StateLayer } from './state-layer'
 export { Checkbox, type CheckboxProps } from './checkbox'
 export { Radio, type RadioProps } from './radio'
 export { Switch, type SwitchProps } from './switch'
+export {
+  AssistChip,
+  FilterChip,
+  InputChip,
+  SuggestionChip,
+  type FilterChipProps,
+  type InputChipProps
+} from './chip'

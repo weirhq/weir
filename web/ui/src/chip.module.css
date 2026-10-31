@@ -1,0 +1,434 @@
+/* M3 chips: assist, suggestion, filter and input. Compose reads only the
+   resting colours. Outlines are drawn inside, as Compose's borders are,
+   so they don't move the content. Citations are to Chip.kt at the pinned
+   commit. */
+
+.chip {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  /* HorizontalElementsPadding */
+  gap: 8px;
+  height: var(--_height);
+  padding-block: 0;
+  padding-inline: var(--_start) var(--_end);
+  border: 0;
+  border-radius: var(--_shape);
+  background: var(--_container, transparent);
+  color: var(--_label);
+  box-shadow:
+    /* none can't join a list, so no shadow is a transparent one. */
+    var(--_shadow, 0 0 transparent),
+    inset 0 0 0 var(--_outline-width, 0) var(--_outline, transparent);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  line-height: var(--md-sys-typescale-label-large-line-height);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: 20;
+  transition:
+    border-radius var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    box-shadow var(--md-sys-motion-duration-short4)
+      var(--md-sys-motion-easing-standard);
+}
+
+.leading {
+  color: var(--_icon);
+}
+
+.trailing {
+  color: var(--_trailing-icon, var(--_icon));
+}
+
+/* Padding: 8dp beside an icon, else 16dp, which Compose gets from its 8dp
+   padding plus the 8dp gap before an empty spacer. */
+.chip {
+  --_start: 16px;
+  --_end: 16px;
+}
+
+.hasLeading {
+  --_start: 8px;
+}
+
+.hasTrailing {
+  --_end: 8px;
+}
+
+/* InputChipDefaults.contentPadding: 4dp, or 8dp before a leading icon,
+   each plus the 8dp gap where there's no icon. */
+.input {
+  --_start: 12px;
+  --_end: 12px;
+}
+
+.input.hasLeading {
+  --_start: 8px;
+}
+
+.input.hasAvatar {
+  --_start: 4px;
+}
+
+.input.hasTrailing {
+  --_end: 8px;
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    --_shadow: var(--_shadow-hover);
+  }
+}
+
+.chip:focus-visible,
+.chip:has(:focus-visible) {
+  --_shadow: var(--_shadow-focus);
+}
+
+.chip:active {
+  --_shadow: var(--_shadow-pressed);
+}
+
+/* Doubled to outrank the selected rules below. */
+.chip.chip:is(:disabled, [aria-disabled='true']) {
+  cursor: default;
+  --_shadow: var(--_shadow-disabled, 0 0 transparent);
+  --_container: var(--_container-disabled, transparent);
+  --_outline: var(--_outline-disabled, transparent);
+  --_label: var(--_label-disabled);
+  --_icon: var(--_icon-disabled);
+  --_trailing-icon: var(--_icon-disabled);
+}
+
+/* The morphing shapes Compose's FilterChip and InputChip take as an
+   option (ChipsTokens): medium at rest, small pressed, round selected. */
+.chip.morph {
+  --_shape: var(--md-comp-chips-unselected-shape);
+}
+
+.chip.morph:active {
+  --_shape: var(--md-comp-chips-pressed-shape);
+}
+
+.chip.morph:is([aria-pressed='true'], .selected) {
+  --_shape: calc(var(--_height) / 2);
+}
+
+/* Assist chips. */
+
+.assist {
+  --_height: var(--md-comp-assist-chip-container-height);
+  --_shape: var(--md-comp-assist-chip-container-shape);
+  --_icon-size: var(--md-comp-assist-chip-icon-size);
+  --_label: var(--md-comp-assist-chip-label-text-color);
+  --_icon: var(--md-comp-assist-chip-icon-color);
+  --_outline: var(--md-comp-assist-chip-flat-outline-color);
+  --_outline-width: var(--md-comp-assist-chip-flat-outline-width);
+  --_outline-disabled: color-mix(
+    in srgb,
+    var(--md-comp-assist-chip-flat-disabled-outline-color)
+      calc(var(--md-comp-assist-chip-flat-disabled-outline-opacity) * 100%),
+    transparent
+  );
+  --_label-disabled: color-mix(
+    in srgb,
+    var(--md-comp-assist-chip-disabled-label-text-color)
+      calc(var(--md-comp-assist-chip-disabled-label-text-opacity) * 100%),
+    transparent
+  );
+  --_icon-disabled: color-mix(
+    in srgb,
+    var(--md-comp-assist-chip-disabled-icon-color)
+      calc(var(--md-comp-assist-chip-disabled-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.assist.elevated {
+  --_container: var(--md-comp-assist-chip-elevated-container-color);
+  --_outline-width: 0px;
+  --_shadow: var(--md-comp-assist-chip-elevated-container-shadow);
+  --_shadow-hover: var(--md-comp-assist-chip-elevated-hover-container-shadow);
+  --_shadow-focus: var(--md-comp-assist-chip-elevated-focus-container-shadow);
+  --_shadow-pressed: var(
+    --md-comp-assist-chip-elevated-pressed-container-shadow
+  );
+  --_shadow-disabled: var(
+    --md-comp-assist-chip-elevated-disabled-container-shadow
+  );
+  --_container-disabled: color-mix(
+    in srgb,
+    var(--md-comp-assist-chip-elevated-disabled-container-color)
+      calc(
+        var(--md-comp-assist-chip-elevated-disabled-container-opacity) * 100%
+      ),
+    transparent
+  );
+}
+
+/* Suggestion chips. */
+
+.suggestion {
+  --_height: var(--md-comp-suggestion-chip-container-height);
+  --_shape: var(--md-comp-suggestion-chip-container-shape);
+  --_icon-size: var(--md-comp-suggestion-chip-leading-icon-size);
+  --_label: var(--md-comp-suggestion-chip-label-text-color);
+  --_icon: var(--md-comp-suggestion-chip-leading-icon-color);
+  --_outline: var(--md-comp-suggestion-chip-flat-outline-color);
+  --_outline-width: var(--md-comp-suggestion-chip-flat-outline-width);
+  --_outline-disabled: color-mix(
+    in srgb,
+    var(--md-comp-suggestion-chip-flat-disabled-outline-color)
+      calc(var(--md-comp-suggestion-chip-flat-disabled-outline-opacity) * 100%),
+    transparent
+  );
+  --_label-disabled: color-mix(
+    in srgb,
+    var(--md-comp-suggestion-chip-disabled-label-text-color)
+      calc(var(--md-comp-suggestion-chip-disabled-label-text-opacity) * 100%),
+    transparent
+  );
+  --_icon-disabled: color-mix(
+    in srgb,
+    var(--md-comp-suggestion-chip-disabled-leading-icon-color)
+      calc(var(--md-comp-suggestion-chip-disabled-leading-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+/* SuggestionChipTokens has no disabled container opacity; Compose uses
+   the assist chip's 0.12 for the same role. */
+.suggestion.elevated {
+  --_container: var(--md-comp-suggestion-chip-elevated-container-color);
+  --_outline-width: 0px;
+  --_shadow: var(--md-comp-suggestion-chip-elevated-container-shadow);
+  --_shadow-hover: var(
+    --md-comp-suggestion-chip-elevated-hover-container-shadow
+  );
+  --_shadow-focus: var(
+    --md-comp-suggestion-chip-elevated-focus-container-shadow
+  );
+  --_shadow-pressed: var(
+    --md-comp-suggestion-chip-elevated-pressed-container-shadow
+  );
+  --_shadow-disabled: var(
+    --md-comp-suggestion-chip-elevated-disabled-container-shadow
+  );
+  --_container-disabled: color-mix(
+    in srgb,
+    var(--md-comp-suggestion-chip-elevated-disabled-container-color)
+      calc(
+        var(--md-comp-assist-chip-elevated-disabled-container-opacity) * 100%
+      ),
+    transparent
+  );
+}
+
+/* Filter chips. */
+
+.filter {
+  --_height: var(--md-comp-filter-chip-container-height);
+  --_shape: var(--md-comp-filter-chip-container-shape);
+  --_icon-size: var(--md-comp-filter-chip-icon-size);
+  --_label: var(--md-comp-filter-chip-unselected-label-text-color);
+  --_icon: var(--md-comp-filter-chip-unselected-leading-icon-color);
+  --_trailing-icon: var(--md-comp-filter-chip-unselected-trailing-icon-color);
+  --_outline: var(--md-comp-filter-chip-flat-unselected-outline-color);
+  --_outline-width: var(--md-comp-filter-chip-flat-unselected-outline-width);
+  --_outline-disabled: color-mix(
+    in srgb,
+    var(--md-comp-filter-chip-flat-disabled-unselected-outline-color)
+      calc(
+        var(--md-comp-filter-chip-flat-disabled-unselected-outline-opacity) *
+          100%
+      ),
+    transparent
+  );
+  --_label-disabled: color-mix(
+    in srgb,
+    var(--md-comp-filter-chip-disabled-label-text-color)
+      calc(var(--md-comp-filter-chip-disabled-label-text-opacity) * 100%),
+    transparent
+  );
+  --_icon-disabled: color-mix(
+    in srgb,
+    var(--md-comp-filter-chip-disabled-leading-icon-color)
+      calc(var(--md-comp-filter-chip-disabled-leading-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.filter[aria-pressed='true'] {
+  --_container: var(--md-comp-filter-chip-flat-selected-container-color);
+  --_outline-width: var(--md-comp-filter-chip-flat-selected-outline-width);
+  --_label: var(--md-comp-filter-chip-selected-label-text-color);
+  --_icon: var(--md-comp-filter-chip-selected-leading-icon-color);
+  --_trailing-icon: var(--md-comp-filter-chip-selected-trailing-icon-color);
+  --_shadow-hover: var(
+    --md-comp-filter-chip-flat-selected-hover-container-shadow
+  );
+  --_container-disabled: color-mix(
+    in srgb,
+    var(--md-comp-filter-chip-flat-disabled-selected-container-color)
+      calc(
+        var(--md-comp-filter-chip-flat-disabled-selected-container-opacity) *
+          100%
+      ),
+    transparent
+  );
+}
+
+.filter.elevated {
+  --_container: var(--md-comp-filter-chip-elevated-unselected-container-color);
+  --_outline-width: 0px;
+  --_shadow: var(--md-comp-filter-chip-elevated-container-shadow);
+  --_shadow-hover: var(--md-comp-filter-chip-elevated-hover-container-shadow);
+  --_shadow-focus: var(--md-comp-filter-chip-elevated-focus-container-shadow);
+  --_shadow-pressed: var(
+    --md-comp-filter-chip-elevated-pressed-container-shadow
+  );
+  --_shadow-disabled: var(
+    --md-comp-filter-chip-elevated-disabled-container-shadow
+  );
+  --_container-disabled: color-mix(
+    in srgb,
+    var(--md-comp-filter-chip-elevated-disabled-container-color)
+      calc(
+        var(--md-comp-filter-chip-elevated-disabled-container-opacity) * 100%
+      ),
+    transparent
+  );
+}
+
+.filter.elevated[aria-pressed='true'] {
+  --_container: var(--md-comp-filter-chip-elevated-selected-container-color);
+}
+
+/* Input chips: a container holding the chip's own button and, if it can
+   be removed, a remove button. */
+
+.input {
+  --_height: var(--md-comp-input-chip-container-height);
+  --_shape: var(--md-comp-input-chip-container-shape);
+  --_icon-size: var(--md-comp-input-chip-leading-icon-size);
+  --_label: var(--md-comp-input-chip-unselected-label-text-color);
+  --_icon: var(--md-comp-input-chip-unselected-leading-icon-color);
+  --_trailing-icon: var(--md-comp-input-chip-unselected-trailing-icon-color);
+  --_outline: var(--md-comp-input-chip-unselected-outline-color);
+  --_outline-width: var(--md-comp-input-chip-unselected-outline-width);
+  --_outline-disabled: color-mix(
+    in srgb,
+    var(--md-comp-input-chip-disabled-unselected-outline-color)
+      calc(var(--md-comp-input-chip-disabled-unselected-outline-opacity) * 100%),
+    transparent
+  );
+  --_label-disabled: color-mix(
+    in srgb,
+    var(--md-comp-input-chip-disabled-label-text-color)
+      calc(var(--md-comp-input-chip-disabled-label-text-opacity) * 100%),
+    transparent
+  );
+  --_icon-disabled: color-mix(
+    in srgb,
+    var(--md-comp-input-chip-disabled-leading-icon-color)
+      calc(var(--md-comp-input-chip-disabled-leading-icon-opacity) * 100%),
+    transparent
+  );
+  cursor: default;
+}
+
+.input.selected {
+  --_container: var(--md-comp-input-chip-selected-container-color);
+  --_outline-width: var(--md-comp-input-chip-selected-outline-width);
+  --_label: var(--md-comp-input-chip-selected-label-text-color);
+  --_icon: var(--md-comp-input-chip-selected-leading-icon-color);
+  --_trailing-icon: var(--md-comp-input-chip-selected-trailing-icon-color);
+  --_container-disabled: color-mix(
+    in srgb,
+    var(--md-comp-input-chip-disabled-selected-container-color)
+      calc(var(--md-comp-input-chip-disabled-selected-container-opacity) * 100%),
+    transparent
+  );
+}
+
+.input:has(:disabled) {
+  --_container: var(--_container-disabled, transparent);
+  --_outline: var(--_outline-disabled);
+  --_label: var(--_label-disabled);
+  --_icon: var(--_icon-disabled);
+  --_trailing-icon: var(--_icon-disabled);
+}
+
+/* The parts of an input chip are buttons without chrome of their own; the
+   chip button's state layer covers the whole chip. */
+.part {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.part:disabled {
+  cursor: default;
+}
+
+.part:focus-visible {
+  outline: none;
+}
+
+.main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.remove {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+}
+
+.remove:focus-visible {
+  outline: 3px solid var(--md-comp-input-chip-focus-indicator-color);
+  outline-offset: 2px;
+}
+
+.input:has(.main:focus-visible) {
+  outline: 3px solid var(--md-comp-input-chip-focus-indicator-color);
+  outline-offset: 2px;
+}
+
+.avatar {
+  display: inline-flex;
+  width: var(--md-comp-input-chip-avatar-size);
+  height: var(--md-comp-input-chip-avatar-size);
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.avatar > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.input:has(:disabled) .avatar {
+  opacity: var(--md-comp-input-chip-disabled-avatar-opacity);
+}

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import {
+  AssistChip,
   Button,
   ButtonGroup,
   Checkbox,
@@ -8,9 +9,12 @@ import {
   Dialog,
   ExtendedFab,
   Fab,
+  FilterChip,
   IconButton,
+  InputChip,
   Radio,
   SplitButton,
+  SuggestionChip,
   Switch,
   TextField
 } from '.'
@@ -331,4 +335,51 @@ it('makes a switch that works uncontrolled, with both icons ready', () => {
   expect(toggle.checked).toBe(true)
   const icons = toggle.parentElement!.querySelectorAll('[translate="no"]')
   expect([...icons].map((i) => i.textContent)).toEqual(['check', 'close'])
+})
+
+it('makes assist and suggestion chips plain buttons', () => {
+  render(
+    <>
+      <AssistChip icon="add" elevated>
+        Add to playlist
+      </AssistChip>
+      <SuggestionChip>Arrival</SuggestionChip>
+    </>
+  )
+  const assist = screen.getByRole('button', { name: 'Add to playlist' })
+  expect(assist.hasAttribute('aria-pressed')).toBe(false)
+  expect(assist.classList).toContain('md-comp-assist-chip')
+  expect(screen.getByRole('button', { name: 'Arrival' }).classList).toContain(
+    'md-comp-suggestion-chip'
+  )
+})
+
+it('toggles a filter chip, showing a check when on', () => {
+  const { rerender } = render(
+    <FilterChip selected={false} icon="favorite">
+      Favourites
+    </FilterChip>
+  )
+  const chip = screen.getByRole('button', { name: 'Favourites' })
+  const leading = () => chip.querySelector('[translate="no"]')!.textContent
+  expect(chip.getAttribute('aria-pressed')).toBe('false')
+  expect(leading()).toBe('favorite')
+  rerender(
+    <FilterChip selected icon="favorite" morph>
+      Favourites
+    </FilterChip>
+  )
+  expect(chip.getAttribute('aria-pressed')).toBe('true')
+  expect(leading()).toBe('check')
+  expect(chip.classList).toContain('md-comp-chips')
+})
+
+it('gives an input chip its own remove button', () => {
+  const removed = vi.fn()
+  render(<InputChip onRemove={removed}>Ana</InputChip>)
+  expect(
+    screen.getByRole('button', { name: 'Ana' }).hasAttribute('aria-pressed')
+  ).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: 'Remove Ana' }))
+  expect(removed).toHaveBeenCalledOnce()
 })

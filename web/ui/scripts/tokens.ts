@@ -306,7 +306,8 @@ class Generator {
       throw new Error(
         `m3.json shadows ${shadowLevels} don't match elevation levels ${levels} after level0`
       )
-    out.push(['--md-sys-elevation-shadow-level0', 'none'])
+    // A transparent shadow rather than none, so it can join a list.
+    out.push(['--md-sys-elevation-shadow-level0', '0 0 0 0 transparent'])
     for (const [level, layers] of Object.entries(theme.shadows))
       out.push([
         `--md-sys-elevation-shadow-${level}`,

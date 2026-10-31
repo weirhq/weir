@@ -250,7 +250,9 @@ describe('fonts', () => {
 describe('elevation', () => {
   it('draws each level as a shadow', () => {
     const css = buildSystemCss(theme, tokens)
-    expect(css).toContain('--md-sys-elevation-shadow-level0: none;')
+    expect(css).toContain(
+      '--md-sys-elevation-shadow-level0: 0 0 0 0 transparent;'
+    )
     expect(css).toMatch(
       /--md-sys-elevation-shadow-level5: 0 4px 4px 0px color-mix\(in srgb, var\(--md-sys-color-shadow\) 30%, transparent\), 0 8px 12px 6px/
     )
@@ -396,4 +398,12 @@ describe('group and split button token assumptions', () => {
       )
     }
   )
+})
+
+// chip.module.css rounds selected morphing chips to half their height.
+it('rounds selected morphing chips fully', () => {
+  const p = Object.fromEntries(
+    tokens.objects.get('ChipsTokens')!.props.map((p) => [p.name, p.expr])
+  )
+  expect(p.SelectedShape).toBe('ShapeKeyTokens.CornerFull')
 })

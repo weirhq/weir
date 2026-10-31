@@ -3,6 +3,7 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
+  AssistChip,
   Button,
   ButtonGroup,
   Checkbox,
@@ -12,11 +13,14 @@ import {
   type ButtonSize,
   ExtendedFab,
   Fab,
+  FilterChip,
   Icon,
   IconButton,
   type IconButtonProps,
+  InputChip,
   iconNames,
   Radio,
+  SuggestionChip,
   Switch
 } from '../src'
 import '../src/tokens.gen.css'
@@ -54,6 +58,79 @@ function IconToggle(props: Omit<IconButtonProps, 'selected' | 'onClick'>) {
 }
 
 const iconVariants = ['standard', 'filled', 'tonal', 'outlined'] as const
+
+function Filters({ morph = false }: { morph?: boolean }) {
+  const [on, setOn] = useState<string[]>(['Films'])
+  return (
+    <>
+      {['Films', 'Shows', 'Music'].map((f) => (
+        <FilterChip
+          key={f}
+          morph={morph}
+          selected={on.includes(f)}
+          onClick={() =>
+            setOn(on.includes(f) ? on.filter((x) => x !== f) : [...on, f])
+          }
+        >
+          {f}
+        </FilterChip>
+      ))}
+      <FilterChip
+        morph={morph}
+        selected={false}
+        trailingIcon="keyboard_arrow_down"
+      >
+        Sort
+      </FilterChip>
+      <FilterChip morph={morph} selected disabled>
+        Disabled
+      </FilterChip>
+    </>
+  )
+}
+
+function People() {
+  const [people, setPeople] = useState(['Ana', 'Bea', 'Cai'])
+  const avatar = (name: string) => (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <rect
+        width="24"
+        height="24"
+        fill="var(--md-sys-color-tertiary-container)"
+      />
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="12"
+        fill="var(--md-sys-color-on-tertiary-container)"
+      >
+        {name[0]}
+      </text>
+    </svg>
+  )
+  return (
+    <>
+      {people.map((p, i) => (
+        <InputChip
+          key={p}
+          avatar={i === 0 ? avatar(p) : undefined}
+          icon={i === 1 ? 'favorite' : undefined}
+          morph={i === 2}
+          onRemove={() => setPeople(people.filter((x) => x !== p))}
+        >
+          {p}
+        </InputChip>
+      ))}
+      <InputChip selected onRemove={() => {}}>
+        Selected
+      </InputChip>
+      <InputChip disabled onRemove={() => {}}>
+        Disabled
+      </InputChip>
+    </>
+  )
+}
 
 function Choice({ size }: { size: ButtonSize }) {
   const [view, setView] = useState('Week')
@@ -326,6 +403,43 @@ function Demo() {
           <label className="control">
             <Switch disabled defaultChecked /> Disabled, on
           </label>
+        </div>
+      </section>
+
+      <section aria-labelledby="chips">
+        <h2 id="chips">Chips</h2>
+        <div className="row" data-testid="chips-assist">
+          <span className="label">assist</span>
+          <AssistChip icon="add">Add to playlist</AssistChip>
+          <AssistChip>No icon</AssistChip>
+          <AssistChip icon="favorite" elevated>
+            Elevated
+          </AssistChip>
+          <AssistChip icon="add" disabled>
+            Disabled
+          </AssistChip>
+          <AssistChip icon="add" elevated disabled>
+            Elevated, disabled
+          </AssistChip>
+        </div>
+        <div className="row" data-testid="chips-suggestion">
+          <span className="label">suggestion</span>
+          <SuggestionChip>Arrival</SuggestionChip>
+          <SuggestionChip icon="search">Zodiac</SuggestionChip>
+          <SuggestionChip elevated>Elevated</SuggestionChip>
+          <SuggestionChip disabled>Disabled</SuggestionChip>
+        </div>
+        <div className="row" data-testid="chips-filter">
+          <span className="label">filter</span>
+          <Filters />
+        </div>
+        <div className="row" data-testid="chips-filter-morph">
+          <span className="label">filter, morph</span>
+          <Filters morph />
+        </div>
+        <div className="row" data-testid="chips-input">
+          <span className="label">input</span>
+          <People />
         </div>
       </section>
 

@@ -1,4 +1,8 @@
+import { configure } from '@testing-library/react'
 import { useQueue } from '../player/queue'
+
+// A busy CI runner can take over the default second to render a page.
+configure({ asyncUtilTimeout: 5000 })
 
 // jsdom has no layout, so the router's scroll restoration has nothing to do.
 window.scrollTo = () => {}

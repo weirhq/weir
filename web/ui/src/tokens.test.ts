@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { readdirSync, readFileSync } from 'node:fs'
 import { checkPin, readPin } from '../scripts/androidx'
 import { checkFontPin, readFontPin } from '../scripts/fonts'
 import { parseTokenFile } from '../scripts/kotlin'
@@ -212,15 +213,24 @@ describe('fonts', () => {
     expect(checkFontPin()).toEqual([])
   })
 
-  it('cover Latin and Vietnamese in Google Sans Flex, Cyrillic and Greek in Roboto Flex', () => {
+  it('cover Latin and Vietnamese in Google Sans Flex, Cyrillic and Greek in Roboto Flex, and the icons', () => {
     expect(pin.faces.map((f) => `${f.family}: ${f.subset}`)).toEqual([
       'Google Sans Flex: latin',
       'Google Sans Flex: latin-ext',
       'Google Sans Flex: vietnamese',
       'Roboto Flex: cyrillic',
       'Roboto Flex: cyrillic-ext',
-      'Roboto Flex: greek'
+      'Roboto Flex: greek',
+      'Material Symbols Rounded: icons'
     ])
+  })
+
+  it('show text in a fallback while loading, but hold icons back', () => {
+    const faces = fontFaces(pin).split('@font-face').slice(1)
+    expect(faces.at(-1)).toContain("font-family: 'Material Symbols Rounded'")
+    expect(faces.at(-1)).toContain('font-display: block;')
+    for (const face of faces.slice(0, -1))
+      expect(face).toContain('font-display: swap;')
   })
 
   it('get one @font-face each, loaded from the package', () => {
@@ -234,5 +244,85 @@ describe('fonts', () => {
 
   it('are what the theme asks for first', () => {
     expect(theme.typeface.plain).toMatch(/^'Google Sans Flex', 'Roboto Flex', /)
+  })
+})
+
+describe('elevation', () => {
+  it('draws each level as a shadow', () => {
+    const css = buildSystemCss(theme, tokens)
+    expect(css).toContain('--md-sys-elevation-shadow-level0: none;')
+    expect(css).toMatch(
+      /--md-sys-elevation-shadow-level5: 0 4px 4px 0px color-mix\(in srgb, var\(--md-sys-color-shadow\) 30%, transparent\), 0 8px 12px 6px/
+    )
+  })
+
+  it('gives every component elevation a shadow beside it', () => {
+    const css = buildComponentCss(theme, tokens).get('elevated-button')!
+    expect(css).toContain(
+      '--md-comp-elevated-button-hovered-container-shadow: var(--md-sys-elevation-shadow-level2);'
+    )
+  })
+})
+
+describe('component stylesheets', () => {
+  const src = new URL('./', import.meta.url)
+  const sheets = readdirSync(src)
+    .filter((f) => f.endsWith('.module.css'))
+    .map((f) => [f, readFileSync(new URL(f, src), 'utf8')] as const)
+  const defined = new Set(
+    [
+      buildSystemCss(theme, tokens),
+      ...buildComponentCss(theme, tokens).values()
+    ].flatMap((css) => [...css.matchAll(/(--md-[\w-]+):/g)].map((m) => m[1]!))
+  )
+
+  it.each(sheets)('%s uses only tokens that exist', (_, css) => {
+    const used = [
+      ...css.matchAll(/var\(\s*(--md-(?:sys|comp|ref)-[\w-]+)/g)
+    ].map((m) => m[1]!)
+    expect(used.filter((name) => !defined.has(name))).toEqual([])
+  })
+})
+
+// button.module.css relies on these, so a re-pin that breaks them fails here.
+describe('button token assumptions', () => {
+  const props = (name: string) =>
+    Object.fromEntries(
+      tokens.objects.get(name)!.props.map((p) => [p.name, p.expr])
+    )
+
+  it.each([
+    'ButtonXSmallTokens',
+    'ButtonSmallTokens',
+    'ButtonMediumTokens',
+    'ButtonLargeTokens',
+    'ButtonXLargeTokens'
+  ])('%s rounds fully, so round can be half the height', (name) => {
+    const p = props(name)
+    expect(p.ContainerShapeRound).toBe('ShapeKeyTokens.CornerFull')
+    expect(p.SelectedContainerShapeRound).toBe('ShapeKeyTokens.CornerFull')
+  })
+
+  it.each([
+    'FilledButtonTokens',
+    'FilledTonalButtonTokens',
+    'TonalButtonTokens',
+    'ElevatedButtonTokens',
+    'OutlinedButtonTokens',
+    'TextButtonTokens'
+  ])('%s keeps its label colours across hover, focus and press', (name) => {
+    const p = props(name)
+    const differing = Object.keys(p)
+      .map((k) => [
+        k,
+        k.replace(
+          /^(Selected|Unselected)?(Hovered|Hover|Focused|Focus|Pressed)/,
+          '$1'
+        )
+      ])
+      // Icons take the label colour, as in Compose.
+      .filter(([k, rest]) => k !== rest && /Label\w*Color$/.test(k!))
+      .filter(([k, rest]) => rest! in p && p[k!] !== p[rest!])
+    expect(differing).toEqual([])
   })
 })

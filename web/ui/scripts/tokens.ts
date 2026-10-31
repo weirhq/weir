@@ -36,6 +36,15 @@ export type Theme = {
   }
   typeface: { brand: string; plain: string }
   motion: 'expressive' | 'standard'
+  // Two shadows per elevation level, drawn in the shadow colour.
+  shadows: Record<string, ShadowLayer[]>
+}
+
+export type ShadowLayer = {
+  y: number
+  blur: number
+  spread: number
+  opacity: number
 }
 
 // Files whose tokens aren't emitted, and why.
@@ -235,11 +244,28 @@ class Generator {
 
   component(o: TokenObject): [string, string][] {
     const prefix = `--md-comp-${componentName(o.name)}`
-    return o.props.flatMap((p): [string, string][] =>
-      p.expr.startsWith('TypographyKeyTokens.')
-        ? this.typography(o, p, prefix)
-        : [[`${prefix}-${kebab(p.name)}`, this.value(o, p)]]
-    )
+    return o.props.flatMap((p): [string, string][] => {
+      if (p.expr.startsWith('TypographyKeyTokens.'))
+        return this.typography(o, p, prefix)
+      const pair: [string, string] = [
+        `${prefix}-${kebab(p.name)}`,
+        this.value(o, p)
+      ]
+      const level = /^ElevationTokens\.(\w+)$/.exec(p.expr)?.[1]
+      if (!level) return [pair]
+      // CSS draws elevation as a shadow, so each elevation has one beside it.
+      if (!p.name.endsWith('Elevation'))
+        throw new Error(
+          `${o.file}:${p.line}: elevation token ${p.name} isn't named *Elevation`
+        )
+      return [
+        pair,
+        [
+          `${prefix}-${kebab(p.name.replace(/Elevation$/, 'Shadow'))}`,
+          `var(--md-sys-elevation-shadow-${kebab(level)})`
+        ]
+      ]
+    })
   }
 
   system(theme: Theme): [string, string][] {
@@ -274,6 +300,23 @@ class Generator {
       `--md-sys-elevation-${kebab(p.name)}`,
       this.value(o, p)
     ])
+    const levels = this.get('ElevationTokens').props.map((p) => kebab(p.name))
+    const shadowLevels = Object.keys(theme.shadows)
+    if (levels.join() !== ['level0', ...shadowLevels].join())
+      throw new Error(
+        `m3.json shadows ${shadowLevels} don't match elevation levels ${levels} after level0`
+      )
+    out.push(['--md-sys-elevation-shadow-level0', 'none'])
+    for (const [level, layers] of Object.entries(theme.shadows))
+      out.push([
+        `--md-sys-elevation-shadow-${level}`,
+        layers
+          .map(
+            (s) =>
+              `0 ${s.y}px ${s.blur}px ${s.spread}px color-mix(in srgb, var(--md-sys-color-shadow) ${s.opacity * 100}%, transparent)`
+          )
+          .join(', ')
+      ])
     each('StateTokens', (o, p) => [
       `--md-sys-state-${kebab(p.name)}`,
       this.value(o, p)
@@ -345,17 +388,20 @@ const header = (from: string) =>
 // fetch only the subsets a page's text needs.
 export function fontFaces(pin: FontPin = readFontPin()): string {
   return pin.faces
-    .map((f) =>
-      block('@font-face', [
+    .map((f) => {
+      const props: [string, string][] = [
         ['font-family', `'${f.family}'`],
         ['font-style', f.style],
-        ['font-weight', f.weight],
-        ['font-stretch', f.stretch],
-        ['font-display', 'swap'],
-        ['src', `url('./fonts/${f.file}') format('woff2')`],
-        ['unicode-range', f.unicodeRange]
-      ])
-    )
+        ['font-weight', f.weight]
+      ]
+      if (f.stretch) props.push(['font-stretch', f.stretch])
+      // Text shows in a fallback font while a face loads, but an icon would
+      // show its name, so icons wait instead.
+      props.push(['font-display', f.subset === 'icons' ? 'block' : 'swap'])
+      props.push(['src', `url('./fonts/${f.file}') format('woff2')`])
+      if (f.unicodeRange) props.push(['unicode-range', f.unicodeRange])
+      return block('@font-face', props)
+    })
     .join('\n')
 }
 

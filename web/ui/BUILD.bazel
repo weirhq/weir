@@ -18,6 +18,7 @@ js_binary(
         "scripts/fonts.ts",
         "scripts/kotlin.ts",
         "scripts/spring.ts",
+        "src/icon-names.ts",
         ":node_modules/@material/material-color-utilities",
     ],
     entry_point = "scripts/tokens.ts",
@@ -62,7 +63,10 @@ npm_package(
     visibility = ["//web:__subpackages__"],
 )
 
-TEST_DATA = SRCS + TOKEN_SOURCES + glob(["src/**/*.test.*"]) + [
+TEST_DATA = SRCS + TOKEN_SOURCES + glob([
+    "demo/**",
+    "src/**/*.test.*",
+]) + [
     "package.json",
     "scripts/androidx.ts",
     "scripts/fonts.ts",
@@ -73,6 +77,8 @@ TEST_DATA = SRCS + TOKEN_SOURCES + glob(["src/**/*.test.*"]) + [
     "vitest.config.ts",
     "//web:tsconfig",
     ":node_modules",
+    # Components import their generated token files.
+    ":tokens",
 ]
 
 typescript.tsc_test(

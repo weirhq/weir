@@ -1,81 +1,375 @@
+/* M3 Expressive buttons. Sizes and variants map their component tokens
+   onto the private --_ properties the rules below use. Where Compose sets a
+   value in code rather than tokens, the comment cites Button.kt or
+   ToggleButton.kt at the pinned androidx commit. */
+
 .button {
   position: relative;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 24px;
-  border: none;
-  border-radius: var(--md-sys-shape-corner-full);
-  font-family: var(--md-sys-typescale-label-large-font);
-  font-size: var(--md-sys-typescale-label-large-size);
-  line-height: var(--md-sys-typescale-label-large-line-height);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  letter-spacing: var(--md-sys-typescale-label-large-tracking);
+  gap: var(--_gap);
+  /* ButtonDefaults.MinWidth */
+  min-width: 58px;
+  height: var(--_height);
+  padding-inline: var(--_leading) var(--_trailing);
+  border: 0;
+  border-radius: var(--_shape);
+  background: var(--_container);
+  color: var(--_label);
+  box-shadow: var(--_shadow);
+  font-family: var(--_font);
+  font-size: var(--_size);
+  line-height: var(--_line-height);
+  font-weight: var(--_weight);
+  letter-spacing: var(--_tracking);
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
-  overflow: hidden;
-  transition: border-radius 150ms;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Plain buttons morph without bounce (DefaultEffects, Button.kt). */
+  transition:
+    border-radius var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects),
+    box-shadow var(--md-sys-motion-duration-short4)
+      var(--md-sys-motion-easing-standard),
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
 }
 
-/* State layer: the content colour at the M3 hover and pressed opacities. */
-.button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 100ms;
+.icon {
+  display: contents;
+  --md-icon-size: var(--_icon-size);
+  --md-icon-optical-size: var(--_icon-opsz);
 }
-.button:hover::before {
-  opacity: 0.08;
-}
-.button:active::before,
-.button:focus-visible::before {
-  opacity: 0.1;
-}
-/* M3 Expressive: pressed buttons morph toward a squarer corner. */
-.button:active {
-  border-radius: var(--md-sys-shape-corner-small);
-}
-.button:focus-visible {
-  outline: 3px solid var(--md-sys-color-secondary);
-  outline-offset: 2px;
-}
-.button:disabled {
-  cursor: default;
-  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--md-sys-color-on-surface) 10%,
-    transparent
+
+/* Sizes. Round is half the height, not corner-full's 9999px, so the
+   corners visibly morph rather than snapping at the end. */
+
+.xs {
+  --_height: var(--md-comp-button-x-small-container-height);
+  /* ExtraSmallContentPadding: the tokens' 16dp is marked wrong. */
+  --_leading: 12px;
+  --_trailing: 12px;
+  /* ExtraSmallIconSpacing */
+  --_gap: 4px;
+  --_icon-size: var(--md-comp-button-x-small-icon-size);
+  --_icon-opsz: 20;
+  --_outline-width: var(--md-comp-button-x-small-outlined-outline-width);
+  --_square: var(--md-comp-button-x-small-container-shape-square);
+  --_pressed: var(--md-comp-button-x-small-pressed-container-shape);
+  --_selected-square: var(
+    --md-comp-button-x-small-selected-container-shape-square
   );
 }
-.button:disabled::before {
-  opacity: 0;
+
+.s {
+  --_height: var(--md-comp-button-small-container-height);
+  --_leading: var(--md-comp-button-small-leading-space);
+  --_trailing: var(--md-comp-button-small-trailing-space);
+  --_gap: var(--md-comp-button-small-icon-label-space);
+  --_icon-size: var(--md-comp-button-small-icon-size);
+  --_icon-opsz: 20;
+  --_outline-width: var(--md-comp-button-small-outlined-outline-width);
+  --_square: var(--md-comp-button-small-container-shape-square);
+  --_pressed: var(--md-comp-button-small-pressed-container-shape);
+  --_selected-square: var(
+    --md-comp-button-small-selected-container-shape-square
+  );
 }
 
+.m {
+  --_height: var(--md-comp-button-medium-container-height);
+  --_leading: var(--md-comp-button-medium-leading-space);
+  --_trailing: var(--md-comp-button-medium-trailing-space);
+  --_gap: var(--md-comp-button-medium-icon-label-space);
+  --_icon-size: var(--md-comp-button-medium-icon-size);
+  --_icon-opsz: 24;
+  --_outline-width: var(--md-comp-button-medium-outlined-outline-width);
+  --_square: var(--md-comp-button-medium-container-shape-square);
+  --_pressed: var(--md-comp-button-medium-pressed-container-shape);
+  --_selected-square: var(
+    --md-comp-button-medium-selected-container-shape-square
+  );
+}
+
+.l {
+  --_height: var(--md-comp-button-large-container-height);
+  --_leading: var(--md-comp-button-large-leading-space);
+  --_trailing: var(--md-comp-button-large-trailing-space);
+  --_gap: var(--md-comp-button-large-icon-label-space);
+  --_icon-size: var(--md-comp-button-large-icon-size);
+  --_icon-opsz: 32;
+  --_outline-width: var(--md-comp-button-large-outlined-outline-width);
+  --_square: var(--md-comp-button-large-container-shape-square);
+  --_pressed: var(--md-comp-button-large-pressed-container-shape);
+  --_selected-square: var(
+    --md-comp-button-large-selected-container-shape-square
+  );
+}
+
+.xl {
+  --_height: var(--md-comp-button-x-large-container-height);
+  --_leading: var(--md-comp-button-x-large-leading-space);
+  --_trailing: var(--md-comp-button-x-large-trailing-space);
+  --_gap: var(--md-comp-button-x-large-icon-label-space);
+  --_icon-size: var(--md-comp-button-x-large-icon-size);
+  --_icon-opsz: 40;
+  --_outline-width: var(--md-comp-button-x-large-outlined-outline-width);
+  --_square: var(--md-comp-button-x-large-container-shape-square);
+  --_pressed: var(--md-comp-button-x-large-pressed-container-shape);
+  --_selected-square: var(
+    --md-comp-button-x-large-selected-container-shape-square
+  );
+}
+
+/* ButtonDefaults.textStyleFor: label large up to small, then larger. */
+.xs,
+.s {
+  --_font: var(--md-sys-typescale-label-large-font);
+  --_size: var(--md-sys-typescale-label-large-size);
+  --_line-height: var(--md-sys-typescale-label-large-line-height);
+  --_weight: var(--md-sys-typescale-label-large-weight);
+  --_tracking: var(--md-sys-typescale-label-large-tracking);
+}
+
+.m {
+  --_font: var(--md-sys-typescale-title-medium-font);
+  --_size: var(--md-sys-typescale-title-medium-size);
+  --_line-height: var(--md-sys-typescale-title-medium-line-height);
+  --_weight: var(--md-sys-typescale-title-medium-weight);
+  --_tracking: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.l {
+  --_font: var(--md-sys-typescale-headline-small-font);
+  --_size: var(--md-sys-typescale-headline-small-size);
+  --_line-height: var(--md-sys-typescale-headline-small-line-height);
+  --_weight: var(--md-sys-typescale-headline-small-weight);
+  --_tracking: var(--md-sys-typescale-headline-small-tracking);
+}
+
+.xl {
+  --_font: var(--md-sys-typescale-headline-large-font);
+  --_size: var(--md-sys-typescale-headline-large-size);
+  --_line-height: var(--md-sys-typescale-headline-large-line-height);
+  --_weight: var(--md-sys-typescale-headline-large-weight);
+  --_tracking: var(--md-sys-typescale-headline-large-tracking);
+}
+
+/* A selected toggle swaps shape: round becomes square, square round
+   (ToggleButtonDefaults.shapesFor). */
+.round {
+  --_shape: calc(var(--_height) / 2);
+  --_shape-selected: var(--_selected-square);
+}
+
+.square {
+  --_shape: var(--_square);
+  --_shape-selected: calc(var(--_height) / 2);
+}
+
+/* Variants. As in Compose, icons take the label colour, and hovered,
+   focused and pressed labels keep the resting colour (tokens.test.ts
+   checks), so only resting colours are mapped. */
+
 .filled {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
+  --_container: var(--md-comp-filled-button-container-color);
+  --_label: var(--md-comp-filled-button-label-text-color);
+  --_shadow: var(--md-comp-filled-button-container-shadow);
+  --_shadow-hover: var(--md-comp-filled-button-hovered-container-shadow);
+  --_shadow-focus: var(--md-comp-filled-button-focused-container-shadow);
+  --_shadow-pressed: var(--md-comp-filled-button-pressed-container-shadow);
+  --_disabled-container: var(--md-comp-filled-button-disabled-container-color);
+  --_disabled-container-opacity: var(
+    --md-comp-filled-button-disabled-container-opacity
+  );
+  --_disabled-label: var(--md-comp-filled-button-disabled-label-text-color);
+  --_disabled-label-opacity: var(
+    --md-comp-filled-button-disabled-label-text-opacity
+  );
+  --_disabled-shadow: var(--md-comp-filled-button-disabled-container-shadow);
+  --_unselected-container: var(
+    --md-comp-filled-button-unselected-container-color
+  );
+  --_unselected-label: var(--md-comp-filled-button-label-text-unselected-color);
+  --_selected-container: var(--md-comp-filled-button-selected-container-color);
+  --_selected-label: var(--md-comp-filled-button-label-text-selected-color);
 }
+
+/* Plain tonal buttons use FilledTonalButtonTokens; tonal toggles use
+   TonalButtonTokens (.tonal.toggle below). */
 .tonal {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+  --_container: var(--md-comp-filled-tonal-button-container-color);
+  --_label: var(--md-comp-filled-tonal-button-label-text-color);
+  --_shadow: var(--md-comp-filled-tonal-button-container-shadow);
+  --_shadow-hover: var(--md-comp-filled-tonal-button-hover-container-shadow);
+  --_shadow-focus: var(--md-comp-filled-tonal-button-focus-container-shadow);
+  --_shadow-pressed: var(
+    --md-comp-filled-tonal-button-pressed-container-shadow
+  );
+  --_disabled-container: var(
+    --md-comp-filled-tonal-button-disabled-container-color
+  );
+  --_disabled-container-opacity: var(
+    --md-comp-filled-tonal-button-disabled-container-opacity
+  );
+  --_disabled-label: var(
+    --md-comp-filled-tonal-button-disabled-label-text-color
+  );
+  --_disabled-label-opacity: var(
+    --md-comp-filled-tonal-button-disabled-label-text-opacity
+  );
+  --_disabled-shadow: var(
+    --md-comp-filled-tonal-button-disabled-container-shadow
+  );
 }
+
+.tonal.toggle {
+  --_container: var(--md-comp-tonal-button-container-color);
+  --_disabled-container: var(--md-comp-tonal-button-disabled-container-color);
+  --_disabled-container-opacity: var(
+    --md-comp-tonal-button-disabled-container-opacity
+  );
+  --_disabled-label: var(--md-comp-tonal-button-disabled-label-text-color);
+  --_disabled-label-opacity: var(
+    --md-comp-tonal-button-disabled-label-text-opacity
+  );
+  --_unselected-container: var(
+    --md-comp-tonal-button-unselected-container-color
+  );
+  --_unselected-label: var(--md-comp-tonal-button-unselected-label-text-color);
+  --_selected-container: var(--md-comp-tonal-button-selected-container-color);
+  --_selected-label: var(--md-comp-tonal-button-selected-label-text-color);
+}
+
+.elevated {
+  --_container: var(--md-comp-elevated-button-container-color);
+  --_label: var(--md-comp-elevated-button-label-text-color);
+  --_shadow: var(--md-comp-elevated-button-container-shadow);
+  --_shadow-hover: var(--md-comp-elevated-button-hovered-container-shadow);
+  --_shadow-focus: var(--md-comp-elevated-button-focused-container-shadow);
+  --_shadow-pressed: var(--md-comp-elevated-button-pressed-container-shadow);
+  --_disabled-container: var(
+    --md-comp-elevated-button-disabled-container-color
+  );
+  --_disabled-container-opacity: var(
+    --md-comp-elevated-button-disabled-container-opacity
+  );
+  --_disabled-label: var(--md-comp-elevated-button-disabled-label-text-color);
+  --_disabled-label-opacity: var(
+    --md-comp-elevated-button-disabled-label-text-opacity
+  );
+  --_disabled-shadow: var(--md-comp-elevated-button-disabled-container-shadow);
+  --_unselected-container: var(
+    --md-comp-elevated-button-unselected-container-color
+  );
+  --_unselected-label: var(
+    --md-comp-elevated-button-label-text-unselected-color
+  );
+  --_selected-container: var(
+    --md-comp-elevated-button-selected-container-color
+  );
+  --_selected-label: var(--md-comp-elevated-button-label-text-selected-color);
+}
+
 .outlined {
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  outline: 1px solid var(--md-sys-color-outline-variant);
-  outline-offset: -1px;
+  --_container: transparent;
+  --_label: var(--md-comp-outlined-button-label-text-color);
+  --_outline: var(--md-comp-outlined-button-outline-color);
+  --_disabled-container: transparent;
+  --_disabled-container-opacity: 1;
+  --_disabled-label: var(--md-comp-outlined-button-disabled-label-text-color);
+  --_disabled-label-opacity: var(
+    --md-comp-outlined-button-disabled-label-text-opacity
+  );
+  --_disabled-outline: var(--md-comp-outlined-button-disabled-outline-color);
+  --_unselected-container: transparent;
+  --_unselected-label: var(
+    --md-comp-outlined-button-unselected-label-text-color
+  );
+  --_selected-container: var(
+    --md-comp-outlined-button-selected-container-color
+  );
+  --_selected-label: var(--md-comp-outlined-button-selected-label-text-color);
+  border: var(--_outline-width) solid var(--_outline);
 }
+
 .text {
-  background: transparent;
-  color: var(--md-sys-color-primary);
-  padding: 0 12px;
+  --_container: transparent;
+  --_label: var(--md-comp-text-button-label-color);
+  --_disabled-container: transparent;
+  --_disabled-container-opacity: 1;
+  --_disabled-label: var(--md-comp-text-button-disabled-label-color);
+  --_disabled-label-opacity: var(--md-comp-text-button-disabled-label-opacity);
 }
-.outlined:disabled,
-.text:disabled {
-  background: transparent;
+
+/* States. */
+
+@media (hover: hover) {
+  .button:hover {
+    box-shadow: var(--_shadow-hover, var(--_shadow));
+  }
+}
+
+.button:focus-visible {
+  box-shadow: var(--_shadow-focus, var(--_shadow));
+}
+
+/* Toggles morph with a little bounce (FastSpatial, ToggleButton.kt). */
+.toggle {
+  transition-property: border-radius, box-shadow, background-color, color;
+  transition-duration:
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-duration-short4),
+    var(--md-sys-motion-spring-fast-effects-duration),
+    var(--md-sys-motion-spring-fast-effects-duration);
+  transition-timing-function:
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-easing-standard),
+    var(--md-sys-motion-spring-fast-effects),
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+.toggle[aria-pressed='false'] {
+  --_container: var(--_unselected-container);
+  --_label: var(--_unselected-label);
+}
+
+.toggle[aria-pressed='true'] {
+  --_container: var(--_selected-container);
+  --_label: var(--_selected-label);
+  --_outline: transparent;
+  border-radius: var(--_shape-selected);
+}
+
+.button:active {
+  border-radius: var(--_pressed);
+  box-shadow: var(--_shadow-pressed, var(--_shadow));
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  cursor: default;
+  background: color-mix(
+    in srgb,
+    var(--_disabled-container) calc(var(--_disabled-container-opacity) * 100%),
+    transparent
+  );
+  color: color-mix(
+    in srgb,
+    var(--_disabled-label) calc(var(--_disabled-label-opacity) * 100%),
+    transparent
+  );
+  --_outline: var(--_disabled-outline, transparent);
+  box-shadow: var(--_disabled-shadow, none);
+  border-radius: var(--_shape);
+}
+
+.toggle[aria-pressed='true']:is(:disabled, [aria-disabled='true']) {
+  border-radius: var(--_shape-selected);
 }

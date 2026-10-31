@@ -66,6 +66,15 @@
       "stretch": "25% 151%",
       "unicodeRange": "U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF",
       "sha256": "f2b728155af51c54b198272ba303e7e801adf3ef943fef3cbfe1e579c3cb4703"
+    },
+    {
+      "family": "Material Symbols Rounded",
+      "file": "material-symbols-rounded.woff2",
+      "subset": "icons",
+      "url": "https://fonts.gstatic.com/l/font?kit=sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190FjzaqkNCeEVJeSgbny0MLa759EVFVuxl414ixamzmi8-1ob-hLUGmOMJmquOhv6hKDfhWz0W1PhLQ&skey=70ddea8fe54d532e&v=v383",
+      "style": "normal",
+      "weight": "100 700",
+      "sha256": "ebd77f778de7ff0f2c4144c9bc16da1bed825c1d0f2dab6ad803a4faa8d90de3"
     }
   ]
 }

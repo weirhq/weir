@@ -1,5 +1,5 @@
 {
-  "$comment": "Theme choices for scripts/tokens.ts; every other token comes from Jetpack Compose (tokens/androidx). Colour roles come from material-color-utilities with the 2025 (Expressive) spec. The typefaces are bundled (src/fonts): Google Sans Flex, then Roboto Flex for the Cyrillic and Greek it lacks. motion picks the expressive or standard spring scheme.",
+  "$comment": "Theme choices for scripts/tokens.ts; every other token comes from Jetpack Compose (tokens/androidx). Colour roles come from material-color-utilities with the 2025 (Expressive) spec. The typefaces are bundled (src/fonts): Google Sans Flex, then Roboto Flex for the Cyrillic and Greek it lacks. motion picks the expressive or standard spring scheme. shadows are M3's key and ambient shadow for each elevation level, which Compose leaves to the platform.",
   "color": {
     "seed": "#2e6f8e",
     "variant": "tonal-spot",
@@ -10,5 +10,77 @@
     "brand": "'Google Sans Flex', 'Roboto Flex', system-ui, -apple-system, 'Segoe UI', sans-serif",
     "plain": "'Google Sans Flex', 'Roboto Flex', system-ui, -apple-system, 'Segoe UI', sans-serif"
   },
-  "motion": "expressive"
+  "motion": "expressive",
+  "shadows": {
+    "level1": [
+      {
+        "y": 1,
+        "blur": 2,
+        "spread": 0,
+        "opacity": 0.3
+      },
+      {
+        "y": 1,
+        "blur": 3,
+        "spread": 1,
+        "opacity": 0.15
+      }
+    ],
+    "level2": [
+      {
+        "y": 1,
+        "blur": 2,
+        "spread": 0,
+        "opacity": 0.3
+      },
+      {
+        "y": 2,
+        "blur": 6,
+        "spread": 2,
+        "opacity": 0.15
+      }
+    ],
+    "level3": [
+      {
+        "y": 1,
+        "blur": 3,
+        "spread": 0,
+        "opacity": 0.3
+      },
+      {
+        "y": 4,
+        "blur": 8,
+        "spread": 3,
+        "opacity": 0.15
+      }
+    ],
+    "level4": [
+      {
+        "y": 2,
+        "blur": 3,
+        "spread": 0,
+        "opacity": 0.3
+      },
+      {
+        "y": 6,
+        "blur": 10,
+        "spread": 4,
+        "opacity": 0.15
+      }
+    ],
+    "level5": [
+      {
+        "y": 4,
+        "blur": 4,
+        "spread": 0,
+        "opacity": 0.3
+      },
+      {
+        "y": 8,
+        "blur": 12,
+        "spread": 6,
+        "opacity": 0.15
+      }
+    ]
+  }
 }

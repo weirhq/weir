@@ -1,0 +1,69 @@
+/* The state layer: the content colour laid over a component at the M3
+   state opacities, with a ripple from where it's pressed. The host needs
+   position: relative; the layer follows its shape. */
+.layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.layer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+@media (hover: hover) {
+  :hover > .layer::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+:focus-visible > .layer::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+:disabled > .layer,
+[aria-disabled='true'] > .layer {
+  display: none;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+  transform: scale(0.2);
+  animation: grow var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard) forwards;
+}
+
+.ripple.released {
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) linear;
+}
+
+@keyframes grow {
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* M3's focus indicator: a 3dp outline in the secondary colour, 2dp out. */
+.focusRing:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}

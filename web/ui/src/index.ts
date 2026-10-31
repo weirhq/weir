@@ -1,3 +1,6 @@
-export { Button, type ButtonProps } from './button'
+export { Button, type ButtonProps, type ButtonSize } from './button'
 export { TextField, type TextFieldProps } from './text-field'
 export { Dialog, type DialogProps } from './dialog'
+export { Icon, type IconProps } from './icon'
+export { iconNames, type IconName } from './icon-names'
+export { focusRing, StateLayer } from './state-layer'

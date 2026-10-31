@@ -14,3 +14,8 @@ not the Apache License:
   trademark of Google LLC; see google-sans-flex-TRADEMARKS.md. Its use
   here implies no affiliation with or endorsement by Google.
 - Roboto Flex (roboto-flex-OFL.txt).
+
+It also bundles Material Symbols Rounded (src/fonts), cut down to the
+icons in src/icon-names.ts as served by Google Fonts, from Google's
+material-design-icons and licensed under the Apache License, Version 2.0
+(material-symbols-rounded-LICENSE.txt).

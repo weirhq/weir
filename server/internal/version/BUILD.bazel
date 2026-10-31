@@ -11,8 +11,11 @@ go_test(
     name = "version_test",
     srcs = ["version_test.go"],
     data = [
+        "version.bzl",
         "//engine:Cargo.toml",
         "//engine:version.bzl",
     ],
     embed = [":version"],
 )
+
+exports_files(["version.bzl"])

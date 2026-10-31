@@ -38,5 +38,7 @@ go_binary(
     embed = [":weir-server_lib"],
     # Embed the web client (webui_embed.go).
     gotags = ["webembed"],  # keep
+    # No cgo, so the binary is static and runs on distroless/static.
+    pure = "on",
     visibility = ["//visibility:public"],
 )

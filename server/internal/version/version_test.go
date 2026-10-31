@@ -55,6 +55,14 @@ func TestRepoEngineIsCompatible(t *testing.T) {
 	}
 }
 
+// Bazel packaging names release files from version.bzl.
+func TestBazelServerVersion(t *testing.T) {
+	got := find(t, read(t, "version.bzl"), `(?m)^SERVER_VERSION = "([^"]+)"`)
+	if got != Server {
+		t.Fatalf("version.bzl says %s but version.go says %s", got, Server)
+	}
+}
+
 func read(t *testing.T, path string) string {
 	t.Helper()
 	b, err := os.ReadFile(path)

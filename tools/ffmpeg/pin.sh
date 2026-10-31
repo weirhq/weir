@@ -24,7 +24,7 @@ for arch in amd64 arm64; do
     sha=$(shasum -a 256 "$work/$name.tar.gz" | cut -d' ' -f1)
     block+="http_archive(
     name = \"ffmpeg_linux_${arch}\",
-    build_file_content = 'exports_files([\"bin/ffmpeg\", \"bin/ffprobe\"])\nfilegroup(name = \"files\", srcs = glob([\"**\"]), visibility = [\"//visibility:public\"])',
+    build_file_content = 'exports_files([\"bin/ffmpeg\", \"bin/ffprobe\", \"BUILDINFO\", \"LICENSE\"])\nfilegroup(name = \"files\", srcs = glob([\"**\"]), visibility = [\"//visibility:public\"])\nfilegroup(name = \"lib\", srcs = glob([\"lib/**\"]), visibility = [\"//visibility:public\"])',
     sha256 = \"${sha}\",
     strip_prefix = \"${name}\",
     url = \"${url}\",

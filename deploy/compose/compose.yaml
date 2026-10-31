@@ -1,0 +1,86 @@
+# Weir with Docker Compose: PostgreSQL, the server and the engine.
+#
+#   cp .env.example .env    # then fill it in
+#   docker compose up -d
+#
+# The server and engine run as different users in the weir group (gid
+# 10000). The engine sees media read-only and can write only playback
+# segments; the server reaches it through a socket only that group can use.
+name: weir
+
+services:
+  postgres:
+    image: postgres:18.6@sha256:979bccfde35445db618c65107d27d08c6c21339d8dc3ad4c830c6633947be0e4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: weir
+      POSTGRES_PASSWORD: ${WEIR_DB_PASSWORD:?set WEIR_DB_PASSWORD in .env}
+      POSTGRES_DB: weir
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "weir"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  engine:
+    image: ghcr.io/weirhq/engine:${WEIR_ENGINE_VERSION:-0.1.0}
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - run:/run/weir
+      - segments:/var/cache/weir/segments
+      - ${WEIR_MEDIA:?set WEIR_MEDIA in .env}:/media:ro
+    # Hardware acceleration arrives in a later release, with -intel and
+    # -cuda engine images. They will need the GPU passed through:
+    # devices:
+    #   - /dev/dri:/dev/dri            # Intel and AMD (VAAPI)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia         # NVIDIA (NVENC)
+    #           count: 1
+    #           capabilities: [gpu, video]
+
+  server:
+    image: ghcr.io/weirhq/server:${WEIR_VERSION:-0.1.0}
+    restart: unless-stopped
+    read_only: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      engine:
+        condition: service_started
+    environment:
+      WEIR_DATABASE_URL: postgres://weir:${WEIR_DB_PASSWORD}@postgres:5432/weir
+      WEIR_LIBRARY_PATHS: /media
+      WEIR_BASE_URL: ${WEIR_BASE_URL:?set WEIR_BASE_URL in .env}
+      WEIR_TLS_MODE: ${WEIR_TLS_MODE:-off}
+      WEIR_TMDB_API_KEY: ${WEIR_TMDB_API_KEY:-}
+      WEIR_MUSICBRAINZ_CONTACT: ${WEIR_MUSICBRAINZ_CONTACT:-}
+    ports:
+      - "${WEIR_PORT:-8320}:8320"
+    volumes:
+      - data:/var/lib/weir
+      - run:/run/weir
+      - segments:/var/cache/weir/segments
+      - ${WEIR_MEDIA}:/media:ro
+
+volumes:
+  postgres:
+  # Keys, artwork and other server state.
+  data:
+  # The engine's socket.
+  run:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=1m,uid=10002,gid=10000,mode=0750
+  # Playback segments, in memory. Raise the size for many 4K sessions.
+  segments:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=4g,uid=10001,gid=10000,mode=0770

@@ -96,7 +96,9 @@ func (s *session) broadcast() {
 func (m *Sessions) Start(ctx context.Context, userID uuid.UUID, file string, duration time.Duration, out *enginev1alpha.OutputProfile, vod bool) (uuid.UUID, string, error) {
 	id := uuid.Must(uuid.NewV7())
 	dir := filepath.Join(m.root, id.String())
-	if err := os.MkdirAll(dir, 0o750); err != nil {
+	// The engine writes here and may run as another user in the same
+	// group (the release units and images do), so the group gets write.
+	if err := os.MkdirAll(dir, 0o770); err != nil {
 		return uuid.Nil, "", err
 	}
 	sctx, cancel := context.WithCancel(context.Background())

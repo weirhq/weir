@@ -1,0 +1,345 @@
+# Release packaging: the server, engine and all-in-one images, and the
+# bare-metal tarball. Linux only; each runner builds its own architecture.
+# See docs/install.md for how these are meant to be run.
+
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "pkg_mkdirs", "strip_prefix")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//engine:version.bzl", "ENGINE_VERSION")
+load("//server/internal/version:version.bzl", "SERVER_VERSION")
+load(":naming.bzl", "image_labels", "package_variables")
+
+# The server and engine run as different users that share the weir group,
+# so the engine can't read the server's data and the server can't touch the
+# engine's binaries. The engine's socket is 0660 and session folders 0770.
+UID_SERVER = 10001
+
+UID_ENGINE = 10002
+
+GID_WEIR = 10000
+
+LINUX = ["@platforms//os:linux"]
+
+ARCH = select({
+    "//tools/platforms:linux_amd64": "amd64",
+    "//tools/platforms:linux_arm64": "arm64",
+})
+
+FFMPEG = "/usr/lib/weir/ffmpeg"
+
+package_variables(
+    name = "variables",
+    arch = ARCH,
+    target_compatible_with = LINUX,
+)
+
+# Pieces shared by the images and the tarball, placed at their image paths.
+
+pkg_files(
+    name = "server_bin",
+    srcs = ["//server/cmd/weir-server"],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "usr/bin",
+)
+
+pkg_files(
+    name = "engine_bin",
+    srcs = ["//engine/weir-engine"],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "usr/bin",
+)
+
+pkg_files(
+    name = "ffmpeg_bin",
+    srcs = select({
+        "//tools/platforms:linux_amd64": [
+            "@ffmpeg_linux_amd64//:bin/ffmpeg",
+            "@ffmpeg_linux_amd64//:bin/ffprobe",
+        ],
+        "//tools/platforms:linux_arm64": [
+            "@ffmpeg_linux_arm64//:bin/ffmpeg",
+            "@ffmpeg_linux_arm64//:bin/ffprobe",
+        ],
+    }),
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = FFMPEG[1:],
+    strip_prefix = strip_prefix.from_pkg(),
+    target_compatible_with = LINUX,
+)
+
+# The shared libraries ffmpeg bundles, and its licence and build record.
+pkg_files(
+    name = "ffmpeg_rest",
+    srcs = select({
+        "//tools/platforms:linux_amd64": [
+            "@ffmpeg_linux_amd64//:BUILDINFO",
+            "@ffmpeg_linux_amd64//:LICENSE",
+            "@ffmpeg_linux_amd64//:lib",
+        ],
+        "//tools/platforms:linux_arm64": [
+            "@ffmpeg_linux_arm64//:BUILDINFO",
+            "@ffmpeg_linux_arm64//:LICENSE",
+            "@ffmpeg_linux_arm64//:lib",
+        ],
+    }),
+    attributes = pkg_attributes(mode = "0644"),
+    prefix = FFMPEG[1:],
+    strip_prefix = strip_prefix.from_pkg(),
+    target_compatible_with = LINUX,
+)
+
+pkg_mkdirs(
+    name = "server_dirs",
+    attributes = pkg_attributes(
+        gid = GID_WEIR,
+        mode = "0750",
+        uid = UID_SERVER,
+    ),
+    dirs = ["var/lib/weir"],
+)
+
+# Segments are written by the engine into folders the server makes.
+pkg_mkdirs(
+    name = "segment_dirs",
+    attributes = pkg_attributes(
+        gid = GID_WEIR,
+        mode = "0770",
+        uid = UID_SERVER,
+    ),
+    dirs = ["var/cache/weir/segments"],
+)
+
+pkg_mkdirs(
+    name = "socket_dir",
+    attributes = pkg_attributes(
+        gid = GID_WEIR,
+        mode = "0750",
+        uid = UID_ENGINE,
+    ),
+    dirs = ["run/weir"],
+)
+
+# In the all-in-one image the engine runs as the server's user, so the
+# socket folder is the server's there.
+pkg_mkdirs(
+    name = "single_user_socket_dir",
+    attributes = pkg_attributes(
+        gid = GID_WEIR,
+        mode = "0750",
+        uid = UID_SERVER,
+    ),
+    dirs = ["run/weir"],
+)
+
+pkg_tar(
+    name = "single_user_layer",
+    srcs = [":single_user_socket_dir"],
+)
+
+pkg_tar(
+    name = "server_layer",
+    srcs = [
+        ":segment_dirs",
+        ":server_bin",
+        ":server_dirs",
+    ],
+    target_compatible_with = LINUX,
+)
+
+pkg_tar(
+    name = "engine_layer",
+    srcs = [
+        ":engine_bin",
+        ":ffmpeg_bin",
+        ":ffmpeg_rest",
+        ":socket_dir",
+    ],
+    target_compatible_with = LINUX,
+)
+
+ENGINE_ENV = {
+    "WEIR_ENGINE_SOCKET": "/run/weir/engine.sock",
+    "WEIR_FFMPEG": FFMPEG + "/bin/ffmpeg",
+    "WEIR_FFPROBE": FFMPEG + "/bin/ffprobe",
+}
+
+SERVER_ENV = {
+    "WEIR_DATA_DIR": "/var/lib/weir",
+    "WEIR_ENGINE_SOCKET": "/run/weir/engine.sock",
+    "WEIR_LISTEN": ":8320",
+    "WEIR_SEGMENT_DIR": "/var/cache/weir/segments",
+}
+
+# Configured by environment; `-config=/path/weir.toml` in place of the
+# command reads a file instead.
+oci_image(
+    name = "server",
+    base = "@distroless_static",
+    cmd = ["-config="],
+    entrypoint = ["/usr/bin/weir-server"],
+    env = SERVER_ENV,
+    exposed_ports = ["8320/tcp"],
+    labels = image_labels("weir-server", SERVER_VERSION),
+    target_compatible_with = LINUX,
+    tars = [":server_layer"],
+    user = "%d:%d" % (UID_SERVER, GID_WEIR),
+)
+
+oci_image(
+    name = "engine",
+    base = "@distroless_cc",
+    entrypoint = ["/usr/bin/weir-engine"],
+    env = ENGINE_ENV,
+    labels = image_labels("weir-engine", ENGINE_VERSION),
+    target_compatible_with = LINUX,
+    tars = [
+        "@trixie//:flat",
+        ":engine_layer",
+    ],
+    user = "%d:%d" % (UID_ENGINE, GID_WEIR),
+)
+
+# One container for people who want one: the server runs the engine itself.
+# The pair is the one in this commit, so always compatible.
+oci_image(
+    name = "weir",
+    base = "@distroless_cc",
+    cmd = ["-config="],
+    entrypoint = ["/usr/bin/weir-server"],
+    env = SERVER_ENV | ENGINE_ENV | {"WEIR_ENGINE_COMMAND": "/usr/bin/weir-engine"},
+    exposed_ports = ["8320/tcp"],
+    labels = image_labels("weir", SERVER_VERSION),
+    target_compatible_with = LINUX,
+    tars = [
+        "@trixie//:flat",
+        ":engine_layer",
+        ":server_layer",
+        ":single_user_layer",
+    ],
+    user = "%d:%d" % (UID_SERVER, GID_WEIR),
+)
+
+[
+    oci_load(
+        name = name + "_load",
+        image = ":" + name,
+        repo_tags = ["ghcr.io/weirhq/%s:dev" % name],
+        target_compatible_with = LINUX,
+    )
+    for name in [
+        "server",
+        "engine",
+        "weir",
+    ]
+]
+
+# Pushed by the release workflow with --tag <version>-<arch>; it then joins
+# the two architectures under <version>.
+[
+    oci_push(
+        name = name + "_push",
+        image = ":" + name,
+        repository = "ghcr.io/weirhq/" + name,
+        target_compatible_with = LINUX,
+    )
+    for name in [
+        "server",
+        "engine",
+        "weir",
+    ]
+]
+
+# The bare-metal release: both binaries and ffmpeg in one folder, meant to
+# live at /opt/weir.
+
+pkg_files(
+    name = "tarball_bin",
+    srcs = [
+        "//engine/weir-engine",
+        "//server/cmd/weir-server",
+    ],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "bin",
+)
+
+pkg_files(
+    name = "tarball_ffmpeg_bin",
+    srcs = select({
+        "//tools/platforms:linux_amd64": [
+            "@ffmpeg_linux_amd64//:bin/ffmpeg",
+            "@ffmpeg_linux_amd64//:bin/ffprobe",
+        ],
+        "//tools/platforms:linux_arm64": [
+            "@ffmpeg_linux_arm64//:bin/ffmpeg",
+            "@ffmpeg_linux_arm64//:bin/ffprobe",
+        ],
+    }),
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "lib/ffmpeg",
+    strip_prefix = strip_prefix.from_pkg(),
+    target_compatible_with = LINUX,
+)
+
+pkg_files(
+    name = "tarball_ffmpeg_rest",
+    srcs = select({
+        "//tools/platforms:linux_amd64": [
+            "@ffmpeg_linux_amd64//:BUILDINFO",
+            "@ffmpeg_linux_amd64//:LICENSE",
+            "@ffmpeg_linux_amd64//:lib",
+        ],
+        "//tools/platforms:linux_arm64": [
+            "@ffmpeg_linux_arm64//:BUILDINFO",
+            "@ffmpeg_linux_arm64//:LICENSE",
+            "@ffmpeg_linux_arm64//:lib",
+        ],
+    }),
+    attributes = pkg_attributes(mode = "0644"),
+    prefix = "lib/ffmpeg",
+    strip_prefix = strip_prefix.from_pkg(),
+    target_compatible_with = LINUX,
+)
+
+pkg_files(
+    name = "tarball_docs",
+    srcs = [
+        "weir.toml.example",
+        "//:LICENSE",
+    ],
+    attributes = pkg_attributes(mode = "0644"),
+)
+
+pkg_files(
+    name = "tarball_install",
+    srcs = ["//docs:install.md"],
+    attributes = pkg_attributes(mode = "0644"),
+    renames = {"//docs:install.md": "INSTALL.md"},
+)
+
+pkg_files(
+    name = "tarball_systemd",
+    srcs = [
+        "systemd/weir.conf",
+        "systemd/weir-engine.service",
+        "systemd/weir-server.service",
+    ],
+    attributes = pkg_attributes(mode = "0644"),
+    prefix = "systemd",
+)
+
+pkg_tar(
+    name = "tarball",
+    srcs = [
+        ":tarball_bin",
+        ":tarball_docs",
+        ":tarball_ffmpeg_bin",
+        ":tarball_ffmpeg_rest",
+        ":tarball_install",
+        ":tarball_systemd",
+    ],
+    extension = "tar.gz",
+    package_dir = "weir-" + SERVER_VERSION,
+    package_file_name = "weir-" + SERVER_VERSION + "-linux-{arch}.tar.gz",
+    package_variables = ":variables",
+    target_compatible_with = LINUX,
+)

@@ -1,0 +1,47 @@
+# Weir server configuration. Each top-level setting can also come from an
+# environment variable, WEIR_ plus the key in capitals (WEIR_BASE_URL), which
+# wins over this file. The server prints every problem it finds at once.
+
+# Required.
+
+# PostgreSQL 15 or later.
+database_url = "postgres://weir:CHANGE-ME@localhost:5432/weir"
+
+# Folders libraries may use. Each library's folders must be one of these or
+# inside one; admins choose them in Settings.
+library_paths = ["/srv/media"]
+
+# Where the engine listens. The systemd units use this path.
+engine_socket = "/run/weir/engine.sock"
+
+# Where playback segments go while a session runs. Fast local disk or tmpfs.
+segment_dir = "/var/cache/weir/segments"
+
+# The address people use to reach this server.
+base_url = "https://weir.example.org"
+
+# "acme" to get a certificate for base_url's host, "off" behind a proxy or
+# tunnel that terminates HTTPS.
+tls_mode = "off"
+
+# Keys, artwork and other state. The systemd unit creates this folder.
+data_dir = "/var/lib/weir"
+
+# Optional.
+
+# listen = ":8320"
+
+# Run the engine as a child process instead of as its own service. The
+# all-in-one image does this; with the systemd units, leave it unset.
+# engine_command = ["/opt/weir/bin/weir-engine", "--ffmpeg", "/opt/weir/lib/ffmpeg/bin/ffmpeg", "--ffprobe", "/opt/weir/lib/ffmpeg/bin/ffprobe"]
+
+# Online metadata stays off until a provider has its setting. As
+# environment variables: WEIR_METADATA_LANGUAGE, WEIR_TMDB_API_KEY and
+# WEIR_MUSICBRAINZ_CONTACT.
+[metadata]
+# language = "en"
+# [metadata.tmdb]
+# api_key = ""
+# [metadata.musicbrainz]
+# A URL or email address MusicBrainz can reach you at.
+# contact = ""

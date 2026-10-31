@@ -1,0 +1,34 @@
+# The Weir server: the API, the web app, scans and metadata. Configure it
+# in /etc/weir/weir.toml (see weir.toml.example).
+[Unit]
+Description=Weir media server
+Documentation=https://github.com/weirhq/weir
+After=network-online.target postgresql.service weir-engine.service
+Wants=network-online.target weir-engine.service
+
+[Service]
+Type=simple
+User=weir-server
+Group=weir
+UMask=0007
+StateDirectory=weir
+StateDirectoryMode=0750
+CacheDirectory=weir weir/segments
+CacheDirectoryMode=0770
+ExecStart=/opt/weir/bin/weir-server -config /etc/weir/weir.toml
+Restart=on-failure
+
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

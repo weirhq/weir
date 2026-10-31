@@ -11,6 +11,9 @@ bazel_dep(name = "aspect_rules_js", version = "3.5.2")
 bazel_dep(name = "aspect_rules_ts", version = "3.10.1")
 bazel_dep(name = "bazel_lib", version = "3.7.2")
 bazel_dep(name = "rules_nodejs", version = "6.7.7")
+bazel_dep(name = "rules_oci", version = "2.3.0")
+bazel_dep(name = "rules_pkg", version = "1.3.0")
+bazel_dep(name = "rules_distroless", version = "0.9.4")
 
 buf = use_extension("@rules_buf//buf:extensions.bzl", "buf")
 buf.toolchains(version = "v1.75.0")
@@ -114,16 +117,82 @@ use_repo(rules_ts_ext, "npm_typescript")
 # BEGIN ffmpeg (written by tools/ffmpeg/pin.sh; see docs/runbooks/ffmpeg.md)
 http_archive(
     name = "ffmpeg_linux_amd64",
-    build_file_content = 'exports_files(["bin/ffmpeg", "bin/ffprobe"])\nfilegroup(name = "files", srcs = glob(["**"]), visibility = ["//visibility:public"])',
+    build_file_content = 'exports_files(["bin/ffmpeg", "bin/ffprobe", "BUILDINFO", "LICENSE"])\nfilegroup(name = "files", srcs = glob(["**"]), visibility = ["//visibility:public"])\nfilegroup(name = "lib", srcs = glob(["lib/**"]), visibility = ["//visibility:public"])',
     sha256 = "5c3bd2d98fdc72c9facd6bd55cda2580663829eb6015524074803dda5e6a33bd",
     strip_prefix = "weir-ffmpeg-9.0.2-1-linux-amd64",
     url = "https://github.com/weirhq/weir/releases/download/ffmpeg-9.0.2-1/weir-ffmpeg-9.0.2-1-linux-amd64.tar.gz",
 )
+
 http_archive(
     name = "ffmpeg_linux_arm64",
-    build_file_content = 'exports_files(["bin/ffmpeg", "bin/ffprobe"])\nfilegroup(name = "files", srcs = glob(["**"]), visibility = ["//visibility:public"])',
+    build_file_content = 'exports_files(["bin/ffmpeg", "bin/ffprobe", "BUILDINFO", "LICENSE"])\nfilegroup(name = "files", srcs = glob(["**"]), visibility = ["//visibility:public"])\nfilegroup(name = "lib", srcs = glob(["lib/**"]), visibility = ["//visibility:public"])',
     sha256 = "521f1448568f82327046f93d8bfbb78f19b244b3bbec1656da8a5a5f3f3c61a5",
     strip_prefix = "weir-ffmpeg-9.0.2-1-linux-arm64",
     url = "https://github.com/weirhq/weir/releases/download/ffmpeg-9.0.2-1/weir-ffmpeg-9.0.2-1-linux-arm64.tar.gz",
 )
 # END ffmpeg
+
+# Release images (deploy/oci). Bases are pinned by multi-arch digest; to
+# move one, read the new digest from the docker-content-digest header of
+#   curl -sI -H 'Accept: application/vnd.oci.image.index.v1+json' \
+#     https://gcr.io/v2/distroless/<image>/manifests/latest
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci.pull(
+    name = "distroless_static",
+    digest = "sha256:15f8637509792e05b97d83451b0b6ccfa4abd548f997e406ac1e72c87fe1fa78",
+    image = "gcr.io/distroless/static-debian13",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
+)
+oci.pull(
+    name = "distroless_cc",
+    digest = "sha256:d74d144baa124dd9defd01d71872bb56c49d4441dba6153ccf790364f97e64b1",
+    image = "gcr.io/distroless/cc-debian13",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
+)
+use_repo(oci, "distroless_cc", "distroless_cc_linux_amd64", "distroless_cc_linux_arm64_v8", "distroless_static", "distroless_static_linux_amd64", "distroless_static_linux_arm64_v8")
+
+# What our ffmpeg needs beyond glibc and libstdc++ (which distroless/cc
+# has): libva and libdrm, from a dated Debian snapshot so builds repeat.
+# Debian 13's glibc (2.41) is newer than the ffmpeg build's floor (2.39).
+apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = [
+        "trixie",
+        "trixie-updates",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.debian.org/archive/debian/20261030T082514Z"],
+)
+apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = ["trixie-security"],
+    types = ["deb"],
+    uris = ["https://snapshot.debian.org/archive/debian-security/20261030T161447Z"],
+)
+apt.install(
+    dependency_set = "trixie",
+    # Only these: their other dependency, libc6, is in the base image.
+    include_transitive = False,
+    packages = [
+        "libdrm-common",
+        "libdrm2",
+        "libva-drm2",
+        "libva2",
+    ],
+)
+use_repo(apt, "trixie")

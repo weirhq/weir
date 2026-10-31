@@ -1,0 +1,46 @@
+# The media engine: probes files and runs ffmpeg for playback. It reads
+# media, writes only playback segments, and listens on a Unix socket that
+# only members of the weir group can reach.
+[Unit]
+Description=Weir media engine
+Documentation=https://github.com/weirhq/weir
+
+[Service]
+Type=simple
+User=weir-engine
+Group=weir
+UMask=0027
+RuntimeDirectory=weir
+RuntimeDirectoryMode=0750
+ExecStart=/opt/weir/bin/weir-engine \
+    --socket /run/weir/engine.sock \
+    --ffmpeg /opt/weir/lib/ffmpeg/bin/ffmpeg \
+    --ffprobe /opt/weir/lib/ffmpeg/bin/ffprobe
+Restart=on-failure
+
+# Media is read-only to the engine: the whole file system is, apart from
+# the segment folder the server creates.
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/cache/weir/segments
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+# ffmpeg runs inside this unit's cgroup, so these limits cover it too.
+# Uncomment to cap what playback can take from the machine.
+#CPUQuota=400%
+#MemoryMax=4G
+
+# Hardware acceleration arrives in a later release; it will need the GPU:
+#DeviceAllow=/dev/dri rw
+#SupplementaryGroups=render video
+
+[Install]
+WantedBy=multi-user.target

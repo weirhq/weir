@@ -1,0 +1,221 @@
+/* M3 switches: a native checkbox with role="switch", invisible over a
+   drawn track and handle. The handle's size and place follow Compose's
+   ThumbNode (Switch.kt at the pinned commit): 16dp off, 24dp on or with
+   an icon, 28dp while pressed; pressing snaps, releasing springs
+   (FastSpatial). Compose reads only the resting colours. */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--md-comp-switch-track-width);
+  height: var(--md-comp-switch-track-height);
+  --_size: var(--md-comp-switch-unselected-handle-width);
+  /* (TrackHeight - size) / 2 from the start, so centred vertically too. */
+  --_x: calc((var(--md-comp-switch-track-height) - var(--_size)) / 2);
+  --_handle: var(--md-comp-switch-unselected-handle-color);
+  --_icon: var(--md-comp-switch-unselected-icon-color);
+  /* The state layer's colour around the handle. */
+  --_halo: var(--md-sys-color-on-surface);
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input:disabled {
+  cursor: default;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--md-comp-switch-track-height) / 2);
+  background: var(--md-comp-switch-unselected-track-color);
+  /* Drawn inside, as Compose's border is, so it doesn't move the handle. */
+  box-shadow: inset 0 0 0 var(--md-comp-switch-track-outline-width)
+    var(--md-comp-switch-unselected-track-outline-color);
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    box-shadow var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.input:focus-visible ~ .track {
+  outline: 3px solid var(--md-comp-switch-focus-indicator-color);
+  outline-offset: 2px;
+}
+
+.handle {
+  position: absolute;
+  top: calc((var(--md-comp-switch-track-height) - var(--_size)) / 2);
+  left: var(--_x);
+  display: grid;
+  place-items: center;
+  width: var(--_size);
+  height: var(--_size);
+  border-radius: 50%;
+  background: var(--_handle);
+  color: var(--_icon);
+  --md-icon-size: var(--md-comp-switch-selected-icon-size);
+  --md-icon-optical-size: 20;
+  transition-property: left, top, width, height, background-color;
+  transition-duration:
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-effects-duration);
+  transition-timing-function:
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+/* The state layer: a 40dp circle around the handle. */
+.handle::before {
+  content: '';
+  position: absolute;
+  inset: calc((var(--_size) - var(--md-comp-switch-state-layer-size)) / 2);
+  border-radius: 50%;
+  background: var(--_halo);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+@media (hover: hover) {
+  .input:hover:not(:disabled) ~ .track .handle::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.input:focus-visible ~ .track .handle::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+.input:active:not(:disabled) ~ .track .handle::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+/* Both icons are there, so uncontrolled switches work too; CSS shows the
+   one that fits. An icon makes the off handle as big as the on one. */
+.handle > * {
+  grid-area: 1 / 1;
+}
+
+.input:checked ~ .track .off,
+.input:not(:checked) ~ .track .on {
+  visibility: hidden;
+}
+
+.icons {
+  --_size: var(--md-comp-switch-icon-handle-width);
+}
+
+.switch:has(> .input:checked) {
+  --_size: var(--md-comp-switch-selected-handle-width);
+  /* (TrackWidth - ThumbDiameter) - ThumbPadding */
+  --_x: calc(
+    var(--md-comp-switch-track-width) - var(--_size) -
+      (var(--md-comp-switch-track-height) - var(--_size)) / 2
+  );
+  --_handle: var(--md-comp-switch-selected-handle-color);
+  --_icon: var(--md-comp-switch-selected-icon-color);
+  --_halo: var(--md-sys-color-primary);
+}
+
+.input:checked ~ .track {
+  background: var(--md-comp-switch-selected-track-color);
+  box-shadow: inset 0 0 0 var(--md-comp-switch-track-outline-width) transparent;
+}
+
+/* Pressed: 28dp, a track outline's width from the end, and no animation
+   on the way in. */
+.switch:has(> .input:active:not(:disabled)) {
+  --_size: var(--md-comp-switch-pressed-handle-width);
+  --_x: var(--md-comp-switch-track-outline-width);
+}
+
+/* maxBound - TrackOutlineWidth: the 28dp handle ends 2dp from the end. */
+.switch:has(> .input:active:not(:disabled):checked) {
+  --_x: calc(
+    var(--md-comp-switch-track-width) -
+      var(--md-comp-switch-selected-handle-width) -
+      (
+        var(--md-comp-switch-track-height) -
+          var(--md-comp-switch-selected-handle-width)
+      ) /
+      2 - var(--md-comp-switch-track-outline-width)
+  );
+}
+
+.input:active:not(:disabled) ~ .track .handle {
+  transition: none;
+}
+
+/* Disabled. */
+
+.switch:has(> .input:disabled) {
+  --_handle: color-mix(
+    in srgb,
+    var(--md-comp-switch-disabled-unselected-handle-color)
+      calc(var(--md-comp-switch-disabled-unselected-handle-opacity) * 100%),
+    transparent
+  );
+  --_icon: color-mix(
+    in srgb,
+    var(--md-comp-switch-disabled-unselected-icon-color)
+      calc(var(--md-comp-switch-disabled-unselected-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.input:disabled ~ .track {
+  background: color-mix(
+    in srgb,
+    var(--md-comp-switch-disabled-unselected-track-color)
+      calc(var(--md-comp-switch-disabled-track-opacity) * 100%),
+    transparent
+  );
+  box-shadow: inset 0 0 0 var(--md-comp-switch-track-outline-width)
+    color-mix(
+      in srgb,
+      var(--md-comp-switch-disabled-unselected-track-outline-color)
+        calc(var(--md-comp-switch-disabled-track-opacity) * 100%),
+      transparent
+    );
+}
+
+.switch:has(> .input:disabled:checked) {
+  --_handle: color-mix(
+    in srgb,
+    var(--md-comp-switch-disabled-selected-handle-color)
+      calc(var(--md-comp-switch-disabled-selected-handle-opacity) * 100%),
+    transparent
+  );
+  --_icon: color-mix(
+    in srgb,
+    var(--md-comp-switch-disabled-selected-icon-color)
+      calc(var(--md-comp-switch-disabled-selected-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.input:disabled:checked ~ .track {
+  background: color-mix(
+    in srgb,
+    var(--md-comp-switch-disabled-selected-track-color)
+      calc(var(--md-comp-switch-disabled-track-opacity) * 100%),
+    transparent
+  );
+  box-shadow: inset 0 0 0 var(--md-comp-switch-track-outline-width) transparent;
+}

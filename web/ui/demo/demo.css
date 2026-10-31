@@ -56,3 +56,9 @@ h2 {
   border-radius: var(--md-sys-shape-corner-medium);
   background: var(--md-sys-color-surface-container-low);
 }
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

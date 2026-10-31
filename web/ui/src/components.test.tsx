@@ -3,12 +3,15 @@ import { useState } from 'react'
 import {
   Button,
   ButtonGroup,
+  Checkbox,
   ConnectedButtonGroup,
   Dialog,
   ExtendedFab,
   Fab,
   IconButton,
+  Radio,
   SplitButton,
+  Switch,
   TextField
 } from '.'
 
@@ -276,4 +279,56 @@ it('splits an action from its menu button', () => {
   expect(menu.closest('[role=group]')!.classList).toContain(
     'md-comp-split-button-small'
   )
+})
+
+it('makes a labelled native checkbox, indeterminate when asked', () => {
+  const { rerender } = render(
+    <label>
+      <Checkbox defaultChecked /> Subtitles
+    </label>
+  )
+  const box = screen.getByRole('checkbox', {
+    name: 'Subtitles'
+  }) as HTMLInputElement
+  expect(box.checked).toBe(true)
+  fireEvent.click(screen.getByText('Subtitles'))
+  expect(box.checked).toBe(false)
+  rerender(
+    <label>
+      <Checkbox indeterminate /> Subtitles
+    </label>
+  )
+  expect(box.indeterminate).toBe(true)
+})
+
+it('makes native radios that share a name', () => {
+  render(
+    <fieldset>
+      <label>
+        <Radio name="quality" value="auto" defaultChecked /> Auto
+      </label>
+      <label>
+        <Radio name="quality" value="original" /> Original
+      </label>
+    </fieldset>
+  )
+  const auto = screen.getByRole('radio', { name: 'Auto' }) as HTMLInputElement
+  const original = screen.getByRole('radio', {
+    name: 'Original'
+  }) as HTMLInputElement
+  fireEvent.click(original)
+  expect(original.checked).toBe(true)
+  expect(auto.checked).toBe(false)
+})
+
+it('makes a switch that works uncontrolled, with both icons ready', () => {
+  render(<Switch aria-label="Shared" icons />)
+  const toggle = screen.getByRole('switch', {
+    name: 'Shared'
+  }) as HTMLInputElement
+  expect(toggle.checked).toBe(false)
+  fireEvent.click(toggle)
+  expect(toggle.checked).toBe(true)
+  const icons = toggle.parentElement!.querySelectorAll('[translate="no"]')
+  expect([...icons].map((i) => i.textContent)).toEqual(['check', 'close'])
 })

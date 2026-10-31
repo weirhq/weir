@@ -1,0 +1,122 @@
+/* M3 checkboxes: a native checkbox, invisible over a drawn box, so labels,
+   forms and keyboards work as usual. Compose reads only the resting
+   colours; hover, focus and press show on the state layer. Citations are
+   to Checkbox.kt at the pinned commit. */
+
+.checkbox {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--md-comp-checkbox-state-layer-size);
+  height: var(--md-comp-checkbox-state-layer-size);
+  border-radius: 50%;
+  color: var(--md-comp-checkbox-unselected-outline-color);
+}
+
+.checkbox:has(> .input:is(:checked, :indeterminate)) {
+  color: var(--md-comp-checkbox-selected-container-color);
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input:disabled {
+  cursor: default;
+}
+
+.box {
+  width: var(--md-comp-checkbox-container-size);
+  height: var(--md-comp-checkbox-container-size);
+  overflow: visible;
+  border-radius: 2px;
+}
+
+.input:focus-visible ~ .box {
+  outline: 3px solid var(--md-comp-checkbox-focus-indicator-color);
+  outline-offset: 2px;
+}
+
+/* The outline when unchecked, filled when checked. It fills with
+   DefaultEffects and empties with FastEffects. */
+.outline {
+  fill: transparent;
+  stroke: var(--md-comp-checkbox-unselected-outline-color);
+  stroke-width: var(--md-comp-checkbox-unselected-outline-width);
+  transition:
+    fill var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    stroke var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.input:is(:checked, :indeterminate) ~ .box .outline {
+  fill: var(--md-comp-checkbox-selected-container-color);
+  stroke: var(--md-comp-checkbox-selected-container-color);
+  transition:
+    fill var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects),
+    stroke var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects);
+}
+
+/* The mark draws itself in with DefaultSpatial and, when cleared, stays
+   until the box has faded (SnapAnimationDelay). A dash longer than the
+   path keeps the spring's overshoot from showing a gap. */
+.mark {
+  fill: none;
+  stroke: var(--md-comp-checkbox-selected-icon-color);
+  stroke-width: 2px;
+  stroke-linecap: square;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  /* checkCrossX/Y, leftX/Y and rightX/Y of the 18dp box. */
+  d: path('M 3.6 9 L 7.2 12.6 L 14.4 5.4');
+  transition:
+    stroke-dashoffset 0s 100ms,
+    d var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial);
+}
+
+.input:is(:checked, :indeterminate) ~ .box .mark {
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial),
+    d var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial);
+}
+
+/* Indeterminate pulls the mark's corner to the centre: a dash. */
+.input:indeterminate ~ .box .mark {
+  d: path('M 3.6 9 L 9 9 L 14.4 9');
+}
+
+.input:disabled ~ .box .outline {
+  stroke: color-mix(
+    in srgb,
+    var(--md-comp-checkbox-unselected-disabled-outline-color)
+      calc(var(--md-comp-checkbox-unselected-disabled-container-opacity) * 100%),
+    transparent
+  );
+}
+
+.input:disabled:is(:checked, :indeterminate) ~ .box .outline {
+  fill: color-mix(
+    in srgb,
+    var(--md-comp-checkbox-selected-disabled-container-color)
+      calc(var(--md-comp-checkbox-selected-disabled-container-opacity) * 100%),
+    transparent
+  );
+  stroke: transparent;
+}
+
+.input:disabled ~ .box .mark {
+  stroke: var(--md-comp-checkbox-selected-disabled-icon-color);
+}

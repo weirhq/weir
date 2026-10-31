@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Dialog, TextField } from '@weirhq/m3e'
+import { Button, Checkbox, Dialog, TextField } from '@weirhq/m3e'
 import { useId, useState, type FormEvent } from 'react'
 import { errorMessage } from '../../errors'
 import { Role, type User } from '../../gen/weir/api/v1alpha/user_pb'
@@ -346,8 +346,7 @@ function AccessEditor({ userId }: { userId: string }) {
               <th scope="row">{l.name}</th>
               {(Object.keys(flagNames) as Flag[]).map((f) => (
                 <td key={f}>
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={`${flagNames[f]} ${l.name}`}
                     checked={current(l.id)[f]}
                     onChange={(e) => toggle(l.id, f, e.target.checked)}

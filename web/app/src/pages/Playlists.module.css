@@ -25,14 +25,9 @@
 .toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 0 12px;
   color: var(--md-sys-color-on-surface);
-}
-.toggle input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--md-sys-color-primary);
 }
 
 .confirm {

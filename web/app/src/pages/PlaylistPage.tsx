@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
-import { Button, IconButton, TextField } from '@weirhq/m3e'
+import { Button, IconButton, Switch, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import cards from '../components/Cards.module.css'
 import { errorMessage } from '../errors'
@@ -121,8 +121,7 @@ export function PlaylistPage() {
               </Button>
             )}
             <label className={styles.toggle}>
-              <input
-                type="checkbox"
+              <Switch
                 checked={pl.shared}
                 disabled={update.isPending}
                 onChange={(e) =>

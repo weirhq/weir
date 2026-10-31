@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import {
   Button,
   ButtonGroup,
+  Checkbox,
   ConnectedButtonGroup,
   SplitButton,
   type ButtonProps,
@@ -14,7 +15,9 @@ import {
   Icon,
   IconButton,
   type IconButtonProps,
-  iconNames
+  iconNames,
+  Radio,
+  Switch
 } from '../src'
 import '../src/tokens.gen.css'
 import '../src/styles.css'
@@ -267,6 +270,63 @@ function Demo() {
             ))}
           </div>
         ))}
+      </section>
+
+      <section aria-labelledby="selection">
+        <h2 id="selection">Selection</h2>
+        <div className="row" data-testid="checkboxes">
+          <span className="label">checkbox</span>
+          <label className="control">
+            <Checkbox /> Off
+          </label>
+          <label className="control">
+            <Checkbox defaultChecked /> On
+          </label>
+          <label className="control">
+            <Checkbox indeterminate /> Some
+          </label>
+          <label className="control">
+            <Checkbox disabled /> Disabled
+          </label>
+          <label className="control">
+            <Checkbox disabled defaultChecked /> Disabled, on
+          </label>
+        </div>
+        <div className="row" data-testid="radios">
+          <span className="label">radio</span>
+          {['Auto', 'Original', 'Data saver'].map((v, i) => (
+            <label className="control" key={v}>
+              <Radio name="quality" value={v} defaultChecked={i === 0} /> {v}
+            </label>
+          ))}
+          <label className="control">
+            <Radio disabled /> Disabled
+          </label>
+          <label className="control">
+            <Radio disabled defaultChecked /> Disabled, on
+          </label>
+        </div>
+        <div className="row" data-testid="switches">
+          <span className="label">switch</span>
+          <label className="control">
+            <Switch /> Off
+          </label>
+          <label className="control">
+            <Switch defaultChecked /> On
+          </label>
+          <label className="control">
+            <Switch icons /> Icons
+          </label>
+          <label className="control">
+            <Switch icons defaultChecked /> Icons, on
+          </label>
+          <label className="control">
+            <Switch disabled /> Disabled
+          </label>
+          <label className="control">
+            <Switch disabled defaultChecked /> Disabled, on
+          </label>
+        </div>
       </section>
 
       <section aria-labelledby="links">

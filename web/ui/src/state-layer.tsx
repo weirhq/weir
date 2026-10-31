@@ -16,7 +16,11 @@ export function StateLayer() {
     const host = layer?.parentElement
     if (!layer || !host) return
     const press = (e: PointerEvent) => {
-      if (e.button !== 0 || host.matches(':disabled, [aria-disabled="true"]'))
+      if (
+        e.button !== 0 ||
+        host.matches(':disabled, [aria-disabled="true"]') ||
+        host.querySelector(':scope > input:disabled')
+      )
         return
       // A circle from the pointer that reaches the farthest corner.
       const box = host.getBoundingClientRect()

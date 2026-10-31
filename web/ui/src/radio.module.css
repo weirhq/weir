@@ -1,0 +1,85 @@
+/* M3 radio buttons: a native radio, invisible over a drawn ring and dot.
+   Compose reads only the resting colours; hover, focus and press show on
+   the state layer. Citations are to RadioButton.kt at the pinned commit. */
+
+.radio {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--md-comp-radio-button-state-layer-size);
+  height: var(--md-comp-radio-button-state-layer-size);
+  border-radius: 50%;
+  color: var(--md-comp-radio-button-unselected-icon-color);
+  /* Colours change with DefaultEffects. */
+  transition: color var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects);
+}
+
+.radio:has(> .input:checked) {
+  color: var(--md-comp-radio-button-selected-icon-color);
+}
+
+.radio:has(> .input:disabled) {
+  color: color-mix(
+    in srgb,
+    var(--md-comp-radio-button-disabled-unselected-icon-color)
+      calc(var(--md-comp-radio-button-disabled-unselected-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.radio:has(> .input:disabled:checked) {
+  color: color-mix(
+    in srgb,
+    var(--md-comp-radio-button-disabled-selected-icon-color)
+      calc(var(--md-comp-radio-button-disabled-selected-icon-opacity) * 100%),
+    transparent
+  );
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input:disabled {
+  cursor: default;
+}
+
+.icon {
+  width: var(--md-comp-radio-button-icon-size);
+  height: var(--md-comp-radio-button-icon-size);
+  overflow: visible;
+  border-radius: 50%;
+}
+
+.input:focus-visible ~ .icon {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+
+/* RadioStrokeWidth: a 2dp ring inside the 20dp icon. */
+.ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+}
+
+/* RadioButtonDotSize: a 12dp dot that springs in (FastSpatial). */
+.dot {
+  fill: currentColor;
+  transform: scale(0);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+
+.input:checked ~ .icon .dot {
+  transform: scale(1);
+}

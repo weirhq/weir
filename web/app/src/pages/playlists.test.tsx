@@ -69,9 +69,7 @@ it('plays, edits, shares and deletes your own playlist', async () => {
   await user.click(screen.getByRole('button', { name: 'Save' }))
   await screen.findByRole('heading', { name: 'Grey day' })
 
-  await user.click(
-    screen.getByRole('checkbox', { name: 'Shared with everyone' })
-  )
+  await user.click(screen.getByRole('switch', { name: 'Shared with everyone' }))
   await vi.waitFor(() => expect(browse.playlists[0]!.shared).toBe(true))
 
   await user.click(screen.getByRole('button', { name: 'Delete playlist' }))
@@ -87,7 +85,7 @@ it('shows someone else’s shared playlist without the owner’s controls', asyn
   expect(screen.getByRole('button', { name: 'Play all' })).toBeTruthy()
   for (const name of ['Rename', 'Delete playlist', 'Remove Wildlife Analysis'])
     expect(screen.queryByRole('button', { name })).toBeNull()
-  expect(screen.queryByRole('checkbox')).toBeNull()
+  expect(screen.queryByRole('switch')).toBeNull()
 })
 
 it('adds an item to a playlist from its page, or to a new one', async () => {

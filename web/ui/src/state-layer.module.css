@@ -25,12 +25,15 @@
   }
 }
 
-:focus-visible > .layer::before {
+/* The host, or an input beside the layer in it (checkbox, radio). */
+:focus-visible > .layer::before,
+:focus-visible ~ .layer::before {
   opacity: var(--md-sys-state-focus-state-layer-opacity);
 }
 
 :disabled > .layer,
-[aria-disabled='true'] > .layer {
+[aria-disabled='true'] > .layer,
+:disabled ~ .layer {
   display: none;
 }
 

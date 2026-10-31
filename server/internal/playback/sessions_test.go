@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -177,5 +179,24 @@ func TestBusyEngine(t *testing.T) {
 	h := newSessionHarness(t, &playbacktest.Engine{Busy: true})
 	if _, _, err := h.sessions.Start(context.Background(), h.user, "/media/film.mkv", time.Minute, &enginev1alpha.OutputProfile{}, true); err != ErrBusy {
 		t.Errorf("got %v, want ErrBusy", err)
+	}
+}
+
+// The engine may run as another user in the server's group, so a session's
+// folder has to be group-writable whatever the server's umask.
+func TestSessionFolderIsGroupWritable(t *testing.T) {
+	old := syscall.Umask(0o022)
+	t.Cleanup(func() { syscall.Umask(old) })
+	h := newSessionHarness(t, &playbacktest.Engine{})
+	id, _, err := h.sessions.Start(context.Background(), h.user, "/media/film.mkv", time.Minute, &enginev1alpha.OutputProfile{}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Join(h.sessions.root, id.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0o770 {
+		t.Errorf("session folder is %o, want 770", got)
 	}
 }

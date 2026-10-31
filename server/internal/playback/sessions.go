@@ -98,7 +98,12 @@ func (m *Sessions) Start(ctx context.Context, userID uuid.UUID, file string, dur
 	dir := filepath.Join(m.root, id.String())
 	// The engine writes here and may run as another user in the same
 	// group (the release units and images do), so the group gets write.
+	// Chmod as well, since the umask (022 in the images) masks MkdirAll's.
 	if err := os.MkdirAll(dir, 0o770); err != nil {
+		return uuid.Nil, "", err
+	}
+	if err := os.Chmod(dir, 0o770); err != nil {
+		_ = os.RemoveAll(dir)
 		return uuid.Nil, "", err
 	}
 	sctx, cancel := context.WithCancel(context.Background())

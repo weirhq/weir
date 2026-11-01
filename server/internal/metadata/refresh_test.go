@@ -208,13 +208,16 @@ func TestRefreshMusic(t *testing.T) {
 	}
 }
 
-// Albums use their tracks' embedded cover art.
+// Albums use their tracks' embedded cover art, and artists the pictures in
+// the folder above the album's.
 func TestRefreshMusicArtFromFiles(t *testing.T) {
 	st := storetest.New(t)
 	ctx := context.Background()
 	root := t.TempDir()
 	track := filepath.Join(root, "Kate Bush", "Hounds of Love", "01.flac")
 	write(t, track, "")
+	write(t, filepath.Join(root, "Kate Bush", "artist.jpg"), "")
+	write(t, filepath.Join(root, "Kate Bush", "fanart.jpg"), "")
 	lib := scannedWith(t, st, library.Music, root, coverProber{
 		tagProber: tagProber{"01.flac": {"album_artist": "Kate Bush", "album": "Hounds of Love", "title": "Running Up That Hill", "track": "1"}},
 		covers:    map[string]uint32{"01.flac": 1},
@@ -234,6 +237,8 @@ func TestRefreshMusicArtFromFiles(t *testing.T) {
 	}
 	want := map[string]string{
 		"Hounds of Love poster embedded": track + "#1",
+		"Kate Bush poster local":         filepath.Join(root, "Kate Bush", "artist.jpg"),
+		"Kate Bush backdrop local":       filepath.Join(root, "Kate Bush", "fanart.jpg"),
 	}
 	if len(art) != len(want) {
 		t.Errorf("artwork %v, want %v", art, want)

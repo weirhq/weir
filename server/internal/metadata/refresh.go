@@ -133,7 +133,7 @@ func (r *Refresher) refreshItem(ctx context.Context, roots []string, it dbgen.It
 	case "show":
 		return r.refreshShow(ctx, roots, item, ids, files[0].Path)
 	case "artist":
-		return r.refreshArtist(ctx, item, files)
+		return r.refreshArtist(ctx, roots, item, files)
 	case "album":
 		return r.refreshAlbum(ctx, roots, item, files)
 	}
@@ -266,7 +266,12 @@ func (r *Refresher) refreshSeason(ctx context.Context, showDir, tmdbID string, s
 	return nil
 }
 
-func (r *Refresher) refreshArtist(ctx context.Context, artist dbgen.Item, files []dbgen.ItemFilePathsRow) error {
+func (r *Refresher) refreshArtist(ctx context.Context, roots []string, artist dbgen.Item, files []dbgen.ItemFilePathsRow) error {
+	if dir := artistFolder(files[0].Path, roots); dir != "" {
+		if err := saveArt(ctx, r.store.Queries, artist.ID, folderArt(dir, "artist", "folder", "poster")); err != nil {
+			return err
+		}
+	}
 	if r.musicBrainz == nil {
 		return nil
 	}
@@ -360,6 +365,20 @@ func embeddedCover(files []dbgen.ItemFilePathsRow) string {
 				return fmt.Sprintf("%s#%d", f.Path, a.Index)
 			}
 		}
+	}
+	return ""
+}
+
+// artistFolder is the folder above an album's, where an Artist/Album layout
+// keeps the artist's pictures, or "" when there's no such folder inside the
+// library.
+func artistFolder(track string, roots []string) string {
+	album := filepath.Dir(track)
+	if isRoot(album, roots) {
+		return ""
+	}
+	if artist := filepath.Dir(album); !isRoot(artist, roots) {
+		return artist
 	}
 	return ""
 }

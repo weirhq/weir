@@ -3,7 +3,7 @@ import { Link, useRouteContext } from '@tanstack/react-router'
 import { Button, IconButton, List, ListItem } from '@weirhq/m3e'
 import { AddToPlaylist } from '../components/AddToPlaylist'
 import { PageLoading } from '../components/PageLoading'
-import { PosterCard } from '../components/PosterCard'
+import { isSquare, PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'
 import {
   ItemKind,
@@ -63,6 +63,12 @@ export function ItemPage() {
   const resumeMs = sum.userData?.position
     ? Number(sum.userData.position.seconds) * 1000
     : 0
+  // An album names its artist under the title, as music apps do, rather
+  // than in the breadcrumbs.
+  const artist =
+    sum.kind === ItemKind.ALBUM
+      ? it.ancestors.find((a) => a.kind === ItemKind.ARTIST)
+      : undefined
 
   return (
     <article className={styles.page}>
@@ -76,11 +82,15 @@ export function ItemPage() {
           />
         </div>
       )}
-      <Breadcrumbs ancestors={it.ancestors} />
+      <Breadcrumbs ancestors={it.ancestors.filter((a) => a !== artist)} />
       <div className={styles.head}>
         {sum.posterUrl && (
           <img
-            className={styles.poster}
+            className={
+              isSquare(sum)
+                ? `${styles.poster} ${styles.square}`
+                : styles.poster
+            }
             src={sized(sum.posterUrl, 480)}
             srcSet={srcSet(sum.posterUrl, 780)}
             sizes="240px"
@@ -89,6 +99,15 @@ export function ItemPage() {
         )}
         <div className={styles.info}>
           <h1 className={styles.title}>{sum.title}</h1>
+          {artist && (
+            <Link
+              to="/item/$itemId"
+              params={{ itemId: artist.id }}
+              className={styles.byline}
+            >
+              {artist.title}
+            </Link>
+          )}
           <Facts item={it} />
           {it.tagline && <p className={styles.tagline}>{it.tagline}</p>}
           {it.overview && <p className={styles.overview}>{it.overview}</p>}

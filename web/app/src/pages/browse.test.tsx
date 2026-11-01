@@ -126,3 +126,15 @@ it('says so when an item is gone', async () => {
     )
   ).toBeTruthy()
 })
+
+it('names an album’s artist under its title, not in breadcrumbs', async () => {
+  renderSignedIn('/item/mhtrtc')
+  const title = await screen.findByRole('heading', {
+    name: 'Music Has the Right to Children',
+    level: 1
+  })
+  const artist = screen.getByRole('link', { name: 'Boards of Canada' })
+  expect(title.nextElementSibling).toBe(artist)
+  expect(artist.getAttribute('href')).toBe('/item/boc')
+  expect(screen.queryByRole('navigation', { name: 'Breadcrumb' })).toBeNull()
+})

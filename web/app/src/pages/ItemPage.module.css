@@ -45,8 +45,29 @@
   border-radius: var(--md-sys-shape-corner-extra-large);
 }
 
+/* Album covers and artist pictures in a square, cropped as their cards
+   are; a few covers are a little wider than tall. */
+.square {
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
 .info {
   max-width: 720px;
+}
+
+.byline {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--md-sys-color-primary);
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  text-decoration: none;
+}
+.byline:hover {
+  text-decoration: underline;
 }
 
 .title {

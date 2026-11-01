@@ -249,6 +249,7 @@ func outputProfile(plan *apiv1alpha.PlaybackPlan, probe *enginev1alpha.ProbeResp
 	for _, st := range probe.GetStreams() {
 		if st.GetKind() == enginev1alpha.StreamKind_STREAM_KIND_VIDEO {
 			out.VideoStream = st.GetIndex()
+			out.VideoCodec = st.GetCodec()
 			break
 		}
 	}

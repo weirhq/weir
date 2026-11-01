@@ -55,7 +55,13 @@ pub fn ffmpeg_args(run: &Run) -> Vec<String> {
 
     match &out.video {
         Some(v) => video_codec_args(v, run.segment, &mut a),
-        None => a.extend(["-c:v".into(), "copy".into()]),
+        None => {
+            a.extend(["-c:v".into(), "copy".into()]);
+            // ffmpeg labels HEVC in MP4 hev1, which Apple's players refuse.
+            if out.video_codec == "hevc" {
+                a.extend(["-tag:v".into(), "hvc1".into()]);
+            }
+        }
     }
     if out.audio_stream.is_some() {
         match &out.audio {
@@ -219,6 +225,19 @@ mod tests {
         assert!(!a.contains(&"-ss".to_string()) && !a.contains(&"-output_ts_offset".to_string()));
         assert!(has(&a, &["-hls_segment_type", "fmp4"]) && has(&a, &["-start_number", "0"]));
         assert_eq!(a.last().unwrap(), "/seg/s1/engine.m3u8");
+    }
+
+    #[test]
+    fn copied_hevc_is_tagged_for_apple() {
+        let profile = |codec: &str| OutputProfile {
+            video_stream: 0,
+            video_codec: codec.into(),
+            ..Default::default()
+        };
+        let hevc = run(profile("hevc"), 0, 0);
+        assert!(has(&hevc, &["-c:v", "copy", "-tag:v", "hvc1"]));
+        let h264 = run(profile("h264"), 0, 0);
+        assert!(!h264.contains(&"-tag:v".to_string()), "only HEVC is retagged");
     }
 
     #[test]

@@ -297,3 +297,20 @@ func TestEngineCapsFrom(t *testing.T) {
 		t.Error("nil capabilities reported encoders")
 	}
 }
+
+// The engine is told the copied video's codec, so it can tag HEVC as hvc1.
+func TestOutputProfileNamesCopiedVideo(t *testing.T) {
+	f := file{codec: "hevc", profile: "Main", width: 3840, audio: "eac3", channels: 6}
+	caps := with(browser(), func(c *apiv1alpha.ClientCapabilities) {
+		c.VideoCodecs = append(c.VideoCodecs, &apiv1alpha.VideoCodecSupport{Codec: "hevc", MaxBitDepth: 10})
+		c.AudioCodecs = c.AudioCodecs[:2]
+	})
+	sel := Selection{Audio: 1, Subtitle: -1}
+	out := outputProfile(Decide(f.probe(), caps, sel, Limits{}, EngineCaps{}), f.probe(), sel)
+	if out.GetVideoCodec() != "hevc" || out.GetVideo() != nil {
+		t.Errorf("video: codec %q, re-encode %v; want hevc copied", out.GetVideoCodec(), out.GetVideo())
+	}
+	if out.GetAudio().GetCodec() != "aac" {
+		t.Errorf("audio: %v; want AAC", out.GetAudio())
+	}
+}

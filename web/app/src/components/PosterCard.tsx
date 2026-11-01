@@ -8,9 +8,9 @@ export function isWide(item: ItemSummary): boolean {
   return item.kind === ItemKind.EPISODE
 }
 
-/** Albums show square covers. */
+/** Artists and albums show square pictures. */
 export function isSquare(item: ItemSummary): boolean {
-  return item.kind === ItemKind.ALBUM
+  return item.kind === ItemKind.ARTIST || item.kind === ItemKind.ALBUM
 }
 
 /** A line under the title: year, episode number, or track number. */

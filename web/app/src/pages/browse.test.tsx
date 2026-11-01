@@ -55,6 +55,12 @@ it('lists a library as a grid', async () => {
   )
 })
 
+it('shows artists square', async () => {
+  renderSignedIn('/library/music')
+  const artist = await screen.findByText('Boards of Canada')
+  expect(artist.closest('a')!.querySelector('div')!.className).toMatch(/square/)
+})
+
 it('shows a film with its facts, cast and file, and marks it watched', async () => {
   const { browse } = renderSignedIn('/item/arrival')
   await screen.findByRole('heading', { name: 'Arrival', level: 1 })

@@ -3,8 +3,14 @@ import { Link, useRouteContext } from '@tanstack/react-router'
 import { PosterCard } from '../components/PosterCard'
 import { Row } from '../components/Row'
 import { librariesKey } from '../components/AppShell'
+import { ItemSort, type ItemSummary } from '../gen/weir/api/v1alpha/browse_pb'
+import { LibraryKind, type Library } from '../gen/weir/api/v1alpha/library_pb'
 import { Role } from '../gen/weir/api/v1alpha/user_pb'
+import type { LibrarySearch } from '../router'
 import cards from '../components/Cards.module.css'
+
+// Cards in a row; the title's link has the rest.
+const rowSize = 20
 
 export function HomePage() {
   const { api, session } = useRouteContext({ from: '__root__' })
@@ -15,14 +21,6 @@ export function HomePage() {
   const libraries = useQuery({
     queryKey: librariesKey,
     queryFn: async () => (await api.browse.listVisibleLibraries({})).libraries
-  })
-  // A row per library, as Plex does, so each keeps its own card shape.
-  const recent = useQueries({
-    queries: (libraries.data ?? []).map((library) => ({
-      queryKey: ['recentlyAdded', library.id],
-      queryFn: async () =>
-        (await api.browse.listRecentlyAdded({ libraryId: library.id })).items
-    }))
   })
 
   if (libraries.data?.length === 0) {
@@ -44,23 +42,97 @@ export function HomePage() {
           <PosterCard key={item.id} item={item} wide />
         ))}
       </Row>
-      {(libraries.data ?? []).map((library, i) => (
-        <Row
-          key={library.id}
-          title={`Recently added in ${library.name}`}
-          link={
-            <Link
-              to="/library/$libraryId"
-              params={{ libraryId: library.id }}
-              search={{ sort: 'added' }}
-            />
-          }
-        >
-          {(recent[i]?.data ?? []).map((item) => (
-            <PosterCard key={item.id} item={item} />
-          ))}
-        </Row>
+      {(libraries.data ?? []).map((library) => (
+        <LibraryRows key={library.id} library={library} />
       ))}
+    </>
+  )
+}
+
+/**
+ * A library's rows, as Plex has: what's new to it, what's newly released,
+ * what's unwatched, and its two biggest genres. Each title leads to the
+ * library listed the same way.
+ */
+function LibraryRows({ library }: { library: Library }) {
+  const { api } = useRouteContext({ from: '__root__' })
+  const libraryId = library.id
+  const watchable =
+    library.kind === LibraryKind.MOVIES || library.kind === LibraryKind.SHOWS
+  const recent = useQuery({
+    queryKey: ['recentlyAdded', libraryId],
+    queryFn: async () =>
+      (await api.browse.listRecentlyAdded({ libraryId })).items
+  })
+  const released = useQuery({
+    queryKey: ['row', libraryId, 'released'],
+    queryFn: async () =>
+      (
+        await api.browse.listItems({
+          libraryId,
+          sort: ItemSort.RELEASED,
+          pageSize: rowSize
+        })
+      ).items
+  })
+  const unwatched = useQuery({
+    queryKey: ['row', libraryId, 'unwatched'],
+    enabled: watchable,
+    queryFn: async () =>
+      (
+        await api.browse.listItems({
+          libraryId,
+          unwatched: true,
+          sort: ItemSort.ADDED,
+          pageSize: rowSize
+        })
+      ).items
+  })
+  const facets = useQuery({
+    queryKey: ['facets', libraryId],
+    queryFn: () => api.browse.listLibraryFacets({ libraryId })
+  })
+  const genres = (facets.data?.genres ?? []).slice(0, 2).map((g) => g.genre)
+  const byGenre = useQueries({
+    queries: genres.map((genre) => ({
+      queryKey: ['row', libraryId, 'genre', genre],
+      queryFn: async () =>
+        (
+          await api.browse.listItems({
+            libraryId,
+            genre,
+            sort: ItemSort.RELEASED,
+            pageSize: rowSize
+          })
+        ).items
+    }))
+  })
+
+  const row = (title: string, items: ItemSummary[], search: LibrarySearch) => (
+    <Row
+      key={title}
+      title={`${title} in ${library.name}`}
+      link={
+        <Link to="/library/$libraryId" params={{ libraryId }} search={search} />
+      }
+    >
+      {items.map((item) => (
+        <PosterCard key={item.id} item={item} />
+      ))}
+    </Row>
+  )
+  return (
+    <>
+      {row('Recently added', recent.data ?? [], { sort: 'added' })}
+      {row('Recently released', released.data ?? [], { sort: 'released' })}
+      {watchable &&
+        row('Unwatched', unwatched.data ?? [], {
+          sort: 'added',
+          unwatched: true
+        })}
+      {genres.map((genre, i) =>
+        row(genre, byGenre[i]?.data ?? [], { sort: 'released', genre })
+      )}
     </>
   )
 }

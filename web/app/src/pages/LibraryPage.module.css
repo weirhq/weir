@@ -11,6 +11,14 @@
   margin: 0;
 }
 
-.sort {
-  width: 200px;
+/* Filters, then the sort, wrapping under the name on narrow windows. */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.control {
+  width: 210px;
 }

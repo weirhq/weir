@@ -81,16 +81,32 @@ const homeRoute = createRoute({
   component: HomePage
 })
 
-export type LibrarySort = 'title' | 'year' | 'added'
+export type LibrarySort = 'title' | 'year' | 'added' | 'released'
+
+export type LibrarySearch = {
+  sort?: LibrarySort
+  unwatched?: boolean
+  genre?: string
+  /** A decade's first year: 1990 for the 1990s. */
+  decade?: number
+}
+
+const librarySorts: LibrarySort[] = ['title', 'year', 'added', 'released']
 
 export const libraryRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/library/$libraryId',
-  // The order to list it in; by title without one.
-  validateSearch: (search: Record<string, unknown>): { sort?: LibrarySort } =>
-    search.sort === 'year' || search.sort === 'added' || search.sort === 'title'
-      ? { sort: search.sort }
-      : {},
+  // How to list it: an order, by title without one, and filters.
+  validateSearch: (search: Record<string, unknown>): LibrarySearch => ({
+    ...(librarySorts.includes(search.sort as LibrarySort) && {
+      sort: search.sort as LibrarySort
+    }),
+    ...(search.unwatched === true && { unwatched: true }),
+    ...(typeof search.genre === 'string' &&
+      search.genre && { genre: search.genre }),
+    ...(typeof search.decade === 'number' &&
+      Number.isInteger(search.decade) && { decade: search.decade })
+  }),
   component: LibraryPage
 })
 

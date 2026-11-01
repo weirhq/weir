@@ -122,7 +122,13 @@ export class FakeBrowse {
   ]
   watchedCalls: { itemId: string; watched: boolean }[] = []
   // What each ListItems call asked for.
-  listCalls: { libraryId: string; parentId: string; sort: ItemSort }[] = []
+  listCalls: {
+    libraryId: string
+    parentId: string
+    sort: ItemSort
+    unwatched: boolean
+    genre: string
+  }[] = []
   // What Playback.Start answers, or the error it throws.
   plan: PlaybackPlan | ConnectError = create(PlaybackPlanSchema, {})
   starts: StartRequest[] = []
@@ -231,12 +237,17 @@ export class FakeBrowse {
         this.listCalls.push({
           libraryId: req.libraryId,
           parentId: req.parentId,
-          sort: req.sort
+          sort: req.sort,
+          unwatched: req.unwatched,
+          genre: req.genre
         })
-        const all = this.summaries.filter((s) =>
-          req.parentId
-            ? s.parentId === req.parentId
-            : s.libraryId === req.libraryId && !s.parentId
+        const all = this.summaries.filter(
+          (s) =>
+            (req.parentId
+              ? s.parentId === req.parentId
+              : s.libraryId === req.libraryId && !s.parentId) &&
+            (!req.unwatched || !s.userData?.watched) &&
+            (!req.genre || this.detail(s.id).genres.includes(req.genre))
         )
         const offset = Number(req.pageToken || '0')
         const size = req.pageSize || 100
@@ -245,6 +256,23 @@ export class FakeBrowse {
         return { items: page, total: all.length, nextPageToken: next }
       },
       getItem: (req) => ({ item: this.detail(req.id) }),
+      listLibraryFacets: (req) => {
+        const counts = new Map<string, number>()
+        for (const s of this.summaries)
+          if (s.libraryId === req.libraryId && !s.parentId)
+            for (const g of this.detail(s.id).genres)
+              counts.set(g, (counts.get(g) ?? 0) + 1)
+        return {
+          genres: [...counts].map(([genre, count]) => ({ genre, count })),
+          decades:
+            req.libraryId === 'films'
+              ? [
+                  { decade: 2010, count: 1 },
+                  { decade: 2000, count: 1 }
+                ]
+              : []
+        }
+      },
       search: (req) => ({
         items: this.summaries.filter((s) =>
           s.title.toLowerCase().includes(req.query.toLowerCase())

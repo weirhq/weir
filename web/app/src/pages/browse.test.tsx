@@ -59,6 +59,45 @@ it('shows continue watching, recently added and the libraries', async () => {
   ])
 })
 
+it('gives each library rows for new, released, unwatched and its genres', async () => {
+  renderSignedIn('/')
+  const link = async (name: string) =>
+    within(await screen.findByRole('region', { name }))
+      .getByRole('heading')
+      .querySelector('a')!
+      .getAttribute('href')
+  expect(await link('Recently released in Films')).toBe(
+    '/library/films?sort=released'
+  )
+  expect(await link('Unwatched in Films')).toBe(
+    '/library/films?sort=added&unwatched=true'
+  )
+  expect(await link('Drama in Films')).toBe(
+    '/library/films?sort=released&genre=Drama'
+  )
+  // Music has nothing to watch.
+  await screen.findByRole('region', { name: 'Recently added in Music' })
+  expect(
+    screen.queryByRole('region', { name: 'Unwatched in Music' })
+  ).toBeNull()
+})
+
+it('filters a library by what the address says, and changes it', async () => {
+  const user = userEvent.setup()
+  const { browse } = renderSignedIn('/library/films?genre=Drama')
+  await screen.findByRole('heading', { name: 'Films' })
+  await vi.waitFor(() => expect(browse.listCalls.at(-1)?.genre).toBe('Drama'))
+  expect(screen.getByText('Arrival')).toBeTruthy()
+  expect(screen.queryByText('Zodiac')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Unwatched' }))
+  await vi.waitFor(() =>
+    expect(browse.listCalls.at(-1)).toMatchObject({
+      genre: 'Drama',
+      unwatched: true
+    })
+  )
+})
+
 it('lists a library as a grid, sorted as the address says', async () => {
   const { browse } = renderSignedIn('/library/films?sort=added')
   await screen.findByRole('heading', { name: 'Films' })

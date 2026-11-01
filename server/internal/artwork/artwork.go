@@ -174,8 +174,13 @@ func (s *Server) file(ctx context.Context, item uuid.UUID, kind string, width in
 	return resized, hash, nil
 }
 
-// original returns the full-size cached picture, fetching it from the best
-// source that works.
+// smallEmbedded is the width below which an embedded cover gives way to a
+// picture at least twice as wide from a source further down, such as the
+// Cover Art Archive's: taggers often embed covers of 500px or so.
+const smallEmbedded = 1000
+
+// original returns the full-size cached picture, from the best source that
+// works.
 func (s *Server) original(ctx context.Context, item uuid.UUID, kind string) (string, string, error) {
 	candidates, err := s.store.ArtworkCandidates(ctx, dbgen.ArtworkCandidatesParams{ItemID: item, Kind: kind})
 	if err != nil {
@@ -183,52 +188,73 @@ func (s *Server) original(ctx context.Context, item uuid.UUID, kind string) (str
 	}
 	dir := filepath.Join(s.dir, item.String())
 	var errs []error
-	for _, c := range candidates {
-		if c.Hash != nil {
-			if matches, _ := filepath.Glob(filepath.Join(dir, *c.Hash+".*")); len(matches) > 0 {
-				return matches[0], *c.Hash, nil
-			}
-		}
-		data, err := s.fetch(ctx, c.Source, c.Location)
+	for i, c := range candidates {
+		pic, err := s.load(ctx, dir, c)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("%s: %w", c.Source, err))
+			errs = append(errs, err)
 			continue
 		}
-		cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
-		if err != nil {
-			errs = append(errs, fmt.Errorf("%s: not an image: %w", c.Source, err))
-			continue
-		}
-		sum := sha256.Sum256(data)
-		hash := hex.EncodeToString(sum[:16])
-		ext := ".jpg"
-		if format == "png" {
-			ext = ".png"
-		}
-		path := filepath.Join(dir, hash+ext)
-		if format == "jpeg" || format == "png" {
-			err = writeFile(path, data)
-		} else {
-			// WebP and others are stored as JPEG, which every client shows.
-			var img image.Image
-			if img, _, err = image.Decode(bytes.NewReader(data)); err == nil {
-				err = writeImage(path, img, ".jpg")
+		if c.Source == "embedded" && pic.width < smallEmbedded {
+			for _, alt := range candidates[i+1:] {
+				if larger, err := s.load(ctx, dir, alt); err == nil && larger.width >= 2*pic.width {
+					return larger.path, larger.hash, nil
+				}
 			}
 		}
-		if err != nil {
-			return "", "", err
-		}
-		if err := s.store.SetArtworkCache(ctx, dbgen.SetArtworkCacheParams{
-			ItemID: item, Kind: kind, Source: c.Source, Hash: &hash, Width: ptr(int32(cfg.Width)), Height: ptr(int32(cfg.Height)),
-		}); err != nil {
-			return "", "", err
-		}
-		return path, hash, nil
+		return pic.path, pic.hash, nil
 	}
 	if len(errs) == 0 {
 		return "", "", errors.New("no artwork")
 	}
 	return "", "", errors.Join(errs...)
+}
+
+type picture struct {
+	path, hash string
+	width      int
+}
+
+// load returns one source's picture from the cache, fetching and caching it
+// first if needed, and records its size.
+func (s *Server) load(ctx context.Context, dir string, c dbgen.Artwork) (picture, error) {
+	if c.Hash != nil && c.Width != nil {
+		if matches, _ := filepath.Glob(filepath.Join(dir, *c.Hash+".*")); len(matches) > 0 {
+			return picture{matches[0], *c.Hash, int(*c.Width)}, nil
+		}
+	}
+	data, err := s.fetch(ctx, c.Source, c.Location)
+	if err != nil {
+		return picture{}, fmt.Errorf("%s: %w", c.Source, err)
+	}
+	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return picture{}, fmt.Errorf("%s: not an image: %w", c.Source, err)
+	}
+	sum := sha256.Sum256(data)
+	hash := hex.EncodeToString(sum[:16])
+	ext := ".jpg"
+	if format == "png" {
+		ext = ".png"
+	}
+	path := filepath.Join(dir, hash+ext)
+	if format == "jpeg" || format == "png" {
+		err = writeFile(path, data)
+	} else {
+		// WebP and others are stored as JPEG, which every client shows.
+		var img image.Image
+		if img, _, err = image.Decode(bytes.NewReader(data)); err == nil {
+			err = writeImage(path, img, ".jpg")
+		}
+	}
+	if err != nil {
+		return picture{}, err
+	}
+	if err := s.store.SetArtworkCache(ctx, dbgen.SetArtworkCacheParams{
+		ItemID: c.ItemID, Kind: c.Kind, Source: c.Source, Hash: &hash, Width: ptr(int32(cfg.Width)), Height: ptr(int32(cfg.Height)),
+	}); err != nil {
+		return picture{}, err
+	}
+	return picture{path, hash, cfg.Width}, nil
 }
 
 func (s *Server) fetch(ctx context.Context, source, location string) ([]byte, error) {

@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/time/rate"
 )
@@ -60,7 +62,8 @@ type mbGenre struct {
 	Count int    `json:"count"`
 }
 
-// topGenres keeps the five genres the most people voted for.
+// topGenres keeps the five genres the most people voted for, capitalised
+// as TMDB's are.
 func topGenres(genres []mbGenre) []string {
 	sort.SliceStable(genres, func(i, j int) bool { return genres[i].Count > genres[j].Count })
 	var names []string
@@ -68,9 +71,53 @@ func topGenres(genres []mbGenre) []string {
 		if i == 5 {
 			break
 		}
-		names = append(names, g.Name)
+		names = append(names, genreName(g.Name))
 	}
 	return names
+}
+
+// genreSmallWords stay lowercase inside a genre name; genreAcronyms are
+// written in capitals.
+var (
+	genreSmallWords = map[string]bool{"and": true, "of": true, "the": true, "n": true}
+	genreAcronyms   = map[string]bool{"uk": true, "us": true, "edm": true, "idm": true, "ebm": true, "dj": true}
+)
+
+// genreName capitalises a MusicBrainz genre, which are all lowercase:
+// "hip hop" is "Hip Hop", "r&b" "R&B", "drum and bass" "Drum and Bass",
+// "uk garage" "UK Garage", "k-pop" "K-Pop".
+func genreName(name string) string {
+	var b strings.Builder
+	word := 0
+	for i, part := range strings.FieldsFunc(name, func(r rune) bool { return r == ' ' }) {
+		if i > 0 {
+			b.WriteByte(' ')
+		}
+		// Hyphens, slashes and ampersands join words that are each
+		// capitalised: "lo-fi", "r&b".
+		start := 0
+		for j := 0; j <= len(part); j++ {
+			if j < len(part) && !strings.ContainsRune("-/&", rune(part[j])) {
+				continue
+			}
+			w := part[start:j]
+			switch {
+			case genreAcronyms[w]:
+				w = strings.ToUpper(w)
+			case word > 0 && genreSmallWords[w]:
+			case w != "":
+				r, size := utf8.DecodeRuneInString(w)
+				w = string(unicode.ToUpper(r)) + w[size:]
+			}
+			b.WriteString(w)
+			if j < len(part) {
+				b.WriteByte(part[j])
+			}
+			word++
+			start = j + 1
+		}
+	}
+	return b.String()
 }
 
 // Artist finds an artist by MusicBrainz id, else by name.

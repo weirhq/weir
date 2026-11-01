@@ -200,6 +200,18 @@ func TestArtwork(t *testing.T) {
 	if code, cfg, ct := size(item.Msg.Item.LogoUrl); code != http.StatusOK || cfg.Width != 500 || ct != "image/png" {
 		t.Errorf("embedded logo: %d %dx%d %s", code, cfg.Width, cfg.Height, ct)
 	}
+	// A small embedded picture gives way to one at least twice as wide from
+	// further down the list.
+	large := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write(encode(t, 1200, 1200, false))
+	}))
+	defer large.Close()
+	if err := h.store.UpsertArtwork(ctx, dbgen.UpsertArtworkParams{ItemID: arrival, Kind: "logo", Source: "coverartarchive", Location: large.URL + "/front.jpg"}); err != nil {
+		t.Fatal(err)
+	}
+	if code, cfg, ct := size(item.Msg.Item.LogoUrl); code != http.StatusOK || cfg.Width != 1200 || ct != "image/jpeg" {
+		t.Errorf("larger logo over a small embedded one: %d %dx%d %s", code, cfg.Width, cfg.Height, ct)
+	}
 
 	// A member without access to the library can't reach the item, so gets
 	// no picture links.

@@ -206,3 +206,21 @@ func TestMusicBrainzByID(t *testing.T) {
 		t.Errorf("by id: %v %+v", err, r)
 	}
 }
+
+func TestGenreName(t *testing.T) {
+	for in, want := range map[string]string{
+		"rock":              "Rock",
+		"hip hop":           "Hip Hop",
+		"r&b":               "R&B",
+		"drum and bass":     "Drum and Bass",
+		"uk garage":         "UK Garage",
+		"k-pop":             "K-Pop",
+		"singer/songwriter": "Singer/Songwriter",
+		"the blues":         "The Blues",
+		"musique concrète":  "Musique Concrète",
+	} {
+		if got := genreName(in); got != want {
+			t.Errorf("genreName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

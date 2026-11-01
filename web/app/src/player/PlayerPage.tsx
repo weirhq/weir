@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
 import { Button } from '@weirhq/m3e'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { PlaybackPlan } from '../gen/weir/api/v1alpha/playback_pb'
 import { playRoute } from '../router'
 import {
@@ -11,6 +11,7 @@ import {
   reasonNames,
   warningNames
 } from './explain'
+import { PlayerControls } from './PlayerControls'
 import { useQueue } from './queue'
 import { startErrorMessage, usePlaybackSession } from './session'
 import styles from './PlayerPage.module.css'
@@ -40,42 +41,55 @@ export function PlayerPage() {
     })
 
   const title = item.data?.summary?.title ?? ''
+  const runtime = Number(item.data?.summary?.duration?.seconds ?? 0)
+  const stage = useRef<HTMLDivElement>(null)
   return (
-    <div className={styles.stage}>
-      <header className={styles.top}>
-        <Link to="/item/$itemId" params={{ itemId }} className={styles.back}>
-          ‹ {title || 'Back'}
-        </Link>
-        {plan && (
-          <Button
-            variant="text"
-            className={styles.infoButton}
-            aria-expanded={showInfo}
-            onClick={() => setShowInfo(!showInfo)}
-          >
-            {showInfo ? 'Hide info' : 'Info'}
-          </Button>
-        )}
-      </header>
-      {startError && (
-        <p className={styles.error} role="alert">
-          {startErrorMessage(startError)}
-        </p>
-      )}
-      {mediaError && (
-        <p className={styles.error} role="alert">
-          {mediaError}
-        </p>
-      )}
+    <div ref={stage} className={styles.stage}>
       <video
         ref={media}
         className={styles.video}
-        controls
         playsInline
         onTimeUpdate={onTimeUpdate}
         onError={() => setMediaError('This browser couldn’t play the stream.')}
       />
-      {plan && showInfo && <PlanPanel plan={plan} />}
+      <PlayerControls
+        media={media}
+        stage={stage}
+        runtime={runtime}
+        header={
+          <>
+            <Link
+              to="/item/$itemId"
+              params={{ itemId }}
+              className={styles.back}
+            >
+              ‹ {title || 'Back'}
+            </Link>
+            {plan && (
+              <Button
+                variant="text"
+                className={styles.infoButton}
+                aria-expanded={showInfo}
+                onClick={() => setShowInfo(!showInfo)}
+              >
+                {showInfo ? 'Hide info' : 'Info'}
+              </Button>
+            )}
+          </>
+        }
+      >
+        {startError && (
+          <p className={styles.error} role="alert">
+            {startErrorMessage(startError)}
+          </p>
+        )}
+        {mediaError && (
+          <p className={styles.error} role="alert">
+            {mediaError}
+          </p>
+        )}
+        {plan && showInfo && <PlanPanel plan={plan} />}
+      </PlayerControls>
     </div>
   )
 }

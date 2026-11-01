@@ -176,3 +176,104 @@ it('says when the server is too busy', async () => {
     'The server is busy with other playback. Try again when something else finishes.'
   )
 })
+
+describe('the player’s own controls', () => {
+  // jsdom's media elements don't play; this one keeps the state the
+  // controls read and write, and says when it changes.
+  function fakeVideo() {
+    const el = document.querySelector('video')!
+    let time = 0
+    let paused = true
+    Object.defineProperties(el, {
+      currentTime: {
+        get: () => time,
+        set: (t: number) => {
+          time = t
+          el.dispatchEvent(new Event('timeupdate'))
+        },
+        configurable: true
+      },
+      duration: { get: () => 600, configurable: true },
+      paused: { get: () => paused, configurable: true },
+      readyState: { get: () => 4, configurable: true }
+    })
+    el.play = () => {
+      paused = false
+      el.dispatchEvent(new Event('play'))
+      return Promise.resolve()
+    }
+    el.pause = () => {
+      paused = true
+      el.dispatchEvent(new Event('pause'))
+    }
+    act(() => {
+      el.dispatchEvent(new Event('durationchange'))
+    })
+    return el
+  }
+
+  async function open() {
+    const browse = browseWith({
+      method: PlaybackMethod.DIRECT_PLAY,
+      url: '/media/files/f1?sig=x'
+    })
+    renderSignedIn('/play/zodiac', browse)
+    await screen.findByRole('link', { name: '‹ Zodiac' })
+    // No browser controls: Weir draws its own.
+    expect(document.querySelector('video')!.hasAttribute('controls')).toBe(
+      false
+    )
+    return fakeVideo()
+  }
+
+  it('plays, pauses and skips by button and key', async () => {
+    const user = userEvent.setup()
+    const video = await open()
+    await user.click(screen.getByRole('button', { name: 'Play' }))
+    expect(video.paused).toBe(false)
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeTruthy()
+    await user.keyboard('k')
+    expect(video.paused).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Forward 30 seconds' }))
+    expect(video.currentTime).toBe(30)
+    await user.click(screen.getByRole('button', { name: 'Back 10 seconds' }))
+    expect(video.currentTime).toBe(20)
+    // The arrows move ten seconds, not past the start.
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' })
+    expect(video.currentTime).toBe(30)
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' })
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' })
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' })
+    expect(video.currentTime).toBe(0)
+  })
+
+  it('seeks with the scrubber once it’s let go, showing the time', async () => {
+    const video = await open()
+    const seek = screen.getByRole('slider', { name: 'Seek' })
+    expect(seek.getAttribute('aria-valuetext')).toBe('0:00 of 10:00')
+    fireEvent.change(seek, { target: { value: '125' } })
+    // Not yet: it's still held.
+    expect(video.currentTime).toBe(0)
+    expect(screen.getByText('-7:55')).toBeTruthy()
+    // The release bubbles up from the slider to where it's committed.
+    fireEvent.pointerUp(seek)
+    expect(video.currentTime).toBe(125)
+  })
+
+  it('goes full screen with the controls, and remembers the volume', async () => {
+    const user = userEvent.setup()
+    const requestFullscreen = vi.fn(() => Promise.resolve())
+    HTMLElement.prototype.requestFullscreen = requestFullscreen
+    const video = await open()
+    await user.click(screen.getByRole('button', { name: 'Full screen' }))
+    // The whole player, so its controls come too, not the bare video.
+    expect(requestFullscreen.mock.contexts[0]).toBe(video.parentElement)
+
+    fireEvent.change(screen.getByRole('slider', { name: 'Volume' }), {
+      target: { value: '0.4' }
+    })
+    expect(video.volume).toBeCloseTo(0.4)
+    expect(localStorage.getItem('weir.volume')).toBe('0.4')
+  })
+})

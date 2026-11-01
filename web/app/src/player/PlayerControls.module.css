@@ -1,0 +1,115 @@
+/* The controls over the video: a header along the top and the controls
+   along the bottom, each on a gradient, fading out together while it plays
+   and nothing moves. The player is always on black, so the colour roles
+   the package draws with are white here, in light theme as in dark. */
+.overlay {
+  --md-sys-color-primary: #fff;
+  --md-sys-color-on-primary: #000;
+  --md-sys-color-secondary-container: rgb(255 255 255 / 30%);
+  --md-sys-color-on-secondary-container: #fff;
+  --md-sys-color-on-surface: #fff;
+  --md-sys-color-on-surface-variant: #fff;
+  --md-sys-color-inverse-surface: #fff;
+  --md-sys-color-inverse-on-surface: #000;
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  cursor: none;
+}
+.overlay[data-shown] {
+  cursor: auto;
+}
+
+/* Clicks on the picture itself. */
+.surface {
+  position: absolute;
+  inset: 0;
+}
+
+.top,
+.bottom {
+  position: absolute;
+  right: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
+}
+.overlay[data-shown] :is(.top, .bottom) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.top {
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 32px;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 70%), transparent);
+}
+
+.bottom {
+  bottom: 0;
+  padding: 32px 16px 12px;
+  background: linear-gradient(to top, rgb(0 0 0 / 75%), transparent);
+}
+
+/* The time either side of the scrubber, in figures that don't jiggle. */
+.scrubber {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.seek {
+  flex: 1;
+}
+.time {
+  min-width: 56px;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.volume {
+  display: flex;
+  align-items: center;
+}
+.volumeSlider {
+  width: 96px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top,
+  .bottom {
+    transition: none;
+  }
+}
+
+/* Narrow windows keep the skips and fullscreen, and lose the volume
+   slider; phones have volume buttons. */
+@media (max-width: 600px) {
+  .volumeSlider {
+    display: none;
+  }
+}

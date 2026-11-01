@@ -2,30 +2,17 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   background: #000;
   color: #fff;
 }
 
-/* The rest of the height, however tall the video is: Safari otherwise
-   sizes it from its own aspect ratio and lets it spill out. */
+/* The picture fills the window, letterboxed; the controls lie over it. */
 .video {
-  flex: 1 1 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  min-height: 0;
+  height: 100%;
   object-fit: contain;
-}
-
-/* Above the video, not over it: Safari draws its own controls in the
-   video's top corners. */
-.top {
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
 }
 
 .back {
@@ -67,6 +54,8 @@
 .error {
   position: absolute;
   top: 64px;
+  left: 50%;
+  translate: -50% 0;
   z-index: 1;
   padding: 12px 16px;
   border-radius: var(--md-sys-shape-corner-medium);

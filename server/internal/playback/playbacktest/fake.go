@@ -32,6 +32,8 @@ type Engine struct {
 	// Pictures are the embedded pictures ExtractPicture returns, keyed
 	// "path#index".
 	Pictures map[string][]byte
+	// Subtitles are the WebVTT ExtractSubtitle returns, keyed "path#index".
+	Subtitles map[string]string
 
 	mu       sync.Mutex
 	sessions map[string]chan *enginev1alpha.ControlSessionRequest
@@ -71,6 +73,14 @@ func (e *Engine) ExtractPicture(_ context.Context, req *enginev1alpha.ExtractPic
 		return nil, status.Error(codes.NotFound, "no picture there")
 	}
 	return &enginev1alpha.ExtractPictureResponse{Data: data}, nil
+}
+
+func (e *Engine) ExtractSubtitle(_ context.Context, req *enginev1alpha.ExtractSubtitleRequest) (*enginev1alpha.ExtractSubtitleResponse, error) {
+	vtt, ok := e.Subtitles[fmt.Sprintf("%s#%d", req.GetPath(), req.GetIndex())]
+	if !ok {
+		return nil, status.Error(codes.NotFound, "no subtitle there")
+	}
+	return &enginev1alpha.ExtractSubtitleResponse{Webvtt: vtt}, nil
 }
 
 func (e *Engine) StartSession(req *enginev1alpha.StartSessionRequest, stream grpc.ServerStreamingServer[enginev1alpha.StartSessionResponse]) error {

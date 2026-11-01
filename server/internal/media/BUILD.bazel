@@ -2,12 +2,19 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "media",
-    srcs = ["media.go"],
+    srcs = [
+        "media.go",
+        "subtitles.go",
+    ],
     importpath = "github.com/weirhq/weir/server/internal/media",
     visibility = ["//server:__subpackages__"],
     deps = [
+        "//proto/weir/engine/v1alpha",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
     ],
 )
 
@@ -16,7 +23,11 @@ go_test(
     srcs = ["media_test.go"],
     embed = [":media"],
     deps = [
+        "//proto/weir/engine/v1alpha",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
     ],
 )

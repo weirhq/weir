@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -141,6 +142,7 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	go sessions.Run(ctx)
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, sup.Capabilities), interceptors))
 	mux.Handle(media.FilePrefix, media.Handler(signer, st))
+	mux.Handle(media.SubtitlePrefix, media.SubtitleHandler(signer, st, sup.Client(), filepath.Join(cfg.DataDir, "subtitles")))
 	mux.Handle(playback.SessionPrefix, sessions.Handler())
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)

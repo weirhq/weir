@@ -32,11 +32,17 @@ func (filmProber) Probe(_ context.Context, req *enginev1alpha.ProbeRequest, _ ..
 			Detail: &enginev1alpha.Stream_Video{Video: &enginev1alpha.VideoDetail{Width: 3840, Height: 2160, BitDepth: 10,
 				HdrFormat: enginev1alpha.HdrFormat_HDR_FORMAT_DOLBY_VISION, DolbyVision: &enginev1alpha.DolbyVision{Profile: 8, BlCompatId: 1, RpuPresent: true}}}}
 	}
-	return &enginev1alpha.ProbeResponse{ProbeHash: "hash:" + req.Path, Container: container, BitRate: 8_000_000, Streams: []*enginev1alpha.Stream{
+	resp := &enginev1alpha.ProbeResponse{ProbeHash: "hash:" + req.Path, Container: container, BitRate: 8_000_000, Streams: []*enginev1alpha.Stream{
 		video,
 		{Index: 1, Kind: enginev1alpha.StreamKind_STREAM_KIND_AUDIO, Codec: "aac", Language: "en",
 			Detail: &enginev1alpha.Stream_Audio{Audio: &enginev1alpha.AudioDetail{Channels: 2}}},
-	}}, nil
+	}}
+	// Files in a "subs" folder have an English SubRip track too.
+	if strings.Contains(req.Path, "/subs/") {
+		resp.Streams = append(resp.Streams, &enginev1alpha.Stream{Index: 2, Kind: enginev1alpha.StreamKind_STREAM_KIND_SUBTITLE, Codec: "subrip", Language: "en",
+			Detail: &enginev1alpha.Stream_Subtitle{Subtitle: &enginev1alpha.SubtitleDetail{}}})
+	}
+	return resp, nil
 }
 
 // arrival scans a film with an MP4 and a DV MKV version and returns its id.
@@ -160,4 +166,44 @@ func TestStartWithAChosenVersionAndErrors(t *testing.T) {
 	wantCode(t, err, connect.CodeNotFound)
 	_, err = apiv1alpha.NewPlaybackClient(http.DefaultClient, h.url).Start(ctx, connect.NewRequest(&apiv1alpha.StartRequest{ItemId: item.String(), Capabilities: browserCaps()}))
 	wantCode(t, err, connect.CodeUnauthenticated)
+}
+
+// A chosen text subtitle comes beside the video, as WebVTT.
+func TestTextSubtitlesComeAsWebVTT(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	creds := h.bootstrap(t)
+	client := apiv1alpha.NewPlaybackClient(http.DefaultClient, h.url, bearer(creds))
+	h.scanFolder(t, library.Movies, "subs", "Arrival (2016).mp4")
+	var path string
+	if err := h.store.Pool.QueryRow(ctx, "SELECT path FROM media_file").Scan(&path); err != nil {
+		t.Fatal(err)
+	}
+	h.engine.Subtitles = map[string]string{path + "#2": "WEBVTT\n\n00:01.000 --> 00:02.000\nHello\n"}
+
+	sub := int32(2)
+	resp, err := client.Start(ctx, connect.NewRequest(&apiv1alpha.StartRequest{ItemId: itemID(t, h, "Arrival"), Capabilities: browserCaps(), SubtitleStreamIndex: &sub}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	url := resp.Msg.Plan.SubtitleUrl
+	if !strings.HasSuffix(strings.Split(url, "?")[0], "/2.vtt") {
+		t.Fatalf("subtitle url %q", url)
+	}
+	got, err := http.Get(h.url + url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer got.Body.Close()
+	body, _ := io.ReadAll(got.Body)
+	if got.StatusCode != http.StatusOK || !strings.Contains(string(body), "Hello") {
+		t.Errorf("subtitle: %d %q", got.StatusCode, body)
+	}
+
+	// Without a subtitle chosen, there's none to fetch.
+	off := int32(-1)
+	resp, err = client.Start(ctx, connect.NewRequest(&apiv1alpha.StartRequest{ItemId: itemID(t, h, "Arrival"), Capabilities: browserCaps(), SubtitleStreamIndex: &off}))
+	if err != nil || resp.Msg.Plan.SubtitleUrl != "" {
+		t.Errorf("subtitles off: %q %v", resp.Msg.Plan.GetSubtitleUrl(), err)
+	}
 }

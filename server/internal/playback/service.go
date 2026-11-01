@@ -27,6 +27,10 @@ import (
 // pauses and seeking back.
 const directPlayGrace = 6 * time.Hour
 
+// subtitleTTL is how long a subtitle URL works: one fetch is all a player
+// makes, but a long film may be paused before it gets there.
+const subtitleTTL = 12 * time.Hour
+
 var errNoItem = connect.NewError(connect.CodeNotFound, errors.New("no such item"))
 
 // Service implements weir.api.v1alpha.Playback.
@@ -137,6 +141,12 @@ func (s *Service) Start(ctx context.Context, req *connect.Request[apiv1alpha.Sta
 			return nil, auth.Internal(ctx, "start session", err)
 		}
 		best.SessionId, best.Url = id.String(), url
+	}
+	// A text subtitle comes beside the video, as WebVTT.
+	for _, d := range best.Streams {
+		if d.Action == apiv1alpha.StreamAction_STREAM_ACTION_SIDECAR {
+			best.SubtitleUrl = s.signer.SubtitleURL(bestRow.FileID, d.Index, userID, subtitleTTL)
+		}
 	}
 	return connect.NewResponse(&apiv1alpha.StartResponse{Plan: best}), nil
 }

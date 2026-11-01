@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	enginev1alpha "github.com/weirhq/weir/proto/weir/engine/v1alpha"
 )
 
 func newSigner(t *testing.T) *Signer {
@@ -127,5 +133,53 @@ func TestScopedSignatures(t *testing.T) {
 	}
 	if _, err := s.Verify(httptest.NewRequest(http.MethodGet, "/media/sessions/abc/1.m4s?"+s.SignScope("/media/sessions/abc", user, time.Minute), nil)); err == nil {
 		t.Error("accepted a scope without a trailing slash")
+	}
+}
+
+type subtitleEngine struct{ calls int }
+
+func (e *subtitleEngine) ExtractSubtitle(_ context.Context, in *enginev1alpha.ExtractSubtitleRequest, _ ...grpc.CallOption) (*enginev1alpha.ExtractSubtitleResponse, error) {
+	e.calls++
+	if in.GetIndex() != 2 {
+		return nil, status.Error(codes.NotFound, "no subtitle there")
+	}
+	return &enginev1alpha.ExtractSubtitleResponse{Webvtt: "WEBVTT\n\n00:01.000 --> 00:02.000\nHello\n"}, nil
+}
+
+func TestServesSubtitlesAsWebVTT(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "film.mkv")
+	if err := os.WriteFile(path, []byte("bytes"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	id, user := uuid.Must(uuid.NewV7()), uuid.Must(uuid.NewV7())
+	s := newSigner(t)
+	engine := &subtitleEngine{}
+	srv := httptest.NewServer(SubtitleHandler(s, files{id: path}, engine, t.TempDir()))
+	defer srv.Close()
+	get := func(url string) (int, string, string) {
+		t.Helper()
+		resp, err := http.Get(srv.URL + url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, resp.Header.Get("Content-Type"), string(body)
+	}
+	for range 2 {
+		code, ct, body := get(s.SubtitleURL(id, 2, user, time.Hour))
+		if code != http.StatusOK || !strings.HasPrefix(ct, "text/vtt") || !strings.Contains(body, "Hello") {
+			t.Fatalf("subtitle: %d %s %q", code, ct, body)
+		}
+	}
+	// Converted once, then kept.
+	if engine.calls != 1 {
+		t.Errorf("%d conversions, want 1", engine.calls)
+	}
+	if code, _, _ := get(s.SubtitleURL(id, 5, user, time.Hour)); code != http.StatusNotFound {
+		t.Errorf("no such stream: %d", code)
+	}
+	if code, _, _ := get(fmt.Sprintf("%s%s/2.vtt", SubtitlePrefix, id)); code != http.StatusForbidden {
+		t.Errorf("unsigned: %d", code)
 	}
 }

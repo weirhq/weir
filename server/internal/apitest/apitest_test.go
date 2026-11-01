@@ -76,6 +76,7 @@ func newHarness(t *testing.T) *harness {
 	sessions := playback.NewSessions(engine, t.TempDir(), signer)
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, func() *enginev1alpha.CapabilitiesResponse { return h.engineCaps }), interceptors))
 	mux.Handle(mediaurl.FilePrefix, mediaurl.Handler(signer, st))
+	mux.Handle(mediaurl.SubtitlePrefix, mediaurl.SubtitleHandler(signer, st, engine, t.TempDir()))
 	mux.Handle(playback.SessionPrefix, sessions.Handler())
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)

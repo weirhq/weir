@@ -389,6 +389,7 @@ export function PlayerControls({
             onPointerCancel={commit}
           >
             <Slider
+              className={styles.bar}
               aria-label="Seek"
               aria-valuetext={`${clock(time)} of ${clock(duration)}`}
               min={0}
@@ -428,7 +429,7 @@ export function PlayerControls({
               }}
             />
             <Slider
-              className={styles.volumeSlider}
+              className={`${styles.bar} ${styles.volumeSlider}`}
               aria-label="Volume"
               min={0}
               max={1}

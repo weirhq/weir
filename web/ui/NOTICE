@@ -6,6 +6,11 @@ This product includes design tokens from Jetpack Compose Material 3
 licensed under the Apache License, Version 2.0. The generated CSS in
 src/tokens.gen.css and src/tokens/ is derived from them.
 
+src/shapes/ is a TypeScript port of androidx graphics-shapes, and
+src/material-shapes.ts of Jetpack Compose Material 3's MaterialShapes,
+both developed by The Android Open Source Project and licensed under the
+Apache License, Version 2.0.
+
 This product bundles two typefaces in src/fonts, unmodified as served by
 Google Fonts and licensed under the SIL Open Font License, Version 1.1,
 not the Apache License:

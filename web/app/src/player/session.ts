@@ -84,7 +84,12 @@ export function usePlaybackSession<T extends HTMLMediaElement>({
     }
     const hls = new Hls({ startPosition: startAt > 0 ? startAt : -1 })
     hls.on(Hls.Events.ERROR, (_event, data) => {
-      if (!data.fatal) return
+      // hls.js recovers from most errors, such as a stall while the buffer
+      // refills; those only leave a warning, to explain a pause afterwards.
+      if (!data.fatal) {
+        console.warn('hls.js:', data.details, data.error, data)
+        return
+      }
       // The message stays plain; the console says what hls.js hit.
       console.error('hls.js:', data.details, data.error, data)
       setFailure({
@@ -107,16 +112,20 @@ export function usePlaybackSession<T extends HTMLMediaElement>({
       position.current > 0
         ? durationFromMs(Math.round(position.current * 1000))
         : undefined
+    // Playback carries on when a report fails, but say so: it means the
+    // resume point is behind.
+    const failed = (what: string) => (err: unknown) =>
+      console.warn(`Couldn’t save progress (${what}):`, err)
     const timer = setInterval(() => {
       void api.playback
         .heartbeat({ sessionId: plan.sessionId, itemId, position: reported() })
-        .catch(() => undefined)
+        .catch(failed('heartbeat'))
     }, heartbeatMs)
     return () => {
       clearInterval(timer)
       void api.playback
         .stop({ sessionId: plan.sessionId, itemId, position: reported() })
-        .catch(() => undefined)
+        .catch(failed('stop'))
     }
   }, [api, plan, itemId])
 

@@ -22,6 +22,23 @@ function music() {
 const nowPlaying = () => screen.findByRole('region', { name: 'Now playing' })
 const audio = () => document.querySelector('audio')!
 
+it('shuffles an album', async () => {
+  // Fisher–Yates always picking the first: t1 t2 t3 becomes t2 t3 t1.
+  vi.spyOn(Math, 'random').mockReturnValue(0)
+  const user = userEvent.setup()
+  const { browse } = renderSignedIn('/item/mhtrtc', music())
+  await user.click(await screen.findByRole('button', { name: 'Shuffle' }))
+  const bar = await nowPlaying()
+  expect(within(bar).getByRole('link').textContent).toBe(
+    'An Eagle in Your Mind'
+  )
+  expect(within(bar).getByText('1 of 3')).toBeTruthy()
+  await vi.waitFor(() =>
+    expect(browse.starts.map((s) => s.itemId)).toEqual(['t2'])
+  )
+  vi.restoreAllMocks()
+})
+
 it('plays an album through, track after track, then goes away', async () => {
   const user = userEvent.setup()
   const { browse } = renderSignedIn('/item/mhtrtc', music())

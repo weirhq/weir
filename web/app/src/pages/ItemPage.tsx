@@ -123,6 +123,15 @@ export function ItemPage() {
                   Play album
                 </Button>
               )}
+            {sum.kind === ItemKind.ALBUM &&
+              (children.data?.length ?? 0) > 1 && (
+                <Button
+                  variant="tonal"
+                  onClick={() => startQueue(shuffled(children.data!))}
+                >
+                  Shuffle
+                </Button>
+              )}
             {playable.has(sum.kind) &&
               sum.kind !== ItemKind.TRACK &&
               it.versions.length > 0 && (
@@ -239,6 +248,16 @@ function Breadcrumbs({ ancestors }: { ancestors: ItemSummary[] }) {
       ))}
     </nav>
   )
+}
+
+/** A copy in a random order (Fisher–Yates). */
+function shuffled<T>(items: T[]): T[] {
+  const out = [...items]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j]!, out[i]!]
+  }
+  return out
 }
 
 // Ratings that say there isn't one.

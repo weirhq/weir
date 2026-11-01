@@ -38,14 +38,17 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* The artwork beside the details, whose actions sit at the artwork's foot
+   when there's less to say than the artwork is tall. */
 .head {
   display: flex;
   gap: 32px;
-  align-items: flex-start;
+  align-items: stretch;
   margin-bottom: 40px;
 }
 
 .poster {
+  align-self: flex-start;
   width: 240px;
   flex-shrink: 0;
   border-radius: var(--md-sys-shape-corner-extra-large);
@@ -59,11 +62,13 @@
 }
 
 .info {
+  display: flex;
+  flex-direction: column;
   max-width: 720px;
 }
 
 .byline {
-  display: inline-block;
+  align-self: flex-start;
   margin-bottom: 8px;
   color: var(--md-sys-color-primary);
   font-family: var(--md-sys-typescale-title-large-font);
@@ -101,6 +106,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: auto;
 }
 
 .file,

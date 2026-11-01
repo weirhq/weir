@@ -128,6 +128,9 @@ message PlaybackPlan {
   // Set when the plan runs through an engine session; send it to Heartbeat
   // and Stop. Empty for direct play.
   string session_id = 7;
+  // The chosen text subtitle (a SIDECAR stream) as a signed WebVTT URL,
+  // timed from the start of the file; empty without one.
+  string subtitle_url = 8;
 }
 
 enum PlaybackMethod {

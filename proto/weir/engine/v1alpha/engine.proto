@@ -24,6 +24,10 @@ service Engine {
   // file as it's stored.
   rpc ExtractPicture(ExtractPictureRequest) returns (ExtractPictureResponse);
 
+  // Converts a text subtitle stream, such as SubRip, ASS or mov_text, to
+  // WebVTT, for a client to show beside the video.
+  rpc ExtractSubtitle(ExtractSubtitleRequest) returns (ExtractSubtitleResponse);
+
   // Starts writing a file as fMP4 HLS segments into a directory, and
   // reports each segment as it completes. The session ends when the stream
   // does: on Stop, on failure, when the server goes away, or when no
@@ -257,6 +261,18 @@ message ExtractPictureRequest {
 message ExtractPictureResponse {
   // The picture as stored in the file, usually JPEG or PNG.
   bytes data = 1;
+}
+
+message ExtractSubtitleRequest {
+  // Absolute path on the filesystem the server and engine share.
+  string path = 1;
+  // The text subtitle stream's index.
+  uint32 index = 2;
+}
+
+message ExtractSubtitleResponse {
+  // The whole stream as WebVTT, timed from the start of the file.
+  string webvtt = 1;
 }
 
 message HealthRequest {}

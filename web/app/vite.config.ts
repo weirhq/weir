@@ -21,6 +21,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['src/test/setup.ts']
+    setupFiles: ['src/test/setup.ts'],
+    // CI's macOS runners take ten times as long as a laptop; the longest
+    // page tests run near 5s there.
+    testTimeout: 20000
   }
 })

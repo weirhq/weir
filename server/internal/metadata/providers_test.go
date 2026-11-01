@@ -23,7 +23,7 @@ func fakeTMDB(t *testing.T, key string) *httptest.Server {
 			"release_date":"2016-11-10","runtime":116,"vote_average":7.6,"vote_count":19000,
 			"genres":[{"id":18,"name":"Drama"},{"id":878,"name":"Science Fiction"}],
 			"poster_path":"/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg","backdrop_path":"/yIZ1xendyqKvY3FGeeUYUd5X9Mm.jpg",
-			"credits":{"cast":[{"name":"Amy Adams","character":"Louise Banks"},{"name":"Jeremy Renner","character":"Ian Donnelly"}]},
+			"credits":{"cast":[{"name":"Amy Adams","character":"Louise Banks","profile_path":"/amy.jpg"},{"name":"Jeremy Renner","character":"Ian Donnelly"}]},
 			"release_dates":{"results":[{"iso_3166_1":"GB","release_dates":[{"certification":"12A"}]},{"iso_3166_1":"US","release_dates":[{"certification":""},{"certification":"PG-13"}]}]}}`,
 		"/search/tv": `{"page":1,"results":[{"id":95396,"name":"Severance","first_air_date":"2022-02-17"}]}`,
 		"/tv/95396": `{"id":95396,"name":"Severance","original_name":"Severance","overview":"Mark leads a team of office workers...",
@@ -74,6 +74,9 @@ func TestTMDBMovie(t *testing.T) {
 		}
 		if r.Rating != 7.6 || r.RuntimeMinutes != 116 || len(r.Genres) != 2 || r.Cast[0].Name != "Amy Adams" {
 			t.Errorf("details %+v", r)
+		}
+		if r.Cast[0].Photo != "https://img.test/amy.jpg" || r.Cast[1].Photo != "" {
+			t.Errorf("cast photos %q %q", r.Cast[0].Photo, r.Cast[1].Photo)
 		}
 		if len(art) != 2 || art[0].Location != "https://img.test/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg" {
 			t.Errorf("art %v", art)

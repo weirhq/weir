@@ -44,6 +44,8 @@ type Record struct {
 type Person struct {
 	Name string `json:"name"`
 	Role string `json:"role,omitempty"`
+	// Where their photo is, as a URL.
+	Photo string `json:"photo,omitempty"`
 }
 
 // Art is a picture of an item: a file path for local art, else a URL.

@@ -3,6 +3,7 @@ package apitest
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -211,6 +212,23 @@ func TestArtwork(t *testing.T) {
 	}
 	if code, cfg, ct := size(item.Msg.Item.LogoUrl); code != http.StatusOK || cfg.Width != 1200 || ct != "image/jpeg" {
 		t.Errorf("larger logo over a small embedded one: %d %dx%d %s", code, cfg.Width, cfg.Height, ct)
+	}
+
+	// Cast photos come through the same server, cached and resized.
+	cast := fmt.Sprintf(`[{"name":"Amy Adams","role":"Louise Banks","photo":%q},{"name":"Jeremy Renner"}]`, remote.URL+"/amy.jpg")
+	if _, err := h.store.Pool.Exec(ctx, "INSERT INTO metadata (item_id, source, cast_members) VALUES ($1, 'tmdb', $2)", arrival, cast); err != nil {
+		t.Fatal(err)
+	}
+	item, err = browse.GetItem(ctx, connect.NewRequest(&apiv1alpha.GetItemRequest{Id: arrival.String()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	people := item.Msg.Item.Cast
+	if len(people) != 2 || people[0].PhotoUrl == "" || people[1].PhotoUrl != "" {
+		t.Fatalf("cast %v", people)
+	}
+	if code, cfg, _ := size(people[0].PhotoUrl + "&w=160"); code != http.StatusOK || cfg.Width != 160 {
+		t.Errorf("cast photo: %d %dx%d", code, cfg.Width, cfg.Height)
 	}
 
 	// A member without access to the library can't reach the item, so gets

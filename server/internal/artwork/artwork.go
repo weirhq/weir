@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -93,7 +94,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	idPart, kind, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, Prefix), "/")
 	itemID, err := uuid.Parse(idPart)
-	if err != nil || !kinds[kind] {
+	if _, isCast := castIndex(kind); err != nil || !kinds[kind] && !isCast {
 		http.NotFound(w, r)
 		return
 	}
@@ -135,7 +136,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // resizing it first if needed.
 func (s *Server) file(ctx context.Context, item uuid.UUID, kind string, width int) (string, string, error) {
 	defer s.lock(item.String() + "/" + kind)()
-	original, hash, err := s.original(ctx, item, kind)
+	var original, hash string
+	var err error
+	if n, ok := castIndex(kind); ok {
+		original, hash, err = s.castPhoto(ctx, item, n)
+	} else {
+		original, hash, err = s.original(ctx, item, kind)
+	}
 	if err != nil {
 		return "", "", err
 	}
@@ -226,28 +233,11 @@ func (s *Server) load(ctx context.Context, dir string, c dbgen.Artwork) (picture
 	if err != nil {
 		return picture{}, fmt.Errorf("%s: %w", c.Source, err)
 	}
-	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
-	if err != nil {
-		return picture{}, fmt.Errorf("%s: not an image: %w", c.Source, err)
-	}
 	sum := sha256.Sum256(data)
 	hash := hex.EncodeToString(sum[:16])
-	ext := ".jpg"
-	if format == "png" {
-		ext = ".png"
-	}
-	path := filepath.Join(dir, hash+ext)
-	if format == "jpeg" || format == "png" {
-		err = writeFile(path, data)
-	} else {
-		// WebP and others are stored as JPEG, which every client shows.
-		var img image.Image
-		if img, _, err = image.Decode(bytes.NewReader(data)); err == nil {
-			err = writeImage(path, img, ".jpg")
-		}
-	}
+	path, cfg, err := save(dir, hash, data)
 	if err != nil {
-		return picture{}, err
+		return picture{}, fmt.Errorf("%s: %w", c.Source, err)
 	}
 	if err := s.store.SetArtworkCache(ctx, dbgen.SetArtworkCacheParams{
 		ItemID: c.ItemID, Kind: c.Kind, Source: c.Source, Hash: &hash, Width: ptr(int32(cfg.Width)), Height: ptr(int32(cfg.Height)),
@@ -282,6 +272,67 @@ func (s *Server) fetch(ctx context.Context, source, location string) ([]byte, er
 		return nil, fmt.Errorf("%s", resp.Status)
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, maxImageBytes))
+}
+
+// castIndex reads a cast photo's kind, "cast/<n>".
+func castIndex(kind string) (int, bool) {
+	rest, ok := strings.CutPrefix(kind, "cast/")
+	if !ok {
+		return 0, false
+	}
+	n, err := strconv.Atoi(rest)
+	return n, err == nil && n >= 0
+}
+
+// castPhoto returns the cached photo of an item's nth cast member, named
+// after its URL, so a new photo is fetched afresh.
+func (s *Server) castPhoto(ctx context.Context, item uuid.UUID, n int) (string, string, error) {
+	m, err := s.store.GetResolvedMetadata(ctx, item)
+	if err != nil {
+		return "", "", err
+	}
+	var cast []struct {
+		Photo string `json:"photo"`
+	}
+	_ = json.Unmarshal(m.CastMembers, &cast)
+	if n >= len(cast) || cast[n].Photo == "" {
+		return "", "", errors.New("no photo")
+	}
+	sum := sha256.Sum256([]byte(cast[n].Photo))
+	hash := "cast-" + hex.EncodeToString(sum[:16])
+	dir := filepath.Join(s.dir, item.String())
+	if matches, _ := filepath.Glob(filepath.Join(dir, hash+".*")); len(matches) > 0 {
+		return matches[0], hash, nil
+	}
+	data, err := s.fetch(ctx, "tmdb", cast[n].Photo)
+	if err != nil {
+		return "", "", err
+	}
+	path, _, err := save(dir, hash, data)
+	return path, hash, err
+}
+
+// save stores a fetched picture as dir/name, keeping JPEG and PNG as they
+// are and converting the rest to JPEG, which every client shows.
+func save(dir, name string, data []byte) (string, image.Config, error) {
+	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return "", cfg, fmt.Errorf("not an image: %w", err)
+	}
+	ext := ".jpg"
+	if format == "png" {
+		ext = ".png"
+	}
+	path := filepath.Join(dir, name+ext)
+	if format == "jpeg" || format == "png" {
+		err = writeFile(path, data)
+	} else {
+		var img image.Image
+		if img, _, err = image.Decode(bytes.NewReader(data)); err == nil {
+			err = writeImage(path, img, ".jpg")
+		}
+	}
+	return path, cfg, err
 }
 
 // embedded copies a picture out of its media file through the engine. Its

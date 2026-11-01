@@ -69,6 +69,11 @@ func (u urls) art(item uuid.UUID, kind string, kinds []string) string {
 	return artwork.Prefix + item.String() + "/" + kind + "?" + u.query
 }
 
+// cast links to the photo of an item's nth cast member.
+func (u urls) cast(item uuid.UUID, n int) string {
+	return artwork.Prefix + item.String() + "/cast/" + strconv.Itoa(n) + "?" + u.query
+}
+
 func (u urls) decorate(sum *apiv1alpha.ItemSummary, id uuid.UUID, v view) *apiv1alpha.ItemSummary {
 	sum.PosterUrl = u.art(id, "poster", v.artKinds)
 	sum.ThumbUrl = u.art(id, "thumb", v.artKinds)
@@ -204,6 +209,15 @@ func (s *Service) GetItem(ctx context.Context, req *connect.Request[apiv1alpha.G
 		return nil, auth.Internal(ctx, "load user state", err)
 	}
 	u := s.urls(caller)
+	var photos []struct {
+		Photo string `json:"photo"`
+	}
+	_ = json.Unmarshal(m.CastMembers, &photos)
+	for i, p := range photos {
+		if p.Photo != "" && i < len(item.Cast) {
+			item.Cast[i].PhotoUrl = u.cast(it.ID, i)
+		}
+	}
 	u.decorate(item.Summary, it.ID, view{uv.PositionMs, uv.Watched, uv.PlayCount, uv.LastPlayed, uv.ArtKinds})
 	item.BackdropUrl = u.art(it.ID, "backdrop", uv.ArtKinds)
 	item.LogoUrl = u.art(it.ID, "logo", uv.ArtKinds)

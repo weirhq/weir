@@ -75,18 +75,24 @@ type tmdbGenre struct {
 
 type tmdbCredits struct {
 	Cast []struct {
-		Name      string `json:"name"`
-		Character string `json:"character"`
+		Name        string `json:"name"`
+		Character   string `json:"character"`
+		ProfilePath string `json:"profile_path"`
 	} `json:"cast"`
 }
 
-func (c tmdbCredits) people() []Person {
+// people is the billed cast, with photos at images.
+func (c tmdbCredits) people(images string) []Person {
 	var cast []Person
 	for i, p := range c.Cast {
 		if i == maxCast {
 			break
 		}
-		cast = append(cast, Person{Name: p.Name, Role: p.Character})
+		person := Person{Name: p.Name, Role: p.Character}
+		if p.ProfilePath != "" {
+			person.Photo = images + p.ProfilePath
+		}
+		cast = append(cast, person)
 	}
 	return cast
 }
@@ -168,7 +174,7 @@ func (c *TMDB) Movie(ctx context.Context, title string, year int, ids map[string
 	}
 	r := Record{
 		Title: m.Title, Overview: m.Overview, Tagline: m.Tagline, RuntimeMinutes: m.Runtime,
-		Cast:        m.Credits.people(),
+		Cast:        m.Credits.people(c.images),
 		ExternalIDs: map[string]string{"tmdb": strconv.Itoa(m.ID)},
 	}
 	if m.OriginalTitle != m.Title {
@@ -257,7 +263,7 @@ func (c *TMDB) Show(ctx context.Context, title string, year int, ids map[string]
 	}
 	r := Record{
 		Title: s.Name, Overview: s.Overview, Tagline: s.Tagline,
-		Cast:        s.Credits.people(),
+		Cast:        s.Credits.people(c.images),
 		ExternalIDs: map[string]string{"tmdb": strconv.Itoa(s.ID)},
 	}
 	if s.OriginalName != s.Name {

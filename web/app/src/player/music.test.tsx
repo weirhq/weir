@@ -154,3 +154,30 @@ it('plays a single track from its page', async () => {
     expect(browse.starts.map((s) => s.itemId)).toEqual(['t2'])
   )
 })
+
+it('plays, mutes and seeks with its own controls', async () => {
+  const user = userEvent.setup()
+  renderSignedIn('/item/mhtrtc', music())
+  await user.click(await screen.findByRole('button', { name: 'Play album' }))
+  const bar = await nowPlaying()
+  // Not the browser's controls.
+  expect(audio().controls).toBe(false)
+
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play')
+  await user.click(within(bar).getByRole('button', { name: 'Play' }))
+  expect(play).toHaveBeenCalled()
+  play.mockRestore()
+
+  // The volume slider unfolds from its icon, which then mutes.
+  await user.click(within(bar).getByRole('button', { name: 'Volume' }))
+  await user.click(within(bar).getByRole('button', { name: 'Mute' }))
+  expect(audio().muted).toBe(true)
+
+  // The scrubber seeks once it's let go.
+  Object.defineProperty(audio(), 'duration', { value: 200 })
+  fireEvent.durationChange(audio())
+  const scrubber = within(bar).getByRole('slider', { name: 'Seek' })
+  fireEvent.change(scrubber, { target: { value: '30' } })
+  fireEvent.keyUp(scrubber)
+  expect(audio().currentTime).toBe(30)
+})

@@ -42,7 +42,9 @@
 }
 
 /* The volume slider unfolds beside its icon once that's clicked. Folded,
-   it's hidden, so it's out of the tab order too. */
+   it's hidden, so it's out of the tab order too. Leftwards, it unfolds
+   before the icon, for a player at the end of a row, where unfolding the
+   other way would move the icon out from under the pointer. */
 .volume {
   display: flex;
   align-items: center;
@@ -52,6 +54,9 @@
 }
 .volume[data-open] {
   gap: 12px;
+}
+.leftwards {
+  flex-direction: row-reverse;
 }
 .volumeSlider {
   width: 0;

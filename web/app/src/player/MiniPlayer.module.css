@@ -3,12 +3,45 @@
   color: var(--md-sys-color-on-surface);
 }
 
+/* What's playing, the transport in the middle, and the rest at the end;
+   on a narrow window the transport goes underneath, the width of it. */
 .row {
+  display: grid;
+  grid-template-areas: 'now transport end';
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 560px) minmax(0, 1fr);
+  align-items: center;
+  gap: 0 16px;
+  padding: 8px 16px 4px;
+}
+
+.now {
+  display: flex;
+  grid-area: now;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.transport {
+  grid-area: transport;
+}
+.buttons {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  min-height: 72px;
-  padding: 8px 16px;
+}
+/* The scrubber tucks up under the buttons. */
+.transport > :last-child {
+  margin-top: -6px;
+}
+
+.end {
+  display: flex;
+  grid-area: end;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .art {
@@ -46,11 +79,6 @@
   font-size: var(--md-sys-typescale-body-small-size);
 }
 
-.audio {
-  width: min(360px, 40vw);
-  height: 40px;
-}
-
 .queue {
   padding: 0 8px 8px;
   /* Items on the sheet's own colour. */
@@ -59,10 +87,9 @@
 
 @media (max-width: 720px) {
   .row {
-    flex-wrap: wrap;
-  }
-  .audio {
-    order: 1;
-    width: 100%;
+    grid-template-areas:
+      'now end'
+      'transport transport';
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }

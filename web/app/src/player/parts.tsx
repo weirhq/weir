@@ -166,19 +166,27 @@ export function Volume({
   volume,
   muted,
   open,
-  onOpen
+  onOpen,
+  leftwards
 }: {
   media: RefObject<HTMLMediaElement | null>
   volume: number
   muted: boolean
   open: boolean
   onOpen: () => void
+  /** Unfolds before the icon, so the icon stays where it was. */
+  leftwards?: boolean
 }) {
   const slider = useMediaQuery('(min-width: 601px)')
   const folded = slider && !open
   const level = muted ? 0 : volume
   return (
-    <div className={styles.volume} data-open={(slider && open) || undefined}>
+    <div
+      className={
+        leftwards ? `${styles.volume} ${styles.leftwards}` : styles.volume
+      }
+      data-open={(slider && open) || undefined}
+    >
       {/* The one button, so it keeps focus as it unfolds the slider. */}
       <IconButton
         icon={level === 0 ? 'volume_off' : 'volume_up'}

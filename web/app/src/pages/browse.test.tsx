@@ -126,9 +126,13 @@ it('shows a film with its facts, cast and file, and marks it watched', async () 
     )
   ).toBeTruthy()
   expect(screen.getByText('Why are they here?')).toBeTruthy()
-  // Without a photo, a cast member shows their initials.
-  const amy = screen.getByText('Amy Adams').closest('li')!
+  // Without a photo, a cast member shows their initials; one we know leads
+  // to their page.
+  const amy = screen.getByRole('link', { name: /Amy Adams/ })
   expect(amy.textContent).toContain('AA')
+  expect(amy.getAttribute('href')).toBe('/person/9273')
+  expect(screen.queryByRole('link', { name: /Jeremy Renner/ })).toBeNull()
+  expect(screen.getByText('Jeremy Renner')).toBeTruthy()
   // Part-way through, it offers both resuming and starting over.
   expect(screen.getByRole('link', { name: 'Resume from 40:00' })).toBeTruthy()
   expect(
@@ -181,6 +185,21 @@ it('searches from the header', async () => {
   await screen.findByRole('heading', { name: 'Results for “zod”' })
   expect(screen.getByText('Zodiac')).toBeTruthy()
   expect(screen.queryByText('Severance')).toBeNull()
+})
+
+it('shows a person and what they’re in', async () => {
+  renderSignedIn('/person/9273')
+  await screen.findByRole('heading', { name: 'Amy Adams', level: 1 })
+  expect(screen.getByText('In 1 title you have')).toBeTruthy()
+  expect(screen.getByRole('link', { name: /Arrival/ })).toBeTruthy()
+  expect(screen.getByText('as Louise Banks')).toBeTruthy()
+})
+
+it('says so when a person isn’t known', async () => {
+  renderSignedIn('/person/1')
+  expect((await screen.findByRole('alert')).textContent).toBe(
+    'This person isn’t in anything you have.'
+  )
 })
 
 it('suggests matches under the search bar as you type', async () => {

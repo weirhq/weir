@@ -121,6 +121,40 @@
 .row.wide {
   grid-auto-columns: 280px;
 }
+.row.narrow {
+  grid-auto-columns: 120px;
+}
+
+/* People: a round photo, or initials, over their name and role. */
+.person {
+  align-items: center;
+  text-align: center;
+}
+.personPhoto {
+  display: grid;
+  flex: none;
+  place-items: center;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  object-fit: cover;
+}
+.card:focus-visible .personPhoto {
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+.personName {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .row > * {
   scroll-snap-align: start;
 }

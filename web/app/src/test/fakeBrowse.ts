@@ -158,7 +158,12 @@ export class FakeBrowse {
       contentRating: id === 'arrival' ? 'PG-13' : '',
       genres: id === 'arrival' ? ['Drama', 'Science Fiction'] : [],
       cast:
-        id === 'arrival' ? [{ name: 'Amy Adams', role: 'Louise Banks' }] : [],
+        id === 'arrival'
+          ? [
+              { id: '9273', name: 'Amy Adams', role: 'Louise Banks' },
+              { name: 'Jeremy Renner', role: 'Ian Donnelly' }
+            ]
+          : [],
       ancestors,
       versions:
         s.kind === ItemKind.TRACK
@@ -256,6 +261,14 @@ export class FakeBrowse {
         return { items: page, total: all.length, nextPageToken: next }
       },
       getItem: (req) => ({ item: this.detail(req.id) }),
+      getPerson: (req) => {
+        if (req.id !== '9273')
+          throw new ConnectError('no such person', Code.NotFound)
+        return {
+          name: 'Amy Adams',
+          credits: [{ item: this.get('arrival'), role: 'Louise Banks' }]
+        }
+      },
       listLibraryFacets: (req) => {
         const counts = new Map<string, number>()
         for (const s of this.summaries)

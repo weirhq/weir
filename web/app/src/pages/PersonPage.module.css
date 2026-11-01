@@ -1,0 +1,37 @@
+/* A person: their photo beside their name, then what they're in. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.name {
+  margin: 0 0 4px;
+  font-family: var(--md-sys-typescale-display-small-font);
+  font-size: var(--md-sys-typescale-display-small-size);
+  line-height: var(--md-sys-typescale-display-small-line-height);
+  font-weight: var(--md-sys-typescale-display-small-weight);
+}
+
+.count {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.credit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.role {
+  overflow: hidden;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-small-size);
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

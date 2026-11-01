@@ -3,7 +3,9 @@ import { Link, useRouteContext } from '@tanstack/react-router'
 import { Button, IconButton, List, ListItem } from '@weirhq/m3e'
 import { AddToPlaylist } from '../components/AddToPlaylist'
 import { PageLoading } from '../components/PageLoading'
+import { PersonCard } from '../components/PersonCard'
 import { isSquare, PosterCard } from '../components/PosterCard'
+import { Row } from '../components/Row'
 import cards from '../components/Cards.module.css'
 import {
   ItemKind,
@@ -184,33 +186,11 @@ export function ItemPage() {
         </section>
       )}
 
-      {it.cast.length > 0 && (
-        <section className={cards.section}>
-          <h2 className={cards.heading}>Cast</h2>
-          <ul className={styles.cast}>
-            {it.cast.slice(0, 12).map((p) => (
-              <li key={p.name + p.role}>
-                {p.photoUrl ? (
-                  <img
-                    className={styles.castPhoto}
-                    src={sized(p.photoUrl, 160)}
-                    srcSet={srcSet(p.photoUrl, 320)}
-                    sizes="80px"
-                    alt=""
-                    loading="lazy"
-                  />
-                ) : (
-                  <span className={styles.castPhoto} aria-hidden="true">
-                    {initials(p.name)}
-                  </span>
-                )}
-                <span className={styles.castName}>{p.name}</span>
-                {p.role && <span className={styles.castRole}>{p.role}</span>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <Row title="Cast" narrow>
+        {it.cast.slice(0, 20).map((p) => (
+          <PersonCard key={p.id || p.name + p.role} person={p} />
+        ))}
+      </Row>
 
       {it.versions.length > 0 && (
         <section className={cards.section}>
@@ -263,17 +243,6 @@ function Breadcrumbs({ ancestors }: { ancestors: ItemSummary[] }) {
 
 // Ratings that say there isn't one.
 const unrated = new Set(['NR', 'Not Rated', 'Unrated', 'UR'])
-
-/** "Reeve Carney" is "RC". */
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
 
 function Facts({ item }: { item: Item }) {
   const facts = [

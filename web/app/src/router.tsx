@@ -17,6 +17,7 @@ import { UsersPage } from './pages/admin/UsersPage'
 import { HomePage } from './pages/HomePage'
 import { ItemPage } from './pages/ItemPage'
 import { LibraryPage } from './pages/LibraryPage'
+import { PersonPage } from './pages/PersonPage'
 import { PlayerPage } from './player/PlayerPage'
 import { LoginPage } from './pages/LoginPage'
 import { PlaylistPage } from './pages/PlaylistPage'
@@ -116,6 +117,12 @@ export const itemRoute = createRoute({
   component: ItemPage
 })
 
+export const personRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/person/$personId',
+  component: PersonPage
+})
+
 export const searchRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/search',
@@ -190,6 +197,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     libraryRoute,
     itemRoute,
+    personRoute,
     searchRoute,
     playlistsRoute,
     playlistRoute,

@@ -17,11 +17,15 @@ import styles from './Cards.module.css'
 export function Row({
   title,
   wide,
+  narrow,
   link,
   children
 }: {
   title: string
+  /** 280px columns, for wide pictures. */
   wide?: boolean
+  /** 120px columns, for people. */
+  narrow?: boolean
   /** A link to all of it, such as a library sorted the same way; the row
       gives it the title as its content. */
   link?: ReactElement<{ className?: string; children?: ReactNode }>
@@ -90,7 +94,9 @@ export function Row({
       </div>
       <div
         ref={scroller}
-        className={wide ? `${styles.row} ${styles.wide}` : styles.row}
+        className={[styles.row, wide && styles.wide, narrow && styles.narrow]
+          .filter(Boolean)
+          .join(' ')}
       >
         {children}
       </div>

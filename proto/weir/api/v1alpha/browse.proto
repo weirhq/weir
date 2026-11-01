@@ -19,7 +19,7 @@ service Browse {
   rpc Search(SearchRequest) returns (SearchResponse);
   // Films and episodes started but not finished, most recent first.
   rpc ListContinueWatching(ListContinueWatchingRequest) returns (ListContinueWatchingResponse);
-  // Newest additions across every visible library.
+  // Newest additions across every visible library, or in one.
   rpc ListRecentlyAdded(ListRecentlyAddedRequest) returns (ListRecentlyAddedResponse);
 }
 
@@ -37,6 +37,8 @@ message ListRecentlyAddedRequest {
   repeated ItemKind kinds = 1;
   // At most 100; zero means 20.
   uint32 limit = 2;
+  // Only this library; empty means every visible one.
+  string library_id = 3;
 }
 
 message ListRecentlyAddedResponse {

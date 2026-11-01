@@ -12,6 +12,7 @@ import {
 } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import cards from '../components/Cards.module.css'
+import { PageLoading } from '../components/PageLoading'
 import { errorMessage } from '../errors'
 import { ItemKind, type ItemSummary } from '../gen/weir/api/v1alpha/browse_pb'
 import { useQueue } from '../player/queue'
@@ -73,7 +74,7 @@ export function PlaylistPage() {
       </p>
     )
   const pl = playlist.data?.playlist
-  if (!pl) return null
+  if (!pl) return <PageLoading />
   const items = playlist.data!.items
   const owned = pl.ownerId === session.user?.id
   const tracks = items.filter((i) => i.kind === ItemKind.TRACK)

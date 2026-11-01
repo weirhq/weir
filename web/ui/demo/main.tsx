@@ -25,6 +25,9 @@ import {
   InputChip,
   LinearProgressIndicator,
   List,
+  LoadingIndicator,
+  MaterialShapes,
+  toSvgPath,
   ListDivider,
   ListItem,
   Menu,
@@ -299,6 +302,44 @@ function Menus() {
           options={kinds}
           disabled
         />
+      </div>
+    </div>
+  )
+}
+
+function Loading() {
+  const [value, setValue] = useState(30)
+  return (
+    <div className="progress-demo">
+      <div className="progress-circles">
+        <LoadingIndicator aria-label="Loading" />
+        <LoadingIndicator aria-label="Loading, contained" contained />
+        <LoadingIndicator aria-label="Loading progress" value={value / 100} />
+        <LoadingIndicator
+          aria-label="Loading progress, contained"
+          value={value / 100}
+          contained
+        />
+      </div>
+      <Slider
+        aria-label="Loading value"
+        value={value}
+        onValueChange={setValue}
+        valueLabel={(n) => `${Math.round(n)}%`}
+      />
+      <div className="shape-grid" data-testid="material-shapes">
+        {Object.keys(MaterialShapes).map((name) => (
+          <figure key={name} className="shape-cell">
+            <svg viewBox="0 0 1 1" aria-hidden>
+              <path
+                d={toSvgPath(
+                  MaterialShapes[name as keyof typeof MaterialShapes].cubics
+                )}
+              />
+            </svg>
+            <figcaption>{name}</figcaption>
+          </figure>
+        ))}
       </div>
     </div>
   )
@@ -1216,6 +1257,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="loading">
+        <h2 id="loading">Loading indicator and shapes</h2>
+        <Loading />
       </section>
 
       <section aria-labelledby="progress">

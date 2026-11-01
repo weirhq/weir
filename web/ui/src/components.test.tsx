@@ -18,6 +18,7 @@ import {
   InputChip,
   LinearProgressIndicator,
   List,
+  LoadingIndicator,
   ListDivider,
   ListItem,
   Menu,
@@ -1142,4 +1143,19 @@ describe('Progress indicators', () => {
         .hasAttribute('aria-valuenow')
     ).toBe(false)
   })
+})
+
+it('reports a loading indicator as a progress bar, with a value when it has one', () => {
+  HTMLCanvasElement.prototype.getContext = () => null
+  render(
+    <>
+      <LoadingIndicator aria-label="Loading" />
+      <LoadingIndicator aria-label="Fetching" value={0.25} contained />
+    </>
+  )
+  const loading = screen.getByRole('progressbar', { name: 'Loading' })
+  expect(loading.hasAttribute('aria-valuenow')).toBe(false)
+  const fetching = screen.getByRole('progressbar', { name: 'Fetching' })
+  expect(fetching.getAttribute('aria-valuenow')).toBe('25')
+  expect(fetching.className).toContain('md-comp-loading-indicator')
 })

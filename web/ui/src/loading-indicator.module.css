@@ -1,0 +1,13 @@
+/* The loading indicator draws on a canvas (loading-indicator.tsx); this is
+   its 48dp box, a primary-container circle when contained. */
+
+.indicator {
+  display: block;
+  width: var(--md-comp-loading-indicator-container-width);
+  height: var(--md-comp-loading-indicator-container-height);
+  border-radius: var(--md-comp-loading-indicator-container-shape);
+}
+
+.contained {
+  background: var(--md-comp-loading-indicator-contained-container-color);
+}

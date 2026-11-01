@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
 import { Button, IconButton, List, ListItem } from '@weirhq/m3e'
 import { AddToPlaylist } from '../components/AddToPlaylist'
+import { PageLoading } from '../components/PageLoading'
 import { PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'
 import {
@@ -55,7 +56,7 @@ export function ItemPage() {
         This item doesn’t exist, or isn’t shared with you.
       </p>
     )
-  if (!item.data?.summary) return null
+  if (!item.data?.summary) return <PageLoading />
   const it = item.data
   const sum = it.summary!
   const watched = sum.userData?.watched ?? false

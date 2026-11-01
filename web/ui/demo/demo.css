@@ -219,3 +219,21 @@ h2 {
   align-items: center;
   gap: 24px;
 }
+
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 12px;
+}
+
+.shape-cell {
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+}
+
+.shape-cell svg {
+  width: 48px;
+  height: 48px;
+  fill: var(--md-sys-color-primary);
+}

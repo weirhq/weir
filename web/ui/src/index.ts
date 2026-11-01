@@ -49,6 +49,12 @@ export {
   LinearProgressIndicator,
   type ProgressIndicatorProps
 } from './progress'
+export {
+  LoadingIndicator,
+  type LoadingIndicatorProps
+} from './loading-indicator'
+export { MaterialShapes } from './material-shapes'
+export * from './shapes'
 export { Slider, type SliderProps } from './slider'
 export {
   Snackbar,

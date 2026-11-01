@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react'
 import styles from './progress.module.css'
+import { CornerRounding, Morph, RoundedPolygon } from './shapes'
 import './tokens/progress-indicator.gen.css'
 import './tokens/linear-progress-indicator.gen.css'
 import './tokens/circular-progress-indicator.gen.css'
@@ -97,6 +98,77 @@ const circularSweep = keyframes(6000, 0.1, [
 // above 95% (WavyProgressIndicatorDefaults.indicatorAmplitude), changing
 // over 500ms, Standard as it grows and EmphasizedAccelerate as it goes.
 const targetAmplitude = (p: number) => (p <= 0.1 || p >= 0.95 ? 0 : 1)
+
+// The circular wave is Compose's: a circle morphing, by the amplitude, into
+// a rounded star with a point every wavelength (CircularShapes in
+// CircularWavyProgressModifiers.kt). It's drawn by the star's radius at
+// each angle from its centre, which a star this round allows.
+const waveMorphs = new Map<number, Morph>()
+const radiusTables = new Map<string, Float64Array>()
+const tableSteps = 720
+
+function waveRadius(points: number, amplitude: number) {
+  const amount = Math.round(amplitude * 100) / 100
+  const key = `${points}:${amount}`
+  let table = radiusTables.get(key)
+  if (table) return table
+  let morph = waveMorphs.get(points)
+  if (!morph) {
+    morph = new Morph(
+      RoundedPolygon.circle(points).normalized(),
+      RoundedPolygon.star(points, {
+        innerRadius: 0.75,
+        rounding: new CornerRounding(0.35, 0.4),
+        innerRounding: new CornerRounding(0.5)
+      }).normalized()
+    )
+    waveMorphs.set(points, morph)
+  }
+  // Points round the outline as (angle, radius) from the centre.
+  const samples: [number, number][] = []
+  for (const c of morph.asCubics(amount))
+    for (let i = 0; i < 16; i++) {
+      const s = i / 16
+      const u = 1 - s
+      const x =
+        u * u * u * c.anchor0X +
+        3 * u * u * s * c.control0X +
+        3 * u * s * s * c.control1X +
+        s * s * s * c.anchor1X
+      const y =
+        u * u * u * c.anchor0Y +
+        3 * u * u * s * c.control0Y +
+        3 * u * s * s * c.control1Y +
+        s * s * s * c.anchor1Y
+      const a = Math.atan2(y - 0.5, x - 0.5)
+      samples.push([a < 0 ? a + 2 * Math.PI : a, Math.hypot(x - 0.5, y - 0.5)])
+    }
+  samples.sort((p, q) => p[0] - q[0])
+  const tau = 2 * Math.PI
+  const n = samples.length
+  table = new Float64Array(tableSteps)
+  for (let i = 0; i < tableSteps; i++) {
+    const a = (i / tableSteps) * tau
+    // The last sample at or before this angle (-1 if none), and the next.
+    let lo = 0
+    let hi = n - 1
+    let k = -1
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (samples[mid]![0] <= a) {
+        k = mid
+        lo = mid + 1
+      } else hi = mid - 1
+    }
+    const [a0, r0] =
+      k < 0 ? [samples[n - 1]![0] - tau, samples[n - 1]![1]] : samples[k]!
+    const [a1, r1] =
+      k + 1 < n ? samples[k + 1]! : [samples[0]![0] + tau, samples[0]![1]]
+    table[i] = r0 + ((r1 - r0) * (a - a0)) / (a1 - a0 || 1)
+  }
+  radiusTables.set(key, table)
+  return table
+}
 
 type Colors = { active: string; track: string; stop: string }
 
@@ -400,21 +472,20 @@ export function CircularProgressIndicator({
       ctx,
       '--md-comp-circular-progress-indicator-active-wave-wavelength'
     )
-    const amplitude = px(
-      ctx,
-      '--md-comp-circular-progress-indicator-active-wave-amplitude'
-    )
     const size = Math.min(w, h)
     const r = size / 2 - thickness / 2
     const cx = w / 2
     const cy = h / 2
-    // One wave each wavelength round, turning one wavelength a second.
+    // A point each wavelength round, turning one wavelength a second.
     const waves = Math.max(3, Math.round((2 * Math.PI * r) / wavelength))
     const turn = (((now / 1000) * wavelength) / r) % (2 * Math.PI)
-    const radius = (a: number) =>
-      amp > 0
-        ? r - amplitude * amp + amplitude * amp * Math.cos(waves * (a - turn))
-        : r
+    const table = amp > 0 ? waveRadius(waves, amp) : undefined
+    const radius = (a: number) => {
+      if (!table) return r
+      const turns = (a - turn) / (2 * Math.PI)
+      const i = Math.floor((turns - Math.floor(turns)) * tableSteps)
+      return table[i % tableSteps]! * (size - thickness)
+    }
     const arc = (start: number, sweep: number): Point[] => {
       const points: Point[] = []
       const steps = Math.max(2, Math.ceil((Math.abs(sweep) * r) / 1.5))

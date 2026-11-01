@@ -5,7 +5,7 @@ import {
   useNavigate,
   useRouteContext
 } from '@tanstack/react-router'
-import { Button, SnackbarHost, SnackbarProvider } from '@weirhq/m3e'
+import { Button, SnackbarHost, SnackbarProvider, TopAppBar } from '@weirhq/m3e'
 import { useState, useSyncExternalStore, type FormEvent } from 'react'
 import { Role } from '../gen/weir/api/v1alpha/user_pb'
 import { MiniPlayer } from '../player/MiniPlayer'
@@ -42,56 +42,66 @@ export function AppShell() {
   return (
     <SnackbarProvider>
       <div className={styles.shell}>
-        <header className={styles.bar}>
-          <Link to="/" className={styles.brand}>
-            Weir
-          </Link>
-          <nav className={styles.nav} aria-label="Libraries">
-            {libraries.data?.map((l) => (
-              <Link
-                key={l.id}
-                to="/library/$libraryId"
-                params={{ libraryId: l.id }}
-                className={styles.navLink}
-                activeProps={{ 'aria-current': 'page' }}
-              >
-                {l.name}
+        <TopAppBar
+          className={styles.bar}
+          scrollBehavior="pinned"
+          title={
+            <span className={styles.titleRow}>
+              <Link to="/" className={styles.brand}>
+                Weir
               </Link>
-            ))}
-            <Link
-              to="/playlists"
-              className={styles.navLink}
-              activeProps={{ 'aria-current': 'page' }}
-            >
-              Playlists
-            </Link>
-          </nav>
-          <form role="search" className={styles.search} onSubmit={search}>
-            <input
-              className={styles.searchInput}
-              type="search"
-              placeholder="Search"
-              aria-label="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </form>
-          <div className={styles.user}>
-            {user?.role === Role.ADMIN && (
-              <Link
-                to="/admin"
-                className={styles.navLink}
-                activeProps={{ 'aria-current': 'page' }}
-              >
-                Settings
-              </Link>
-            )}
-            <span>{user?.displayName}</span>
-            <Button variant="text" onClick={signOut}>
-              Sign out
-            </Button>
-          </div>
-        </header>
+              <nav className={styles.nav} aria-label="Libraries">
+                {libraries.data?.map((l) => (
+                  <Link
+                    key={l.id}
+                    to="/library/$libraryId"
+                    params={{ libraryId: l.id }}
+                    className={styles.navLink}
+                    activeProps={{ 'aria-current': 'page' }}
+                  >
+                    {l.name}
+                  </Link>
+                ))}
+                <Link
+                  to="/playlists"
+                  className={styles.navLink}
+                  activeProps={{ 'aria-current': 'page' }}
+                >
+                  Playlists
+                </Link>
+              </nav>
+            </span>
+          }
+          actions={
+            <>
+              <form role="search" className={styles.search} onSubmit={search}>
+                <input
+                  className={styles.searchInput}
+                  type="search"
+                  placeholder="Search"
+                  aria-label="Search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </form>
+              <div className={styles.user}>
+                {user?.role === Role.ADMIN && (
+                  <Link
+                    to="/admin"
+                    className={styles.navLink}
+                    activeProps={{ 'aria-current': 'page' }}
+                  >
+                    Settings
+                  </Link>
+                )}
+                <span>{user?.displayName}</span>
+                <Button variant="text" onClick={signOut}>
+                  Sign out
+                </Button>
+              </div>
+            </>
+          }
+        />
         <main className={styles.main}>
           <Outlet />
         </main>

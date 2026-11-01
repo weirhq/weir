@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import {
   AssistChip,
+  BottomAppBar,
   BottomSheet,
   Button,
   ButtonGroup,
@@ -37,6 +38,7 @@ import {
   Tabs,
   TextField,
   Tooltip,
+  TopAppBar,
   useSnackbar,
   type SnackbarOptions,
   type SnackbarResult
@@ -980,4 +982,79 @@ describe('Tabs', () => {
       screen.getByRole('link', { name: 'Users' }).getAttribute('aria-current')
     ).toBeNull()
   })
+})
+
+describe('TopAppBar', () => {
+  it('lays out navigation, a title and actions in a banner', () => {
+    render(
+      <TopAppBar
+        title="Weir"
+        subtitle="Home"
+        headingLevel={1}
+        navigationIcon={<IconButton icon="arrow_back" label="Back" />}
+        actions={<IconButton icon="search" label="Search" />}
+      />
+    )
+    const bar = screen.getByRole('banner')
+    expect(bar.className).toContain('md-comp-app-bar')
+    expect(screen.getByRole('heading', { level: 1, name: 'Weir' })).toBeTruthy()
+    expect(bar.querySelector('[data-title]')!.textContent).toBe('WeirHome')
+    const [back, search] = screen.getAllByRole('button')
+    expect(back!.getAttribute('aria-label')).toBe('Back')
+    expect(search!.getAttribute('aria-label')).toBe('Search')
+  })
+
+  it('reads out only the showing title of a collapsing bar', () => {
+    const page = document.createElement('div')
+    document.body.append(page)
+    render(
+      <TopAppBar
+        size="large"
+        title="Films"
+        headingLevel={1}
+        scrollBehavior="exitUntilCollapsed"
+        scrollTarget={page}
+      />
+    )
+    expect(screen.getAllByRole('heading', { name: 'Films' })).toHaveLength(1)
+    const bar = screen.getByRole('banner')
+    // jsdom has no layout; give the bar its heights.
+    Object.defineProperty(bar, 'offsetHeight', { value: 120 })
+    Object.defineProperty(bar.firstElementChild, 'offsetHeight', {
+      value: 64
+    })
+    Object.defineProperty(page, 'scrollTop', { value: 56, configurable: true })
+    fireEvent.scroll(page)
+    expect(bar.style.getPropertyValue('--_collapsed')).toBe('1')
+    const [small, big] = bar.querySelectorAll('[data-title]')
+    expect(small!.getAttribute('aria-hidden')).toBe('false')
+    expect(big!.getAttribute('aria-hidden')).toBe('true')
+    page.remove()
+  })
+
+  it('takes the on-scroll colour once content is under a pinned bar', () => {
+    const page = document.createElement('div')
+    document.body.append(page)
+    render(
+      <TopAppBar title="Weir" scrollBehavior="pinned" scrollTarget={page} />
+    )
+    const bar = screen.getByRole('banner')
+    expect(bar.className).not.toContain('scrolled')
+    Object.defineProperty(page, 'scrollTop', { value: 1, configurable: true })
+    fireEvent.scroll(page)
+    expect(bar.className).toContain('scrolled')
+    page.remove()
+  })
+})
+
+it('puts actions and a FAB in a bottom app bar', () => {
+  render(
+    <BottomAppBar
+      aria-label="Actions"
+      actions={<IconButton icon="search" label="Search" />}
+      fab={<Fab icon="add" label="New playlist" />}
+    />
+  )
+  expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'New playlist' })).toBeTruthy()
 })

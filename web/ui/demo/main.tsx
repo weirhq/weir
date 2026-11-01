@@ -4,6 +4,7 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   AssistChip,
+  BottomAppBar,
   BottomSheet,
   Button,
   ButtonGroup,
@@ -44,7 +45,9 @@ import {
   Tabs,
   TextField,
   Tooltip,
-  useSnackbar
+  TopAppBar,
+  useSnackbar,
+  type TopAppBarProps
 } from '../src'
 import '../src/tokens.gen.css'
 import '../src/styles.css'
@@ -290,6 +293,95 @@ function Menus() {
           onValueChange={() => {}}
           options={kinds}
           disabled
+        />
+      </div>
+    </div>
+  )
+}
+
+function ScrollingBar(props: Omit<TopAppBarProps, 'scrollTarget'>) {
+  const [box, setBox] = useState<HTMLDivElement | null>(null)
+  const label = [
+    props.size ?? 'small',
+    props.align,
+    props.scrollBehavior,
+    props.subtitle && 'subtitle'
+  ]
+    .filter(Boolean)
+    .join(', ')
+  return (
+    <div
+      ref={setBox}
+      className="bar-box"
+      data-testid={`bar-${label}`}
+      aria-label={label}
+      role="region"
+    >
+      <TopAppBar
+        {...props}
+        scrollTarget={box}
+        navigationIcon={<IconButton icon="arrow_back" label="Back" />}
+        actions={
+          <>
+            <IconButton icon="search" label="Search" />
+            <IconButton icon="more_vert" label="More" />
+          </>
+        }
+      />
+      <div className="bar-content">
+        {Array.from({ length: 30 }, (_, i) => (
+          <p key={i}>Line {i + 1}</p>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AppBars() {
+  return (
+    <div className="bars">
+      <ScrollingBar title="Small" scrollBehavior="pinned" />
+      <ScrollingBar
+        title="Centred"
+        subtitle="With a subtitle"
+        align="center"
+        scrollBehavior="pinned"
+      />
+      <ScrollingBar title="Enters always" scrollBehavior="enterAlways" />
+      <ScrollingBar
+        size="medium"
+        title="Medium"
+        scrollBehavior="exitUntilCollapsed"
+      />
+      <ScrollingBar
+        size="medium"
+        title="Medium"
+        subtitle="With a subtitle"
+        scrollBehavior="exitUntilCollapsed"
+      />
+      <ScrollingBar
+        size="large"
+        title="Large"
+        scrollBehavior="exitUntilCollapsed"
+      />
+      <ScrollingBar
+        size="large"
+        title="Large, centred"
+        subtitle="With a subtitle"
+        align="center"
+        scrollBehavior="exitUntilCollapsed"
+      />
+      <div className="bar-box bottom-box">
+        <BottomAppBar
+          aria-label="Bottom"
+          actions={
+            <>
+              <IconButton icon="check" label="Done" />
+              <IconButton icon="edit" label="Edit" />
+              <IconButton icon="favorite" label="Favourite" />
+            </>
+          }
+          fab={<Fab icon="add" label="Add" />}
         />
       </div>
     </div>
@@ -1021,6 +1113,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="app-bars">
+        <h2 id="app-bars">App bars</h2>
+        <AppBars />
       </section>
 
       <section aria-labelledby="tabs">

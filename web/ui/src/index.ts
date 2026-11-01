@@ -12,6 +12,13 @@ export {
 } from './button-group'
 export { SplitButton, type SplitButtonProps } from './split-button'
 export { TextField, type TextFieldProps } from './text-field'
+export {
+  BottomAppBar,
+  TopAppBar,
+  type BottomAppBarProps,
+  type TopAppBarProps,
+  type TopAppBarScrollBehavior
+} from './app-bar'
 export { BottomSheet, type BottomSheetProps } from './bottom-sheet'
 export { Card, type CardProps } from './card'
 export { Dialog, type DialogProps } from './dialog'

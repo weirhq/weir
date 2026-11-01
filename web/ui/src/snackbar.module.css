@@ -1,0 +1,165 @@
+/* M3 snackbars, following Compose's Snackbar and SnackbarHost at the pinned
+   commit. The layout is the one Compose uses with isSnackbarStylingFixEnabled
+   (OneRowSnackbar and NewLineButtonSnackbar): the default, legacy layout
+   lines multi-line text up by its baselines and, as the flag says, gets
+   their vertical alignment wrong. */
+
+.snackbar {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  min-height: var(--md-comp-snackbar-single-line-container-height);
+  /* 16dp before the text; 8dp after the actions unless there's a close
+     button, which sits at the very end. */
+  padding-inline: 16px 8px;
+  border-radius: var(--md-comp-snackbar-container-shape);
+  background: var(--md-comp-snackbar-container-color);
+  color: var(--md-comp-snackbar-supporting-text-color);
+  box-shadow: var(--md-comp-snackbar-container-shadow);
+  font-family: var(--md-comp-snackbar-supporting-text-font);
+  font-size: var(--md-comp-snackbar-supporting-text-size);
+  line-height: var(--md-comp-snackbar-supporting-text-line-height);
+  font-weight: var(--md-comp-snackbar-supporting-text-weight);
+  letter-spacing: var(--md-comp-snackbar-supporting-text-tracking);
+}
+
+.snackbar:has(.dismiss) {
+  padding-inline-end: 0;
+}
+
+/* 14dp above and below, and 8dp clear of the actions when there's no
+   close button (TextEndExtraSpacing). */
+.text {
+  flex: 1;
+  min-width: 0;
+  padding-block: 14px;
+  padding-inline-end: 8px;
+}
+
+.snackbar:has(.dismiss) > .text {
+  padding-inline-end: 0;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+/* The action is a text button in the inverse primary colour, and the close
+   button an icon button in the snackbar's icon colour. */
+.action {
+  --md-comp-text-button-label-color: var(
+    --md-comp-snackbar-action-label-text-color
+  );
+}
+
+.dismiss {
+  --md-comp-standard-icon-button-color: var(--md-comp-snackbar-icon-color);
+}
+
+/* The action on its own line: the text 14dp above and below and 16dp from
+   the end, then the actions at the end, 4dp from the bottom. */
+.newLine {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.newLine > .text {
+  padding-inline-end: 16px;
+}
+
+.newLine > .actions {
+  align-self: flex-end;
+  padding-bottom: 4px;
+}
+
+/* The host: one snackbar at a time, 12dp in from the edges and up to 600dp
+   wide. Where it sits carries no weight, so a class can place it. */
+:where(.host) {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 90;
+}
+
+.host {
+  display: grid;
+  justify-items: center;
+  pointer-events: none;
+}
+
+/* Leaving and arriving snackbars overlap while they cross-fade. */
+.live {
+  display: grid;
+  grid-area: 1 / 1;
+  width: 100%;
+}
+
+.item {
+  grid-area: 1 / 1;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+}
+
+.item > .snackbar {
+  pointer-events: auto;
+}
+
+/* FadeInFadeOutWithScale: opacity with FastEffects, scale from or to 0.8
+   with FastSpatial. */
+.item[data-state='open'] > .snackbar {
+  animation:
+    fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    grow var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial);
+}
+
+.item[data-state='closed'] > .snackbar {
+  pointer-events: none;
+  animation:
+    fade-out var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects) forwards,
+    shrink var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes grow {
+  from {
+    scale: 0.8;
+  }
+}
+
+@keyframes shrink {
+  to {
+    scale: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item > .snackbar {
+    animation-name: fade-in, none !important;
+  }
+  .item[data-state='closed'] > .snackbar {
+    animation-name: fade-out, none !important;
+  }
+}

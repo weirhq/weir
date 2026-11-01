@@ -104,3 +104,17 @@
     display: none;
   }
 }
+
+/* The player, with snackbars just above it, at the foot of the window. */
+.foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.snackbars {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+}

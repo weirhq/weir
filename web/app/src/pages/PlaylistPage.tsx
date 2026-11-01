@@ -7,7 +7,8 @@ import {
   List,
   ListItem,
   Switch,
-  TextField
+  TextField,
+  useSnackbar
 } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import cards from '../components/Cards.module.css'
@@ -39,6 +40,7 @@ export function PlaylistPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const startQueue = useQueue((q) => q.start)
+  const show = useSnackbar()
   const [renaming, setRenaming] = useState<string>()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const playlist = useQuery({
@@ -57,8 +59,10 @@ export function PlaylistPage() {
   const remove = useMutation({
     mutationFn: () => api.playlists.deletePlaylist({ id: playlistId }),
     onSuccess: async () => {
+      const name = playlist.data?.playlist?.name
       await queryClient.invalidateQueries({ queryKey: playlistsKey })
       await navigate({ to: '/playlists' })
+      void show({ message: `Deleted “${name}”` })
     }
   })
 

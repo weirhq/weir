@@ -29,11 +29,16 @@ import {
   MenuItem,
   iconNames,
   Radio,
+  RichTooltip,
   Select,
   Slider,
+  SnackbarHost,
+  SnackbarProvider,
   SuggestionChip,
   Switch,
-  TextField
+  TextField,
+  Tooltip,
+  useSnackbar
 } from '../src'
 import '../src/tokens.gen.css'
 import '../src/styles.css'
@@ -281,6 +286,98 @@ function Menus() {
           disabled
         />
       </div>
+    </div>
+  )
+}
+
+function Messages() {
+  const show = useSnackbar()
+  const [said, setSaid] = useState('Nothing yet')
+  const report = (what: string) => (r: string) => setSaid(`${what}: ${r}`)
+  return (
+    <div className="row">
+      <Button
+        variant="tonal"
+        onClick={() =>
+          void show({ message: 'Added to Rainy day' }).then(report('Short'))
+        }
+      >
+        Short
+      </Button>
+      <Button
+        variant="tonal"
+        onClick={() =>
+          void show({ message: 'Deleted Films', actionLabel: 'Undo' }).then(
+            report('Action')
+          )
+        }
+      >
+        With an action
+      </Button>
+      <Button
+        variant="tonal"
+        onClick={() =>
+          void show({
+            message: 'Access saved',
+            withDismissAction: true,
+            duration: 'long'
+          }).then(report('Close'))
+        }
+      >
+        With a close button
+      </Button>
+      <Button
+        variant="tonal"
+        onClick={() =>
+          void show({
+            message:
+              'The engine stopped responding, so playback paused. It will start again by itself when the engine is back.',
+            actionLabel: 'Open settings',
+            withDismissAction: true
+          }).then(report('Two lines'))
+        }
+      >
+        Two lines
+      </Button>
+      <Button
+        variant="tonal"
+        onClick={() =>
+          void show({
+            message: 'Couldn’t reach the server.',
+            actionLabel: 'Try again with a fresh connection',
+            actionOnNewLine: true
+          }).then(report('New line'))
+        }
+      >
+        Action on a new line
+      </Button>
+      <output data-testid="snackbar-result">{said}</output>
+      <Tooltip text="Queue">
+        <IconButton icon="queue_music" label="Queue" />
+      </Tooltip>
+      <Tooltip text="A longer tooltip that wraps onto a second line">
+        <IconButton icon="more_vert" label="Long tooltip" />
+      </Tooltip>
+      <RichTooltip
+        title="Hardware"
+        text="Nothing in use; the engine is converting on the processor."
+      >
+        <IconButton icon="settings" label="About hardware" />
+      </RichTooltip>
+      <RichTooltip
+        title="Hardware"
+        text="Nothing in use; the engine is converting on the processor."
+        action={
+          <Button variant="text" onClick={() => setSaid('Learn more')}>
+            Learn more
+          </Button>
+        }
+      >
+        <IconButton icon="search" label="Hardware, with an action" />
+      </RichTooltip>
+      <RichTooltip text="Text only, no title or action.">
+        <IconButton icon="edit" label="Text only" />
+      </RichTooltip>
     </div>
   )
 }
@@ -832,6 +929,11 @@ function Demo() {
         <Menus />
       </section>
 
+      <section aria-labelledby="messages">
+        <h2 id="messages">Snackbars and tooltips</h2>
+        <Messages />
+      </section>
+
       <section aria-labelledby="dialogs">
         <h2 id="dialogs">Dialogs and sheets</h2>
         <Dialogs />
@@ -894,6 +996,9 @@ function Demo() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Demo />
+    <SnackbarProvider>
+      <Demo />
+      <SnackbarHost />
+    </SnackbarProvider>
   </StrictMode>
 )

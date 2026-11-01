@@ -2,11 +2,6 @@
   position: relative;
 }
 
-.status {
-  margin: 8px 0 0;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
 .panel {
   position: absolute;
   z-index: 5;

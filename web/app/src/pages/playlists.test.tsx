@@ -122,11 +122,14 @@ it('adds an item to a playlist from its page, or to a new one', async () => {
   await user.click(screen.getByRole('button', { name: 'Add to playlist' }))
   await user.type(screen.getByLabelText('New playlist'), 'Fincher')
   await user.click(screen.getByRole('button', { name: 'Create' }))
-  expect((await screen.findByRole('status')).textContent).toBe(
-    'Added to Fincher'
+  // Snackbars take turns: this one shows once the last has had its 4s.
+  await vi.waitFor(
+    () =>
+      expect(screen.getByRole('status').textContent).toBe('Added to Fincher'),
+    { timeout: 5000 }
   )
   expect(browse.playlists.at(-1)).toMatchObject({
     name: 'Fincher',
     itemIds: ['zodiac']
   })
-})
+}, 10000)

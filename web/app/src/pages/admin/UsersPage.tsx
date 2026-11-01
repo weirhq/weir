@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Card, Checkbox, Dialog, Select, TextField } from '@weirhq/m3e'
+import {
+  Button,
+  Card,
+  Checkbox,
+  Dialog,
+  Select,
+  TextField,
+  useSnackbar
+} from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../errors'
 import { Role, type User } from '../../gen/weir/api/v1alpha/user_pb'
@@ -283,7 +291,7 @@ function AccessEditor({ userId }: { userId: string }) {
   const { api } = useRouteContext({ from: '__root__' })
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState<Record<string, Record<Flag, boolean>>>()
-  const [saved, setSaved] = useState(false)
+  const show = useSnackbar()
   const libraries = useQuery({
     ...adminLibrariesQuery(api),
     select: (r) => r.libraries
@@ -302,7 +310,7 @@ function AccessEditor({ userId }: { userId: string }) {
       }[]
     ) => api.admin.setLibraryAccess({ userId, access: rows }),
     onSuccess: () => {
-      setSaved(true)
+      void show({ message: 'Access saved' })
       void queryClient.invalidateQueries({ queryKey: accessKey(userId) })
     }
   })
@@ -318,7 +326,6 @@ function AccessEditor({ userId }: { userId: string }) {
     if (flag === 'view' && !on) next.play = next.manage = false
     if (flag !== 'view' && on) next.view = true
     setDraft({ ...draft, [libraryId]: next })
-    setSaved(false)
   }
   const rows = libraries.data
     .map((l) => ({ libraryId: l.id, ...current(l.id) }))
@@ -368,7 +375,6 @@ function AccessEditor({ userId }: { userId: string }) {
         >
           Save access
         </Button>
-        {saved && <span role="status">Access saved</span>}
       </div>
     </fieldset>
   )

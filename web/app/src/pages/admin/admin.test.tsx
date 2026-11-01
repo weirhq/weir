@@ -149,7 +149,7 @@ it('manages users and what members may do in each library', async () => {
   await user.click(await box('Browse Films'))
   expect((await box('Play Films')).checked).toBe(false)
   await user.click(within(ana).getByRole('button', { name: 'Save access' }))
-  await within(ana).findByText('Access saved')
+  expect((await screen.findByRole('status')).textContent).toBe('Access saved')
   expect(admin.access.u2).toEqual([
     expect.objectContaining({
       libraryId: 'tv',

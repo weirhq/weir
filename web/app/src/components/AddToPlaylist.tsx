@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, List, ListItem, TextField } from '@weirhq/m3e'
+import { Button, List, ListItem, TextField, useSnackbar } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../errors'
 import { appendToPlaylist, playlistsKey } from '../pages/playlists'
@@ -12,7 +12,7 @@ export function AddToPlaylist({ itemId }: { itemId: string }) {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [added, setAdded] = useState('')
+  const show = useSnackbar()
   const playlists = useQuery({
     queryKey: playlistsKey,
     enabled: open,
@@ -22,7 +22,7 @@ export function AddToPlaylist({ itemId }: { itemId: string }) {
     (p) => p.ownerId === session.user?.id
   )
   const done = (playlist: string) => {
-    setAdded(playlist)
+    void show({ message: `Added to ${playlist}` })
     setOpen(false)
     setName('')
     void queryClient.invalidateQueries({ queryKey: playlistsKey })
@@ -57,18 +57,10 @@ export function AddToPlaylist({ itemId }: { itemId: string }) {
       <Button
         variant="tonal"
         aria-expanded={open}
-        onClick={() => {
-          setOpen(!open)
-          setAdded('')
-        }}
+        onClick={() => setOpen(!open)}
       >
         Add to playlist
       </Button>
-      {added && (
-        <p role="status" className={styles.status}>
-          Added to {added}
-        </p>
-      )}
       {open && (
         <div className={styles.panel} role="group" aria-label="Add to playlist">
           {own.length > 0 && (

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import {
   AssistChip,
@@ -20,12 +20,20 @@ import {
   Menu,
   MenuItem,
   Radio,
+  RichTooltip,
   Select,
   Slider,
+  Snackbar,
+  SnackbarHost,
+  SnackbarProvider,
   SplitButton,
   SuggestionChip,
   Switch,
-  TextField
+  TextField,
+  Tooltip,
+  useSnackbar,
+  type SnackbarOptions,
+  type SnackbarResult
 } from '.'
 
 it('renders button variants and passes props through', () => {
@@ -763,5 +771,142 @@ describe('BottomSheet', () => {
     render(<Harness handle={false} />)
     expect(screen.getByRole('dialog', { name: 'Queue' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Close sheet' })).toBeNull()
+  })
+})
+
+describe('Snackbar', () => {
+  it('shows a message with an action and a close button', () => {
+    const undo = vi.fn()
+    const close = vi.fn()
+    render(
+      <Snackbar
+        message="Deleted Films"
+        actionLabel="Undo"
+        onAction={undo}
+        onDismiss={close}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(undo).toHaveBeenCalledOnce()
+    expect(close).toHaveBeenCalledOnce()
+  })
+})
+
+describe('SnackbarHost', () => {
+  const results: SnackbarResult[] = []
+  let show: (o: SnackbarOptions) => Promise<SnackbarResult>
+  function Grab() {
+    show = useSnackbar()
+    return null
+  }
+  function renderHost() {
+    results.length = 0
+    render(
+      <SnackbarProvider>
+        <Grab />
+        <SnackbarHost />
+      </SnackbarProvider>
+    )
+  }
+  const queue = (o: SnackbarOptions) =>
+    act(() => {
+      void show(o).then((r) => results.push(r))
+    })
+  const status = () => screen.getByRole('status').textContent
+
+  afterEach(() => vi.useRealTimers())
+
+  it('shows one at a time, in order, and goes after 4 seconds', async () => {
+    vi.useFakeTimers()
+    renderHost()
+    expect(status()).toBe('')
+    queue({ message: 'Added to Rainy day' })
+    queue({ message: 'Added to Road trip', duration: 'long' })
+    expect(status()).toBe('Added to Rainy day')
+    await act(() => vi.advanceTimersByTimeAsync(3999))
+    expect(status()).toBe('Added to Rainy day')
+    await act(() => vi.advanceTimersByTimeAsync(1))
+    expect(status()).toBe('Added to Road trip')
+    expect(results).toEqual(['dismissed'])
+    await act(() => vi.advanceTimersByTimeAsync(9999))
+    expect(status()).toBe('Added to Road trip')
+    await act(() => vi.advanceTimersByTimeAsync(1))
+    expect(status()).toBe('')
+  })
+
+  it('waits for its action, which says so', async () => {
+    vi.useFakeTimers()
+    renderHost()
+    queue({ message: 'Deleted Films', actionLabel: 'Undo' })
+    await act(() => vi.advanceTimersByTimeAsync(60000))
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(results).toEqual(['action'])
+    expect(status()).toBe('')
+  })
+
+  it('holds its time while hovered or focused', async () => {
+    vi.useFakeTimers()
+    renderHost()
+    queue({ message: 'Access saved', withDismissAction: true })
+    const close = screen.getByRole('button', { name: 'Dismiss' })
+    fireEvent.focus(close)
+    await act(() => vi.advanceTimersByTimeAsync(8000))
+    expect(status()).toContain('Access saved')
+    fireEvent.blur(close)
+    await act(() => vi.advanceTimersByTimeAsync(4000))
+    expect(status()).toBe('')
+  })
+
+  it('closes from its close button and with Escape', async () => {
+    renderHost()
+    queue({ message: 'One', withDismissAction: true })
+    queue({ message: 'Two', withDismissAction: true })
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(status()).toContain('Two')
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Dismiss' }), {
+      key: 'Escape'
+    })
+    expect(status()).toBe('')
+    await waitFor(() => expect(results).toEqual(['dismissed', 'dismissed']))
+  })
+})
+
+describe('Tooltip', () => {
+  it('describes its child while it has keyboard focus', async () => {
+    render(
+      <Tooltip text="Queue">
+        <IconButton icon="queue_music" label="Queue" />
+      </Tooltip>
+    )
+    const button = screen.getByRole('button', { name: 'Queue' })
+    fireEvent.focus(button)
+    expect((await screen.findByRole('tooltip')).textContent).toBe('Queue')
+    fireEvent.blur(button)
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
+  })
+
+  it('opens a rich tooltip with an action when pressed, and closes from it', async () => {
+    const more = vi.fn()
+    render(
+      <RichTooltip
+        title="Hardware"
+        text="Converting on the processor."
+        action={
+          <Button variant="text" onClick={more}>
+            Learn more
+          </Button>
+        }
+      >
+        <IconButton icon="settings" label="About hardware" />
+      </RichTooltip>
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'About hardware' }))
+    const tip = await screen.findByRole('dialog', { name: 'Hardware' })
+    expect(tip.textContent).toContain('Converting on the processor.')
+    fireEvent.click(screen.getByRole('button', { name: 'Learn more' }))
+    expect(more).toHaveBeenCalledOnce()
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 })

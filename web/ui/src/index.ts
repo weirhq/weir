@@ -31,6 +31,16 @@ export {
 } from './chip'
 export { Slider, type SliderProps } from './slider'
 export {
+  Snackbar,
+  SnackbarHost,
+  SnackbarProvider,
+  useSnackbar,
+  type SnackbarDuration,
+  type SnackbarOptions,
+  type SnackbarProps,
+  type SnackbarResult
+} from './snackbar'
+export {
   Menu,
   MenuDivider,
   MenuItem,
@@ -45,3 +55,9 @@ export {
   type ListItemProps,
   type ListProps
 } from './list'
+export {
+  RichTooltip,
+  Tooltip,
+  type RichTooltipProps,
+  type TooltipProps
+} from './tooltip'

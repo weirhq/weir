@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { BottomSheet, IconButton, List, ListItem } from '@weirhq/m3e'
+import { BottomSheet, IconButton, List, ListItem, Tooltip } from '@weirhq/m3e'
 import { useState } from 'react'
 import { sized } from '../art'
 import { useQueue } from './queue'
@@ -61,12 +61,14 @@ export function MiniPlayer() {
             </span>
           )}
         </div>
-        <IconButton
-          icon="skip_previous"
-          label="Previous track"
-          disabled={index === 0}
-          onClick={previous}
-        />
+        <Tooltip text="Previous track">
+          <IconButton
+            icon="skip_previous"
+            label="Previous track"
+            disabled={index === 0}
+            onClick={previous}
+          />
+        </Tooltip>
         <audio
           ref={media}
           className={styles.audio}
@@ -75,19 +77,25 @@ export function MiniPlayer() {
           onEnded={next}
           onError={() => setMediaError('This browser couldn’t play the track.')}
         />
-        <IconButton
-          icon="skip_next"
-          label="Next track"
-          disabled={index + 1 >= tracks.length}
-          onClick={next}
-        />
-        <IconButton
-          icon="queue_music"
-          label="Queue"
-          aria-haspopup="dialog"
-          onClick={() => setShowQueue(true)}
-        />
-        <IconButton icon="close" label="Close player" onClick={clear} />
+        <Tooltip text="Next track">
+          <IconButton
+            icon="skip_next"
+            label="Next track"
+            disabled={index + 1 >= tracks.length}
+            onClick={next}
+          />
+        </Tooltip>
+        <Tooltip text="Queue">
+          <IconButton
+            icon="queue_music"
+            label="Queue"
+            aria-haspopup="dialog"
+            onClick={() => setShowQueue(true)}
+          />
+        </Tooltip>
+        <Tooltip text="Close player">
+          <IconButton icon="close" label="Close player" onClick={clear} />
+        </Tooltip>
       </div>
     </section>
   )

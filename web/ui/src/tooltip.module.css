@@ -1,0 +1,147 @@
+/* M3 tooltips, following Compose's PlainTooltip and RichTooltip (Tooltip.kt
+   at the pinned commit): 4dp from the anchor, at least 40 by 24dp, plain
+   ones up to 200dp wide and rich ones up to 320dp. */
+
+.plain,
+.rich {
+  z-index: 110;
+  box-sizing: border-box;
+  min-width: 40px;
+  min-height: 24px;
+  transform-origin: var(
+    --radix-tooltip-content-transform-origin,
+    var(--radix-popover-content-transform-origin)
+  );
+}
+
+/* Plain: no shadow, 8dp in at the sides and 4dp above and below. */
+.plain {
+  max-width: 200px;
+  padding: 4px 8px;
+  border-radius: var(--md-comp-plain-tooltip-container-shape);
+  background: var(--md-comp-plain-tooltip-container-color);
+  color: var(--md-comp-plain-tooltip-supporting-text-color);
+  font-family: var(--md-comp-plain-tooltip-supporting-text-font);
+  font-size: var(--md-comp-plain-tooltip-supporting-text-size);
+  line-height: var(--md-comp-plain-tooltip-supporting-text-line-height);
+  font-weight: var(--md-comp-plain-tooltip-supporting-text-weight);
+  letter-spacing: var(--md-comp-plain-tooltip-supporting-text-tracking);
+}
+
+/* Rich: 16dp in at the sides, with a shadow. Compose places its lines by
+   their baselines: the title's 28dp from the top, the text's 24dp below
+   the title, and 16dp under the text. Both are 14 on 20 (title small and
+   body medium), whose baseline sits 15px into the line, so the padding
+   above each is that much less. */
+.rich {
+  display: flex;
+  flex-direction: column;
+  max-width: 320px;
+  padding-inline: 16px;
+  border-radius: var(--md-comp-rich-tooltip-container-shape);
+  background: var(--md-comp-rich-tooltip-container-color);
+  box-shadow: var(--md-comp-rich-tooltip-container-shadow);
+  --_baseline: 15px;
+}
+
+.rich:focus {
+  outline: none;
+}
+
+.title {
+  margin: 0;
+  padding-top: calc(28px - var(--_baseline));
+  color: var(--md-comp-rich-tooltip-subhead-color);
+  font-family: var(--md-comp-rich-tooltip-subhead-font);
+  font-size: var(--md-comp-rich-tooltip-subhead-size);
+  line-height: var(--md-comp-rich-tooltip-subhead-line-height);
+  font-weight: var(--md-comp-rich-tooltip-subhead-weight);
+  letter-spacing: var(--md-comp-rich-tooltip-subhead-tracking);
+}
+
+.text {
+  margin: 0;
+  padding-top: calc(24px - var(--_baseline));
+  padding-bottom: 16px;
+  color: var(--md-comp-rich-tooltip-supporting-text-color);
+  font-family: var(--md-comp-rich-tooltip-supporting-text-font);
+  font-size: var(--md-comp-rich-tooltip-supporting-text-size);
+  line-height: var(--md-comp-rich-tooltip-supporting-text-line-height);
+  font-weight: var(--md-comp-rich-tooltip-supporting-text-weight);
+  letter-spacing: var(--md-comp-rich-tooltip-supporting-text-tracking);
+}
+
+/* With neither a title nor an action, the text has 4dp above and below. */
+.rich:not(:has(.title, .action)) > .text {
+  padding-block: 4px;
+}
+
+/* The action: at least 36dp tall and 8dp from the bottom, its text button
+   in the action colour and its label lined up with the text (a small
+   button's label is 16dp in). */
+.action {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin-inline-start: -16px;
+  padding-bottom: 8px;
+}
+
+.action > * {
+  --md-comp-text-button-label-color: var(
+    --md-comp-rich-tooltip-action-label-text-color
+  );
+}
+
+/* Fades with FastEffects and grows from 0.8 with FastSpatial. */
+.plain[data-state='delayed-open'],
+.plain[data-state='instant-open'],
+.rich[data-state='delayed-open'],
+.rich[data-state='instant-open'],
+.rich[data-state='open'] {
+  animation:
+    fade-in var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    grow var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial);
+}
+
+.plain[data-state='closed'],
+.rich[data-state='closed'] {
+  animation:
+    fade-out var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects) forwards,
+    shrink var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes grow {
+  from {
+    scale: 0.8;
+  }
+}
+
+@keyframes shrink {
+  to {
+    scale: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plain,
+  .rich {
+    animation-name: none !important;
+  }
+}

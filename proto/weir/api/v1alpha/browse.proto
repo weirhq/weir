@@ -119,8 +119,10 @@ enum ItemSort {
 }
 
 message ListItemsRequest {
-  // One of library_id and parent_id. A library lists its top-level items; a
-  // parent lists its children (a show's seasons, an album's tracks).
+  // One of library_id and parent_id. A library lists its top-level items,
+  // or with kinds its items of those kinds at any depth (a music library's
+  // albums); a parent lists its children (a show's seasons, an album's
+  // tracks).
   string library_id = 1;
   string parent_id = 2;
   // Only these kinds; empty means all.
@@ -142,6 +144,9 @@ message ListItemsRequest {
 
 message ListLibraryFacetsRequest {
   string library_id = 1;
+  // Count over items of these kinds at any depth, as ListItems lists them;
+  // empty means the top-level items.
+  repeated ItemKind kinds = 2;
 }
 
 message ListLibraryFacetsResponse {

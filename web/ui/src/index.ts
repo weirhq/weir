@@ -35,6 +35,13 @@ export {
   type DatePickerProps,
   type DatePickerStrings
 } from './date-picker'
+export {
+  DateRangePicker,
+  DateRangePickerDialog,
+  type DateRange,
+  type DateRangePickerDialogProps,
+  type DateRangePickerProps
+} from './date-range-picker'
 export { Dialog, type DialogProps } from './dialog'
 export { Icon, type IconProps } from './icon'
 export { iconNames, type IconName } from './icon-names'

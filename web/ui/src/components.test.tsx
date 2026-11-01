@@ -12,6 +12,8 @@ import {
   ConnectedButtonGroup,
   DatePicker,
   DatePickerDialog,
+  DateRangePicker,
+  DateRangePickerDialog,
   Dialog,
   ExtendedFab,
   Fab,
@@ -1344,4 +1346,131 @@ it('confirms a date from the dialog, and leaves the value on Cancel', () => {
   fireEvent.click(ok)
   expect(confirm).toHaveBeenCalledOnce()
   expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+describe('DateRangePicker', () => {
+  // It opens on this month; keep it November 2026 whenever the tests run.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 10, 1))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  // The month list grows as it's scrolled, which jsdom can't do.
+  beforeAll(() => {
+    globalThis.IntersectionObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return []
+      }
+    } as unknown as typeof IntersectionObserver
+  })
+
+  function Harness({
+    onChange
+  }: {
+    onChange?: (v: { start: string | null; end: string | null }) => void
+  }) {
+    const [value, setValue] = useState<{
+      start: string | null
+      end: string | null
+    }>({
+      start: null,
+      end: null
+    })
+    return (
+      <DateRangePicker
+        locale="en-US"
+        yearRange={[2020, 2030]}
+        value={value}
+        onValueChange={(v) => {
+          setValue(v)
+          onChange?.(v)
+        }}
+      />
+    )
+  }
+  const day = (name: string) =>
+    screen.getByRole('button', { name: new RegExp(`^${name}`) })
+
+  it('picks a start, then an end, banding the days between', () => {
+    const change = vi.fn()
+    render(<Harness onChange={change} />)
+    expect(screen.getByText('Start date')).toBeTruthy()
+    fireEvent.click(day('Monday, November 2, 2026'))
+    expect(change).toHaveBeenLastCalledWith({ start: '2026-11-02', end: null })
+    fireEvent.click(day('Friday, November 6, 2026'))
+    expect(change).toHaveBeenLastCalledWith({
+      start: '2026-11-02',
+      end: '2026-11-06'
+    })
+    expect(screen.getByText('Nov 2, 2026')).toBeTruthy()
+    expect(screen.getByText('Nov 6, 2026')).toBeTruthy()
+    // The days between are in the range, the ends chosen.
+    expect(
+      day('Wednesday, November 4, 2026').getAttribute('aria-label')
+    ).toContain('In range')
+    expect(day('Monday, November 2, 2026').getAttribute('aria-pressed')).toBe(
+      'true'
+    )
+    expect(day('Friday, November 6, 2026').getAttribute('aria-pressed')).toBe(
+      'true'
+    )
+    // A third pick starts again.
+    fireEvent.click(day('Tuesday, November 10, 2026'))
+    expect(change).toHaveBeenLastCalledWith({ start: '2026-11-10', end: null })
+    // A pick before the start starts again there too.
+    fireEvent.click(day('Sunday, November 1, 2026'))
+    expect(change).toHaveBeenLastCalledWith({ start: '2026-11-01', end: null })
+  })
+
+  it('types both ends, refusing an end before the start', () => {
+    const change = vi.fn()
+    render(<Harness onChange={change} />)
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Switch to text input mode' })
+    )
+    fireEvent.change(screen.getByLabelText('Start date'), {
+      target: { value: '11102026' }
+    })
+    expect(change).toHaveBeenLastCalledWith({ start: '2026-11-10', end: null })
+    fireEvent.change(screen.getByLabelText('End date'), {
+      target: { value: '11052026' }
+    })
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Invalid date range input'
+    )
+    fireEvent.change(screen.getByLabelText('End date'), {
+      target: { value: '11202026' }
+    })
+    expect(change).toHaveBeenLastCalledWith({
+      start: '2026-11-10',
+      end: '2026-11-20'
+    })
+  })
+
+  it('confirms from the dialog only with both ends', () => {
+    const confirm = vi.fn()
+    render(
+      <DateRangePickerDialog
+        locale="en-US"
+        open
+        onOpenChange={() => {}}
+        value={{ start: '2026-11-02', end: null }}
+        onConfirm={confirm}
+      />
+    )
+    const ok = screen.getByRole('button', { name: 'OK' }) as HTMLButtonElement
+    expect(screen.getByRole('dialog', { name: 'Select dates' })).toBeTruthy()
+    expect(ok.disabled).toBe(true)
+    fireEvent.click(day('Thursday, November 5, 2026'))
+    expect(ok.disabled).toBe(false)
+    fireEvent.click(ok)
+    expect(confirm).toHaveBeenCalledWith({
+      start: '2026-11-02',
+      end: '2026-11-05'
+    })
+  })
 })

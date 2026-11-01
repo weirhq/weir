@@ -14,6 +14,9 @@ import {
   ConnectedButtonGroup,
   DatePicker,
   DatePickerDialog,
+  DateRangePicker,
+  DateRangePickerDialog,
+  type DateRange,
   Dialog,
   SplitButton,
   type ButtonProps,
@@ -336,6 +339,47 @@ function DatePickers() {
         </Button>
         <output data-testid="date-confirmed">{confirmed ?? 'none'}</output>
         <DatePickerDialog
+          locale="en-US"
+          open={open}
+          onOpenChange={setOpen}
+          value={confirmed}
+          onConfirm={setConfirmed}
+        />
+      </div>
+    </div>
+  )
+}
+
+function DateRanges() {
+  const [range, setRange] = useState<DateRange>({
+    start: '2026-11-02',
+    end: '2026-11-06'
+  })
+  const [open, setOpen] = useState(false)
+  const [confirmed, setConfirmed] = useState<DateRange>({
+    start: null,
+    end: null
+  })
+  return (
+    <div className="pickers">
+      <div className="picker-box range-box" data-testid="date-range-picker">
+        <DateRangePicker
+          locale="en-US"
+          value={range}
+          onValueChange={setRange}
+        />
+      </div>
+      <div className="column">
+        <output data-testid="range-value">
+          {range.start ?? '…'} to {range.end ?? '…'}
+        </output>
+        <Button variant="tonal" onClick={() => setOpen(true)}>
+          Pick dates
+        </Button>
+        <output data-testid="range-confirmed">
+          {confirmed.start ?? '…'} to {confirmed.end ?? '…'}
+        </output>
+        <DateRangePickerDialog
           locale="en-US"
           open={open}
           onOpenChange={setOpen}
@@ -1336,6 +1380,11 @@ function Demo() {
       <section aria-labelledby="date-pickers">
         <h2 id="date-pickers">Date pickers</h2>
         <DatePickers />
+      </section>
+
+      <section aria-labelledby="date-ranges">
+        <h2 id="date-ranges">Date range pickers</h2>
+        <DateRanges />
       </section>
 
       <section aria-labelledby="fab-menu">

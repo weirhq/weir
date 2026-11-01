@@ -42,7 +42,8 @@ import { Tooltip } from './tooltip'
 import './tokens/date-picker-modal.gen.css'
 import './tokens/date-input-modal.gen.css'
 
-const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
+export const cx = (...c: (string | false | undefined)[]) =>
+  c.filter(Boolean).join(' ')
 
 /** Compose's English strings, for an app to translate. */
 export const datePickerStrings = {
@@ -64,12 +65,18 @@ export const datePickerStrings = {
   invalidYearRange: 'Date out of expected year range %1$s - %2$s',
   invalidNotAllowed: 'Date not allowed: %1$s',
   confirm: 'OK',
-  dismiss: 'Cancel'
+  dismiss: 'Cancel',
+  rangeTitle: 'Select dates',
+  rangeInputTitle: 'Enter dates',
+  startDate: 'Start date',
+  endDate: 'End date',
+  inRange: 'In range',
+  invalidRange: 'Invalid date range input'
 }
 
 export type DatePickerStrings = typeof datePickerStrings
 
-const fill = (template: string, ...values: string[]) =>
+export const fill = (template: string, ...values: string[]) =>
   values.reduce((s, v, i) => s.replace(`%${i + 1}$s`, v), template)
 
 export type DatePickerProps = {
@@ -194,7 +201,7 @@ export function DatePicker({
   )
 }
 
-type PartProps = {
+export type PartProps = {
   selected: CalendarDate | null
   yearRange: [number, number]
   allowed: (d: CalendarDate) => boolean
@@ -451,19 +458,49 @@ function Calendar({
 function DateInput({
   selected,
   onChange,
+  ...props
+}: PartProps & { onChange: (d: CalendarDate | null) => void }) {
+  return (
+    <div className={styles.input}>
+      <TypedDate
+        {...props}
+        label={props.strings.inputLabel}
+        initial={selected}
+        onChange={onChange}
+      />
+    </div>
+  )
+}
+
+/**
+ * A field for typing a date in the locale's pattern: digits only, its
+ * delimiters put in as it's typed, and no verdict until every digit is in
+ * (DateInputTextField). [check] can add a last test, as the range does.
+ */
+export function TypedDate({
+  label,
+  initial,
+  onChange,
   yearRange,
   allowed,
   locale,
-  strings
-}: PartProps & { onChange: (d: CalendarDate | null) => void }) {
+  strings,
+  check,
+  className
+}: Omit<PartProps, 'selected'> & {
+  label: string
+  initial: CalendarDate | null
+  onChange: (d: CalendarDate | null) => void
+  check?: (d: CalendarDate) => string
+  className?: string
+}) {
   const format = useMemo(() => dateInputFormat(locale), [locale])
   const bare = format.pattern.replaceAll(format.delimiter, '')
   const [digits, setDigits] = useState(() =>
-    selected ? toDigits(selected, format) : ''
+    initial ? toDigits(initial, format) : ''
   )
   const [error, setError] = useState('')
   const pattern = format.pattern.toUpperCase()
-  // As Compose: no verdict until every digit is in.
   const update = (typed: string) => {
     const next = typed.replace(/\D/g, '').slice(0, bare.length)
     setDigits(next)
@@ -483,22 +520,21 @@ function DateInput({
           )
         : !allowed(date)
           ? fill(strings.invalidNotAllowed, formatDate(date, locale))
-          : ''
+          : (check?.(date) ?? '')
     setError(problem)
     onChange(problem ? null : date)
   }
   return (
-    <div className={styles.input}>
-      <TextField
-        label={strings.inputLabel}
-        placeholder={pattern}
-        inputMode="numeric"
-        autoComplete="off"
-        value={withDelimiters(digits, format)}
-        error={error || undefined}
-        onChange={(e) => update(e.target.value)}
-      />
-    </div>
+    <TextField
+      className={className}
+      label={label}
+      placeholder={pattern}
+      inputMode="numeric"
+      autoComplete="off"
+      value={withDelimiters(digits, format)}
+      error={error || undefined}
+      onChange={(e) => update(e.target.value)}
+    />
   )
 }
 

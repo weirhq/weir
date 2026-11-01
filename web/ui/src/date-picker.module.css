@@ -364,3 +364,149 @@
     animation: none;
   }
 }
+
+/* The range picker (DateRangePicker.kt): a lower header, its title and
+   headline 64dp in and the headline in title large; the weekdays fixed
+   above months that scroll, each under a title small subhead 20dp down,
+   24dp in and 8dp above its days. It fills its box. */
+.range {
+  height: 100%;
+}
+
+.rangeHeader {
+  min-height: calc(
+    var(--md-comp-date-picker-modal-range-selection-header-container-height) -
+      60px
+  );
+}
+
+.rangeHeader .title {
+  padding: 16px 12px 0 64px;
+}
+
+.rangeHeadline {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 12px 12px 64px;
+  color: var(--md-comp-date-picker-modal-header-headline-color);
+  font-family: var(
+    --md-comp-date-picker-modal-range-selection-header-headline-font
+  );
+  font-size: var(
+    --md-comp-date-picker-modal-range-selection-header-headline-size
+  );
+  line-height: var(
+    --md-comp-date-picker-modal-range-selection-header-headline-line-height
+  );
+  font-weight: var(
+    --md-comp-date-picker-modal-range-selection-header-headline-weight
+  );
+  letter-spacing: var(
+    --md-comp-date-picker-modal-range-selection-header-headline-tracking
+  );
+}
+
+.rangeBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rangeBody > .week {
+  padding: 0 12px;
+}
+
+.months {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-anchor: none;
+  padding: 0 12px;
+}
+
+.subhead {
+  margin: 0;
+  padding: 20px 0 8px 24px;
+  color: var(--md-comp-date-picker-modal-range-selection-month-subhead-color);
+  font-family: var(
+    --md-comp-date-picker-modal-range-selection-month-subhead-font
+  );
+  font-size: var(
+    --md-comp-date-picker-modal-range-selection-month-subhead-size
+  );
+  line-height: var(
+    --md-comp-date-picker-modal-range-selection-month-subhead-line-height
+  );
+  font-weight: var(
+    --md-comp-date-picker-modal-range-selection-month-subhead-weight
+  );
+  letter-spacing: var(
+    --md-comp-date-picker-modal-range-selection-month-subhead-tracking
+  );
+}
+
+/* The range: a 40dp secondary container band through the days in it,
+   from the middle of the first to the middle of the last, running to the
+   row's ends between (drawRangeBackground). Days in it take its colour. */
+.cell {
+  position: relative;
+}
+
+.band::before,
+.bandStart::before,
+.bandEnd::before {
+  content: '';
+  position: absolute;
+  top: calc(
+    (
+        48px -
+          var(
+            --md-comp-date-picker-modal-range-selection-active-indicator-container-height
+          )
+      ) /
+      2
+  );
+  left: 0;
+  right: 0;
+  height: var(
+    --md-comp-date-picker-modal-range-selection-active-indicator-container-height
+  );
+  background: var(
+    --md-comp-date-picker-modal-range-selection-active-indicator-container-color
+  );
+}
+
+.bandStart::before {
+  left: 50%;
+}
+
+.bandEnd::before {
+  right: 50%;
+}
+
+.band .day {
+  color: var(
+    --md-comp-date-picker-modal-selection-date-in-range-label-text-color
+  );
+}
+
+/* Typing a range: the two fields side by side, 8dp apart. */
+.rangeInput {
+  display: flex;
+  gap: 8px;
+}
+
+.rangeInput > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.dialog .range {
+  height: var(--md-comp-date-picker-modal-container-height);
+  max-height: calc(100dvh - 60px);
+}

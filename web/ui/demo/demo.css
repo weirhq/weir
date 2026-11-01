@@ -264,3 +264,7 @@ h2 {
   align-items: flex-start;
   gap: 12px;
 }
+
+.range-box {
+  height: 568px;
+}

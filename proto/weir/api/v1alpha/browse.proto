@@ -160,6 +160,8 @@ message Item {
 message Person {
   string name = 1;
   string role = 2;
+  // A signed link to their photo, or empty when there isn't one.
+  string photo_url = 3;
 }
 
 message Version {

@@ -2,6 +2,7 @@
 // down to these). Add a name here and re-pin to use another icon.
 export const iconNames = [
   'add',
+  'airplay',
   'arrow_back',
   'arrow_drop_down',
   'check',
@@ -10,6 +11,9 @@ export const iconNames = [
   'delete',
   'edit',
   'favorite',
+  'forward_30',
+  'fullscreen',
+  'fullscreen_exit',
   'home',
   'keyboard',
   'keyboard_arrow_down',
@@ -21,15 +25,20 @@ export const iconNames = [
   'movie',
   'music_note',
   'pause',
+  'picture_in_picture_alt',
   'play_arrow',
   'playlist_play',
   'queue_music',
+  'replay_10',
   'schedule',
   'search',
   'settings',
   'skip_next',
   'skip_previous',
-  'tv'
+  'subtitles',
+  'tv',
+  'volume_off',
+  'volume_up'
 ] as const
 
 export type IconName = (typeof iconNames)[number]

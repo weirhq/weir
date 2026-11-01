@@ -20,6 +20,10 @@ service Engine {
   // Liveness plus load. The server polls this every 10 s.
   rpc Health(HealthRequest) returns (HealthResponse);
 
+  // Copies an embedded picture, such as an audio file's cover art, out of a
+  // file as it's stored.
+  rpc ExtractPicture(ExtractPictureRequest) returns (ExtractPictureResponse);
+
   // Starts writing a file as fMP4 HLS segments into a directory, and
   // reports each segment as it completes. The session ends when the stream
   // does: on Stop, on failure, when the server goes away, or when no
@@ -234,11 +238,25 @@ message Chapter {
   string title = 3;
 }
 
-// Attached files, mostly fonts that ASS subtitles reference.
+// Attached files: cover art in audio files (an image MIME type, no
+// filename), and in Matroska mostly fonts that ASS subtitles reference.
 message Attachment {
   uint32 index = 1;
   string filename = 2;
   string mime_type = 3;
+}
+
+message ExtractPictureRequest {
+  // Absolute path on the filesystem the server and engine share.
+  string path = 1;
+  // The picture's index from ProbeResponse.attachments: an image stream,
+  // such as cover art, not a Matroska file attachment.
+  uint32 index = 2;
+}
+
+message ExtractPictureResponse {
+  // The picture as stored in the file, usually JPEG or PNG.
+  bytes data = 1;
 }
 
 message HealthRequest {}

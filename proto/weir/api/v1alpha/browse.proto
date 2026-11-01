@@ -24,6 +24,8 @@ service Browse {
   // A library's genres and decades with how many items each has, for
   // filtering it and for rows of it.
   rpc ListLibraryFacets(ListLibraryFacetsRequest) returns (ListLibraryFacetsResponse);
+  // Someone in the cast, and what they're in across the caller's libraries.
+  rpc GetPerson(GetPersonRequest) returns (GetPersonResponse);
 }
 
 message ListContinueWatchingRequest {
@@ -201,6 +203,27 @@ message Person {
   string role = 2;
   // A signed link to their photo, or empty when there isn't one.
   string photo_url = 3;
+  // Who they are across items, for GetPerson; empty when unknown.
+  string id = 4;
+}
+
+message GetPersonRequest {
+  // A Person's id.
+  string id = 1;
+}
+
+message GetPersonResponse {
+  string name = 1;
+  // A signed link to their photo, or empty when there isn't one.
+  string photo_url = 2;
+  // What they're in, newest first.
+  repeated Credit credits = 3;
+}
+
+message Credit {
+  ItemSummary item = 1;
+  // Who they play, e.g. "Louise Banks"; empty when unknown.
+  string role = 2;
 }
 
 message Version {

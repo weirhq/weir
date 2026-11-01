@@ -11,9 +11,11 @@ export default defineConfig({
     target: 'es2023'
   },
   server: {
-    // In development the Go server runs separately; send API calls to it.
+    // In development the Go server runs separately; send API calls and
+    // media (artwork, files, HLS sessions) to it.
     proxy: {
-      '^/weir\\.api\\.': 'http://localhost:8320'
+      '^/weir\\.api\\.': 'http://localhost:8320',
+      '/media/': 'http://localhost:8320'
     },
     // Under Bazel, test files resolve to paths outside the runfiles root.
     fs: { strict: process.env.BAZEL_TEST !== '1' }

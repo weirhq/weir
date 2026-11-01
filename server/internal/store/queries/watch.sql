@@ -36,7 +36,8 @@ ON CONFLICT (user_id, item_id) DO UPDATE SET
 -- name: ContinueWatching :many
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
-       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms
 FROM playback_state ps
 JOIN item i ON i.id = ps.item_id
 JOIN resolved_metadata r ON r.item_id = i.id
@@ -48,7 +49,8 @@ LIMIT sqlc.arg(max_results)::int;
 -- name: RecentlyAdded :many
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
-       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
 LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)
@@ -59,7 +61,8 @@ LIMIT sqlc.arg(max_results)::int;
 -- name: ItemUserView :one
 -- The caller's state and the artwork kinds of one item.
 SELECT ps.position_ms, ps.watched, ps.play_count, ps.last_played,
-       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = sqlc.arg(item_id)), '{}')::text[] AS art_kinds
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = sqlc.arg(item_id)), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = sqlc.arg(item_id)), 0)::bigint AS duration_ms
 FROM (SELECT 1) one
 LEFT JOIN playback_state ps ON ps.item_id = sqlc.arg(item_id) AND ps.user_id = sqlc.arg(user_id);
 

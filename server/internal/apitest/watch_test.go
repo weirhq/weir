@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -59,6 +60,10 @@ func TestWatchProgress(t *testing.T) {
 	if len(cw.Msg.Items) != 1 || cw.Msg.Items[0].UserData.Position.AsDuration() != 40*time.Minute {
 		t.Fatalf("continue watching %v", cw.Msg.Items)
 	}
+	// Summaries carry the runtime, for a progress bar.
+	if d := cw.Msg.Items[0].Duration.AsDuration(); d != 116*time.Minute {
+		t.Errorf("duration %v, want 1h56m", d)
+	}
 
 	// Stopping in the credits finishes it.
 	if _, err := play.Stop(ctx, connect.NewRequest(&apiv1alpha.StopRequest{ItemId: arrival, Position: durationpb.New(110 * time.Minute)})); err != nil {
@@ -92,6 +97,8 @@ func TestWatchProgress(t *testing.T) {
 	recent, err := browse.ListRecentlyAdded(ctx, connect.NewRequest(&apiv1alpha.ListRecentlyAddedRequest{}))
 	if err != nil || len(recent.Msg.Items) != 3 || recent.Msg.Items[0].Kind != apiv1alpha.ItemKind_ITEM_KIND_SHOW {
 		t.Errorf("recently added (newest first): %v %v", recent, err)
+	} else if recent.Msg.Items[0].Duration != nil {
+		t.Errorf("a show has nothing to play, so no duration: %v", recent.Msg.Items[0].Duration)
 	}
 	// One library at a time, for a row per library.
 	recent, err = browse.ListRecentlyAdded(ctx, connect.NewRequest(&apiv1alpha.ListRecentlyAddedRequest{LibraryId: films.String()}))
@@ -157,8 +164,12 @@ func TestArtwork(t *testing.T) {
 		t.Fatal(err)
 	}
 	it := item.Msg.Item
-	if it.Summary.PosterUrl == "" || it.BackdropUrl == "" || it.LogoUrl != "" || it.Summary.ThumbUrl != "" {
+	if it.Summary.PosterUrl == "" || it.BackdropUrl == "" || it.LogoUrl != "" {
 		t.Fatalf("urls: poster %q backdrop %q logo %q", it.Summary.PosterUrl, it.BackdropUrl, it.LogoUrl)
+	}
+	// Without a still, the wide picture is the backdrop.
+	if !strings.Contains(it.Summary.ThumbUrl, "/backdrop?") {
+		t.Errorf("thumb %q, want the backdrop", it.Summary.ThumbUrl)
 	}
 
 	size := func(url string) (int, image.Config, string) {

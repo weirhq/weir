@@ -13,6 +13,7 @@ INSERT INTO library_access (user_id, library_id, can_view, can_play, can_manage)
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
        coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms,
        count(*) OVER () AS total
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
@@ -62,7 +63,8 @@ SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_i
            ), 0)
        )::real AS score,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
-       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
 LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)

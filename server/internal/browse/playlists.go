@@ -72,7 +72,7 @@ func (p *Playlists) GetPlaylist(ctx context.Context, req *connect.Request[apiv1a
 	resp := &apiv1alpha.GetPlaylistResponse{Playlist: playlistProto(pl.ID, pl.Name, pl.Shared, pl.OwnerID, pl.OwnerName, len(rows))}
 	for _, r := range rows {
 		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
-		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds}))
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs}))
 	}
 	return connect.NewResponse(resp), nil
 }

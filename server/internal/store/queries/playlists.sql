@@ -16,7 +16,8 @@ WHERE p.id = $1;
 -- name: PlaylistItems :many
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
-       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms
 FROM playlist_item pi
 JOIN item i ON i.id = pi.item_id
 JOIN resolved_metadata r ON r.item_id = i.id

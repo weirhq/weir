@@ -278,6 +278,9 @@ message OutputProfile {
   optional VideoOutput video = 4;
   // Re-encode the audio; absent copies it.
   optional AudioOutput audio = 5;
+  // The video stream's ffmpeg codec name, so copied video can be labelled
+  // as players expect: HEVC as hvc1, which Apple requires, not hev1.
+  string video_codec = 6;
 }
 
 message VideoOutput {

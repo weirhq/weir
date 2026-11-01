@@ -21,6 +21,9 @@ service Browse {
   rpc ListContinueWatching(ListContinueWatchingRequest) returns (ListContinueWatchingResponse);
   // Newest additions across every visible library, or in one.
   rpc ListRecentlyAdded(ListRecentlyAddedRequest) returns (ListRecentlyAddedResponse);
+  // A library's genres and decades with how many items each has, for
+  // filtering it and for rows of it.
+  rpc ListLibraryFacets(ListLibraryFacetsRequest) returns (ListLibraryFacetsResponse);
 }
 
 message ListContinueWatchingRequest {
@@ -105,6 +108,8 @@ enum ItemSort {
   ITEM_SORT_ADDED = 3;
   // Season, episode, or disc and track order.
   ITEM_SORT_INDEX = 4;
+  // Newest release first, by release date or else year.
+  ITEM_SORT_RELEASED = 5;
 }
 
 message ListItemsRequest {
@@ -119,6 +124,36 @@ message ListItemsRequest {
   // At most 500; zero means 100.
   uint32 page_size = 5;
   string page_token = 6;
+  // Only what the caller hasn't finished: items not watched, and shows with
+  // an episode not watched.
+  bool unwatched = 7;
+  // Only items of this genre.
+  string genre = 8;
+  // Only items from this decade, given as its first year: 1990 for the
+  // 1990s. Zero means any.
+  uint32 decade = 9;
+}
+
+message ListLibraryFacetsRequest {
+  string library_id = 1;
+}
+
+message ListLibraryFacetsResponse {
+  // The library's genres, the most items first.
+  repeated GenreCount genres = 1;
+  // The decades its items are from, newest first.
+  repeated DecadeCount decades = 2;
+}
+
+message GenreCount {
+  string genre = 1;
+  uint32 count = 2;
+}
+
+message DecadeCount {
+  // Its first year: 1990 for the 1990s.
+  uint32 decade = 1;
+  uint32 count = 2;
 }
 
 message ListItemsResponse {

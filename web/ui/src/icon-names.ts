@@ -9,15 +9,22 @@ export const iconNames = [
   'delete',
   'edit',
   'favorite',
+  'home',
   'keyboard_arrow_down',
+  'menu',
+  'menu_open',
   'more_vert',
+  'movie',
+  'music_note',
   'pause',
   'play_arrow',
+  'playlist_play',
   'queue_music',
   'search',
   'settings',
   'skip_next',
-  'skip_previous'
+  'skip_previous',
+  'tv'
 ] as const
 
 export type IconName = (typeof iconNames)[number]

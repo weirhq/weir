@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-10-31",
+  "fetched": "2026-11-01",
   "faces": [
     {
       "family": "Google Sans Flex",
@@ -71,10 +71,10 @@
       "family": "Material Symbols Rounded",
       "file": "material-symbols-rounded.woff2",
       "subset": "icons",
-      "url": "https://fonts.gstatic.com/l/font?kit=sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190FjzaqkNCeEVJeSgbny0MLa759EVFVuxl414ixamzmi8-1ob-RLUGmOMJ2quGRB45M-YxWbFV1GxCIw&skey=70ddea8fe54d532e&v=v383",
+      "url": "https://fonts.gstatic.com/l/font?kit=sykg-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190FjzaqkNCeEVJeSgbny0MLa759EVFVuxl414ixamzmi8-1ob8BLUGkKMt4R7GInhXgachF7CQVslvapKkYxJyxcoNUY&skey=70ddea8fe54d532e&v=v383",
       "style": "normal",
       "weight": "100 700",
-      "sha256": "0ea4e97e68191bca6f848b7952819988f93386c289f1074b702d016b3ebf186c"
+      "sha256": "00f993c5710ce7f7caeba6ef9037f054b88eb2df72a89a5178c1725cb6b7376a"
     }
   ]
 }

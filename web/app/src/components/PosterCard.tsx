@@ -29,18 +29,21 @@ export function subtitle(item: ItemSummary): string {
 
 export function PosterCard({
   item,
-  runtimeMs
+  wide = isWide(item)
 }: {
   item: ItemSummary
-  runtimeMs?: number
+  /** A 16:9 card with the wide picture, whatever the item. */
+  wide?: boolean
 }) {
-  const wide = isWide(item)
   const image = wide ? item.thumbUrl || item.posterUrl : item.posterUrl
-  const position = item.userData?.position
-    ? Number(item.userData.position.seconds) * 1000
-    : 0
+  // How far through it the viewer is, when it's part-watched.
+  const seconds = (d?: { seconds: bigint }) => (d ? Number(d.seconds) : 0)
+  const position = seconds(item.userData?.position)
+  const runtime = seconds(item.duration)
   const progress =
-    runtimeMs && position ? Math.min(100, (position / runtimeMs) * 100) : 0
+    runtime && position && !item.userData?.watched
+      ? Math.min(100, (position / runtime) * 100)
+      : 0
   return (
     <Link
       to="/item/$itemId"

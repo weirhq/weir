@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ItemSort } from '../gen/weir/api/v1alpha/browse_pb'
 import { renderSignedIn } from '../test/render'
 
 it('shows continue watching, recently added and the libraries', async () => {
@@ -8,6 +9,8 @@ it('shows continue watching, recently added and the libraries', async () => {
     name: 'Continue watching'
   })
   expect(within(resume).getByText('Arrival')).toBeTruthy()
+  // 40 minutes into 1 h 56 min.
+  expect(within(resume).getByLabelText('34% watched')).toBeTruthy()
   // Recently added comes a row per library, albums with square covers.
   const titles = async (library: string) =>
     within(
@@ -16,12 +19,20 @@ it('shows continue watching, recently added and the libraries', async () => {
       })
     )
       .getAllByRole('link')
+      // The cards, not the title's link to all of them.
+      .filter((a) => !a.closest('h2'))
       .map((a) => a.textContent)
   expect(await titles('Films')).toEqual([
     expect.stringContaining('Arrival'),
     expect.stringContaining('Zodiac')
   ])
   expect(await titles('TV')).toEqual([expect.stringContaining('Severance')])
+  expect(
+    within(screen.getByRole('region', { name: 'Recently added in Films' }))
+      .getByRole('heading')
+      .querySelector('a')!
+      .getAttribute('href')
+  ).toBe('/library/films?sort=added')
   expect(await titles('Music')).toEqual([
     expect.stringContaining('Music Has the Right to Children')
   ])
@@ -48,9 +59,12 @@ it('shows continue watching, recently added and the libraries', async () => {
   ])
 })
 
-it('lists a library as a grid', async () => {
-  renderSignedIn('/library/films')
+it('lists a library as a grid, sorted as the address says', async () => {
+  const { browse } = renderSignedIn('/library/films?sort=added')
   await screen.findByRole('heading', { name: 'Films' })
+  await vi.waitFor(() =>
+    expect(browse.listCalls.at(-1)?.sort).toBe(ItemSort.ADDED)
+  )
   expect(await screen.findByText('Zodiac')).toBeTruthy()
   const poster = screen.getByText('Arrival').closest('a')!.querySelector('img')!
   expect(poster.getAttribute('srcset')).toContain(

@@ -129,6 +129,50 @@
   margin-bottom: 40px;
 }
 
+/* A row's title, and arrows at the end that show while it's hovered. */
+.rowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.rowHead .heading {
+  margin: 0;
+}
+
+.seeAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+.seeAll > :last-child {
+  color: var(--md-sys-color-on-surface-variant);
+  transition: translate var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+.seeAll:hover > :last-child,
+.seeAll:focus-visible > :last-child {
+  translate: 4px 0;
+}
+
+.arrows {
+  display: flex;
+  gap: 4px;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+.section:not(:hover, :focus-within) .arrows {
+  opacity: 0;
+}
+@media (hover: none) {
+  .arrows {
+    display: none;
+  }
+}
+
 .heading {
   margin: 0 0 16px;
   font-family: var(--md-sys-typescale-title-large-font);

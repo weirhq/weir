@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useRouteContext } from '@tanstack/react-router'
+import { Link, useRouteContext } from '@tanstack/react-router'
 import { PosterCard } from '../components/PosterCard'
 import { Row } from '../components/Row'
 import { librariesKey } from '../components/AppShell'
@@ -41,14 +41,21 @@ export function HomePage() {
     <>
       <Row title="Continue watching" wide>
         {(continueWatching.data ?? []).map((item) => (
-          <PosterCard
-            key={item.id}
-            item={{ ...item, posterUrl: item.thumbUrl || item.posterUrl }}
-          />
+          <PosterCard key={item.id} item={item} wide />
         ))}
       </Row>
       {(libraries.data ?? []).map((library, i) => (
-        <Row key={library.id} title={`Recently added in ${library.name}`}>
+        <Row
+          key={library.id}
+          title={`Recently added in ${library.name}`}
+          link={
+            <Link
+              to="/library/$libraryId"
+              params={{ libraryId: library.id }}
+              search={{ sort: 'added' }}
+            />
+          }
+        >
           {(recent[i]?.data ?? []).map((item) => (
             <PosterCard key={item.id} item={item} />
           ))}

@@ -81,9 +81,16 @@ const homeRoute = createRoute({
   component: HomePage
 })
 
+export type LibrarySort = 'title' | 'year' | 'added'
+
 export const libraryRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/library/$libraryId',
+  // The order to list it in; by title without one.
+  validateSearch: (search: Record<string, unknown>): { sort?: LibrarySort } =>
+    search.sort === 'year' || search.sort === 'added' || search.sort === 'title'
+      ? { sort: search.sort }
+      : {},
   component: LibraryPage
 })
 

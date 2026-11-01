@@ -1,0 +1,16 @@
+/* The library's name, and how it's sorted at the other end. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.head h1 {
+  margin: 0;
+}
+
+.sort {
+  width: 200px;
+}

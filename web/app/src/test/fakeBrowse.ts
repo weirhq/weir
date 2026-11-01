@@ -4,6 +4,7 @@ import { Code, ConnectError, type ConnectRouter } from '@connectrpc/connect'
 import {
   Browse,
   ItemKind,
+  ItemSort,
   ItemSchema,
   ItemSummarySchema,
   StreamKind,
@@ -54,7 +55,8 @@ export class FakeBrowse {
       year: 2016,
       libraryId: 'films',
       posterUrl: '/media/artwork/arrival/poster?sig=x',
-      position: 40 * 60_000
+      position: 40 * 60_000,
+      duration: 116 * 60_000
     }),
     summary('zodiac', ItemKind.MOVIE, 'Zodiac', {
       year: 2007,
@@ -119,6 +121,8 @@ export class FakeBrowse {
     }
   ]
   watchedCalls: { itemId: string; watched: boolean }[] = []
+  // What each ListItems call asked for.
+  listCalls: { libraryId: string; parentId: string; sort: ItemSort }[] = []
   // What Playback.Start answers, or the error it throws.
   plan: PlaybackPlan | ConnectError = create(PlaybackPlanSchema, {})
   starts: StartRequest[] = []
@@ -224,6 +228,11 @@ export class FakeBrowse {
     router.service(Browse, {
       listVisibleLibraries: () => ({ libraries: this.libraries }),
       listItems: (req) => {
+        this.listCalls.push({
+          libraryId: req.libraryId,
+          parentId: req.parentId,
+          sort: req.sort
+        })
         const all = this.summaries.filter((s) =>
           req.parentId
             ? s.parentId === req.parentId
@@ -329,6 +338,7 @@ function summary(
     indexNumber?: number
     posterUrl?: string
     position?: number
+    duration?: number
     watched?: boolean
   }
 ): ItemSummary {
@@ -341,6 +351,7 @@ function summary(
     parentId: o.parentId ?? '',
     indexNumber: o.indexNumber ?? 0,
     posterUrl: o.posterUrl ?? '',
+    duration: o.duration ? durationFromMs(o.duration) : undefined,
     userData:
       o.position || o.watched
         ? create(UserDataSchema, {

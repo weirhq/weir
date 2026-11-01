@@ -244,3 +244,23 @@ h2 {
   gap: 8px;
   min-height: 340px;
 }
+
+.pickers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.picker-box {
+  width: 360px;
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+}
+
+.pickers .column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}

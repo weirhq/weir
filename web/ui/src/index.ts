@@ -27,6 +27,14 @@ export {
 } from './app-bar'
 export { BottomSheet, type BottomSheetProps } from './bottom-sheet'
 export { Card, type CardProps } from './card'
+export {
+  DatePicker,
+  DatePickerDialog,
+  datePickerStrings,
+  type DatePickerDialogProps,
+  type DatePickerProps,
+  type DatePickerStrings
+} from './date-picker'
 export { Dialog, type DialogProps } from './dialog'
 export { Icon, type IconProps } from './icon'
 export { iconNames, type IconName } from './icon-names'

@@ -10,6 +10,8 @@ import {
   Checkbox,
   CircularProgressIndicator,
   ConnectedButtonGroup,
+  DatePicker,
+  DatePickerDialog,
   Dialog,
   ExtendedFab,
   Fab,
@@ -1209,4 +1211,137 @@ describe('FabMenu', () => {
     expect(button.getAttribute('aria-expanded')).toBe('false')
     expect(document.activeElement).toBe(button)
   })
+})
+
+describe('DatePicker', () => {
+  function Harness({
+    initial = '2026-11-01',
+    onChange
+  }: {
+    initial?: string | null
+    onChange?: (value: string | null) => void
+  }) {
+    const [value, setValue] = useState(initial)
+    return (
+      <DatePicker
+        locale="en-US"
+        value={value}
+        onValueChange={(v) => {
+          setValue(v)
+          onChange?.(v)
+        }}
+        yearRange={[2020, 2030]}
+        isSelectable={(d) => d !== '2026-11-13'}
+      />
+    )
+  }
+
+  it('shows the month of the value, picks a day, and blocks unselectable ones', () => {
+    const change = vi.fn()
+    render(<Harness onChange={change} />)
+    expect(screen.getByRole('grid', { name: 'November 2026' })).toBeTruthy()
+    expect(screen.getByText('Nov 1, 2026')).toBeTruthy()
+    const first = screen.getByRole('button', {
+      name: 'Sunday, November 1, 2026'
+    })
+    expect(first.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Thursday, November 5, 2026' })
+    )
+    expect(change).toHaveBeenLastCalledWith('2026-11-05')
+    expect(
+      (
+        screen.getByRole('button', {
+          name: 'Friday, November 13, 2026'
+        }) as HTMLButtonElement
+      ).disabled
+    ).toBe(true)
+  })
+
+  it('moves between months by button and by keyboard', () => {
+    render(<Harness />)
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Change to next month' })
+    )
+    expect(screen.getByRole('grid', { name: 'December 2026' })).toBeTruthy()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Change to previous month' })
+    )
+    const day = screen.getByRole('button', { name: 'Sunday, November 1, 2026' })
+    day.focus()
+    fireEvent.keyDown(day, { key: 'ArrowLeft' })
+    expect(screen.getByRole('grid', { name: 'October 2026' })).toBeTruthy()
+    expect(document.activeElement!.getAttribute('aria-label')).toBe(
+      'Saturday, October 31, 2026'
+    )
+    fireEvent.keyDown(document.activeElement!, { key: 'PageDown' })
+    expect(document.activeElement!.getAttribute('aria-label')).toBe(
+      'Monday, November 30, 2026'
+    )
+  })
+
+  it('jumps to a year from the year list', () => {
+    render(<Harness />)
+    fireEvent.click(screen.getByRole('button', { name: 'November 2026' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Navigate to year 2030' })
+    )
+    expect(screen.getByRole('grid', { name: 'November 2030' })).toBeTruthy()
+  })
+
+  it('takes a typed date once all its digits are in, and says what is wrong', () => {
+    const change = vi.fn()
+    render(<Harness initial={null} onChange={change} />)
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Switch to text input mode' })
+    )
+    const field = screen.getByLabelText('Date') as HTMLInputElement
+    fireEvent.change(field, { target: { value: '1225' } })
+    expect(field.value).toBe('12/25')
+    fireEvent.change(field, { target: { value: '12/25/2026' } })
+    expect(change).toHaveBeenLastCalledWith('2026-12-25')
+    expect(screen.getByText('Dec 25, 2026')).toBeTruthy()
+    fireEvent.change(field, { target: { value: '13252026' } })
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Date does not match expected pattern: MM/DD/YYYY'
+    )
+    fireEvent.change(field, { target: { value: '01012040' } })
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Date out of expected year range 2020 - 2030'
+    )
+    fireEvent.change(field, { target: { value: '11132026' } })
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Date not allowed: Nov 13, 2026'
+    )
+    expect(change).toHaveBeenLastCalledWith(null)
+  })
+})
+
+it('confirms a date from the dialog, and leaves the value on Cancel', () => {
+  const confirm = vi.fn()
+  function Harness() {
+    const [open, setOpen] = useState(true)
+    return (
+      <DatePickerDialog
+        locale="en-US"
+        open={open}
+        onOpenChange={setOpen}
+        value={null}
+        onConfirm={confirm}
+      />
+    )
+  }
+  render(<Harness />)
+  const ok = screen.getByRole('button', { name: 'OK' }) as HTMLButtonElement
+  expect(ok.disabled).toBe(true)
+  expect(screen.getByRole('dialog', { name: 'Select date' })).toBeTruthy()
+  const day = screen
+    .getAllByRole('gridcell')
+    .find((c) => c.querySelector('button'))!
+    .querySelector('button')!
+  fireEvent.click(day)
+  expect(ok.disabled).toBe(false)
+  fireEvent.click(ok)
+  expect(confirm).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('dialog')).toBeNull()
 })

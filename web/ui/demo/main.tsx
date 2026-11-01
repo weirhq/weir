@@ -12,6 +12,8 @@ import {
   Checkbox,
   CircularProgressIndicator,
   ConnectedButtonGroup,
+  DatePicker,
+  DatePickerDialog,
   Dialog,
   SplitButton,
   type ButtonProps,
@@ -303,6 +305,42 @@ function Menus() {
           onValueChange={() => {}}
           options={kinds}
           disabled
+        />
+      </div>
+    </div>
+  )
+}
+
+function DatePickers() {
+  const [date, setDate] = useState<string | null>('2026-11-01')
+  const [german, setGerman] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
+  const [confirmed, setConfirmed] = useState<string | null>(null)
+  return (
+    <div className="pickers">
+      <div className="picker-box" data-testid="date-picker">
+        <DatePicker
+          locale="en-US"
+          value={date}
+          onValueChange={setDate}
+          isSelectable={(d) => new Date(d).getUTCDay() !== 0}
+        />
+      </div>
+      <div className="picker-box" data-testid="date-picker-de">
+        <DatePicker locale="de-DE" value={german} onValueChange={setGerman} />
+      </div>
+      <div className="column">
+        <output data-testid="date-value">{date ?? 'none'}</output>
+        <Button variant="tonal" onClick={() => setOpen(true)}>
+          Pick a date
+        </Button>
+        <output data-testid="date-confirmed">{confirmed ?? 'none'}</output>
+        <DatePickerDialog
+          locale="en-US"
+          open={open}
+          onOpenChange={setOpen}
+          value={confirmed}
+          onConfirm={setConfirmed}
         />
       </div>
     </div>
@@ -1293,6 +1331,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="date-pickers">
+        <h2 id="date-pickers">Date pickers</h2>
+        <DatePickers />
       </section>
 
       <section aria-labelledby="fab-menu">

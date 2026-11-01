@@ -1,0 +1,366 @@
+/* M3 date pickers, following Compose's DatePicker, DateInput and
+   DatePickerDialog at the pinned commit. */
+
+.picker {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: var(--md-comp-date-picker-modal-container-width);
+  overflow: hidden;
+  background: var(--md-comp-date-picker-modal-container-color);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* The header: at least 120dp with a title. The title 16dp down and 24dp
+   in, the headline 24dp in and 12dp up from the divider, the mode toggle
+   12dp from the end and the divider. */
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: var(--md-comp-date-picker-modal-header-container-height);
+}
+
+.title {
+  margin: 0;
+  padding: 16px 12px 0 24px;
+  color: var(--md-comp-date-picker-modal-header-supporting-text-color);
+  font-family: var(--md-comp-date-picker-modal-header-supporting-text-font);
+  font-size: var(--md-comp-date-picker-modal-header-supporting-text-size);
+  line-height: var(
+    --md-comp-date-picker-modal-header-supporting-text-line-height
+  );
+  font-weight: var(--md-comp-date-picker-modal-header-supporting-text-weight);
+  letter-spacing: var(
+    --md-comp-date-picker-modal-header-supporting-text-tracking
+  );
+}
+
+.headlineRow {
+  display: flex;
+  align-items: center;
+}
+
+.headline {
+  flex: 1;
+  margin: 0;
+  padding: 0 12px 12px 24px;
+  color: var(--md-comp-date-picker-modal-header-headline-color);
+  font-family: var(--md-comp-date-picker-modal-header-headline-font);
+  font-size: var(--md-comp-date-picker-modal-header-headline-size);
+  line-height: var(--md-comp-date-picker-modal-header-headline-line-height);
+  font-weight: var(--md-comp-date-picker-modal-header-headline-weight);
+  letter-spacing: var(--md-comp-date-picker-modal-header-headline-tracking);
+}
+
+.toggle {
+  padding: 0 12px 12px 0;
+  color: var(--md-comp-date-picker-modal-header-headline-color);
+  --md-comp-standard-icon-button-color: currentColor;
+}
+
+.divider {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* Switching between the calendar and typing: the newcomer slides in
+   (DefaultSpatial) and fades in (DefaultEffects); typing comes up from
+   below, the calendar down from 48dp above. */
+.enterInput {
+  animation:
+    rise var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial),
+    fade-in var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects);
+}
+
+.enterPicker {
+  animation:
+    drop var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial),
+    fade-in var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects);
+}
+
+/* The month row: 56dp tall, 12dp in. */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  --md-comp-text-button-label-color: var(--md-sys-color-on-surface-variant);
+  --md-comp-standard-icon-button-color: var(--md-sys-color-on-surface-variant);
+}
+
+.arrow {
+  transition: rotate var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial);
+}
+
+.expanded .arrow {
+  rotate: 180deg;
+}
+
+.arrows {
+  display: flex;
+}
+
+.body {
+  position: relative;
+  padding: 0 12px;
+}
+
+/* Weekdays and days in 48dp cells spread across the row; days are 40dp
+   circles in them. Six weeks always, 288dp. */
+.week {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.weekday,
+.cell {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+
+.weekday {
+  color: var(--md-comp-date-picker-modal-weekdays-label-text-color);
+  font-family: var(--md-comp-date-picker-modal-weekdays-label-text-font);
+  font-size: var(--md-comp-date-picker-modal-weekdays-label-text-size);
+  line-height: var(--md-comp-date-picker-modal-weekdays-label-text-line-height);
+  font-weight: var(--md-comp-date-picker-modal-weekdays-label-text-weight);
+  letter-spacing: var(--md-comp-date-picker-modal-weekdays-label-text-tracking);
+}
+
+.month {
+  display: grid;
+  grid-template-rows: repeat(6, 48px);
+}
+
+/* Changing month slides the new one in from its side. */
+.fromNext {
+  animation: from-next var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial);
+}
+
+.fromPrevious {
+  animation: from-previous var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial);
+}
+
+.day,
+.year {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-comp-date-picker-modal-date-container-shape);
+  background: transparent;
+  color: var(--md-comp-date-picker-modal-date-unselected-label-text-color);
+  font-family: var(--md-comp-date-picker-modal-date-label-text-font);
+  font-size: var(--md-comp-date-picker-modal-date-label-text-size);
+  line-height: var(--md-comp-date-picker-modal-date-label-text-line-height);
+  font-weight: var(--md-comp-date-picker-modal-date-label-text-weight);
+  letter-spacing: var(--md-comp-date-picker-modal-date-label-text-tracking);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    color var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+
+.day {
+  width: var(--md-comp-date-picker-modal-date-container-width);
+  height: var(--md-comp-date-picker-modal-date-container-height);
+}
+
+/* Today, unselected: a 1dp primary ring and primary text. */
+.today {
+  border: var(--md-comp-date-picker-modal-date-today-container-outline-width)
+    solid var(--md-comp-date-picker-modal-date-today-container-outline-color);
+  color: var(--md-comp-date-picker-modal-date-today-label-text-color);
+}
+
+.day[aria-pressed='true'],
+.year[aria-pressed='true'] {
+  border: 0;
+  background: var(--md-comp-date-picker-modal-date-selected-container-color);
+  color: var(--md-comp-date-picker-modal-date-selected-label-text-color);
+}
+
+.day:disabled,
+.year:disabled {
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  cursor: default;
+}
+
+.day:focus-visible,
+.year:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+
+/* Years: over the weekdays and days, 7 rows of 48dp less the divider,
+   three to a row, 16dp between rows, as 72 by 36dp pills. They open
+   downward and fade in from 60% (DefaultEffects). */
+.years {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--md-comp-date-picker-modal-container-color);
+  animation:
+    reveal var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects),
+    fade-from var(--md-sys-motion-spring-default-effects-duration)
+      var(--md-sys-motion-spring-default-effects);
+}
+
+.yearGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  row-gap: 16px;
+  justify-items: center;
+  height: calc(48px * 7 - 1px);
+  margin: 0;
+  padding: 0 12px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.year {
+  width: var(--md-comp-date-picker-modal-selection-year-container-width);
+  height: var(--md-comp-date-picker-modal-selection-year-container-height);
+  border-radius: var(
+    --md-comp-date-picker-modal-selection-year-state-layer-shape
+  );
+  color: var(
+    --md-comp-date-picker-modal-selection-year-unselected-label-text-color
+  );
+}
+
+.year.today {
+  color: var(--md-comp-date-picker-modal-date-today-label-text-color);
+}
+
+/* Typing: an outlined field 10dp down, 24dp in, 16dp up from the end
+   (less what an error message takes). */
+.input {
+  padding: 10px 24px 16px;
+}
+
+/* The dialog: 360dp wide, at most 568dp tall, rounded 28dp, on a scrim;
+   its buttons at the end, 8dp apart, 6dp in and 8dp up. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  width: var(--md-comp-date-picker-modal-container-width);
+  max-width: calc(100vw - 16px);
+  max-height: min(var(--md-comp-date-picker-modal-container-height), 100dvh);
+  overflow: hidden auto;
+  border-radius: var(--md-comp-date-picker-modal-container-shape);
+  background: var(--md-comp-date-picker-modal-container-color);
+  translate: -50% -50%;
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+.dialog .picker {
+  min-width: 0;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 6px 8px 0;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-from {
+  from {
+    opacity: 0.6;
+  }
+}
+
+@keyframes rise {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes drop {
+  from {
+    translate: 0 -48px;
+  }
+}
+
+@keyframes reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes from-next {
+  from {
+    translate: 100% 0;
+  }
+}
+
+@keyframes from-previous {
+  from {
+    translate: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enterInput,
+  .enterPicker,
+  .fromNext,
+  .fromPrevious,
+  .years {
+    animation: none;
+  }
+}

@@ -10,6 +10,7 @@ import {
   ButtonGroup,
   Card,
   Checkbox,
+  CircularProgressIndicator,
   ConnectedButtonGroup,
   Dialog,
   SplitButton,
@@ -22,6 +23,7 @@ import {
   IconButton,
   type IconButtonProps,
   InputChip,
+  LinearProgressIndicator,
   List,
   ListDivider,
   ListItem,
@@ -296,6 +298,36 @@ function Menus() {
           onValueChange={() => {}}
           options={kinds}
           disabled
+        />
+      </div>
+    </div>
+  )
+}
+
+function Progress() {
+  const [value, setValue] = useState(40)
+  const v = value / 100
+  return (
+    <div className="progress-demo">
+      <Slider
+        aria-label="Progress"
+        value={value}
+        onValueChange={setValue}
+        valueLabel={(n) => `${Math.round(n)}%`}
+      />
+      <div className="progress-row">
+        <LinearProgressIndicator aria-label="Flat" value={v} />
+        <LinearProgressIndicator aria-label="Flat, indeterminate" />
+        <LinearProgressIndicator aria-label="Wavy" value={v} wavy />
+        <LinearProgressIndicator aria-label="Wavy, indeterminate" wavy />
+      </div>
+      <div className="progress-circles">
+        <CircularProgressIndicator aria-label="Circular" value={v} />
+        <CircularProgressIndicator aria-label="Circular, indeterminate" />
+        <CircularProgressIndicator aria-label="Circular wavy" value={v} wavy />
+        <CircularProgressIndicator
+          aria-label="Circular wavy, indeterminate"
+          wavy
         />
       </div>
     </div>
@@ -1184,6 +1216,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="progress">
+        <h2 id="progress">Progress</h2>
+        <Progress />
       </section>
 
       <section aria-labelledby="navigation">

@@ -21,6 +21,9 @@ window.matchMedia ??= (query: string) =>
     removeEventListener: () => {}
   }) as unknown as MediaQueryList
 
+// jsdom can't draw on a canvas; progress indicators skip drawing.
+HTMLCanvasElement.prototype.getContext = () => null
+
 // The tabs' indicator follows sizes, which jsdom doesn't have.
 globalThis.ResizeObserver ??= class {
   observe() {}

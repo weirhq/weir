@@ -8,6 +8,7 @@ import {
   ButtonGroup,
   Card,
   Checkbox,
+  CircularProgressIndicator,
   ConnectedButtonGroup,
   Dialog,
   ExtendedFab,
@@ -15,6 +16,7 @@ import {
   FilterChip,
   IconButton,
   InputChip,
+  LinearProgressIndicator,
   List,
   ListDivider,
   ListItem,
@@ -1106,5 +1108,38 @@ describe('Navigation', () => {
     const expanded = screen.getByRole('button', { name: /Settings/ })
     expect(expanded.children).toHaveLength(1)
     expect(expanded.getAttribute('aria-current')).toBe('true')
+  })
+})
+
+describe('Progress indicators', () => {
+  // jsdom has no canvas drawing; the indicators still say where they are.
+  beforeAll(() => {
+    HTMLCanvasElement.prototype.getContext = () => null
+  })
+
+  it('reports determinate progress as a percentage', () => {
+    render(
+      <>
+        <LinearProgressIndicator aria-label="Scanning" value={0.42} />
+        <CircularProgressIndicator aria-label="Uploading" value={1.5} wavy />
+      </>
+    )
+    const scanning = screen.getByRole('progressbar', { name: 'Scanning' })
+    expect(scanning.getAttribute('aria-valuenow')).toBe('42')
+    expect(scanning.getAttribute('aria-valuemax')).toBe('100')
+    expect(
+      screen
+        .getByRole('progressbar', { name: 'Uploading' })
+        .getAttribute('aria-valuenow')
+    ).toBe('100')
+  })
+
+  it('leaves out the value while indeterminate', () => {
+    render(<LinearProgressIndicator aria-label="Loading" wavy />)
+    expect(
+      screen
+        .getByRole('progressbar', { name: 'Loading' })
+        .hasAttribute('aria-valuenow')
+    ).toBe(false)
   })
 })

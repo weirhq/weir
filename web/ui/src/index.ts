@@ -44,6 +44,11 @@ export {
   type NavigationItemProps,
   type NavigationRailProps
 } from './navigation'
+export {
+  CircularProgressIndicator,
+  LinearProgressIndicator,
+  type ProgressIndicatorProps
+} from './progress'
 export { Slider, type SliderProps } from './slider'
 export {
   Snackbar,

@@ -1,0 +1,24 @@
+/* Progress indicators draw on a canvas (progress.tsx); these are their
+   boxes. Linear ones fill their width, 4dp tall, or 10dp for the wave;
+   circular ones are 40dp, or 48dp for the wave. */
+
+.linear {
+  display: block;
+  width: 100%;
+  height: var(--md-comp-linear-progress-indicator-height);
+}
+
+.linear.wavy {
+  height: var(--md-comp-linear-progress-indicator-wave-height);
+}
+
+.circular {
+  display: block;
+  width: var(--md-comp-circular-progress-indicator-size);
+  height: var(--md-comp-circular-progress-indicator-size);
+}
+
+.circular.wavy {
+  width: var(--md-comp-circular-progress-indicator-wave-size);
+  height: var(--md-comp-circular-progress-indicator-wave-size);
+}

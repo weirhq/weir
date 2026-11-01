@@ -200,3 +200,22 @@ h2 {
   padding: 24px;
   min-width: 160px;
 }
+
+.progress-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 480px;
+}
+
+.progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.progress-circles {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}

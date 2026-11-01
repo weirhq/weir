@@ -24,6 +24,10 @@ it('lists libraries with their scans, and scans, edits, adds and deletes', async
   await user.click(await screen.findByRole('link', { name: 'Settings' }))
   await screen.findByRole('heading', { name: 'Films' })
   expect(within(card('TV')).getByText('Scanning…')).toBeTruthy()
+  expect(
+    within(card('TV')).getByRole('progressbar', { name: 'Scanning TV' })
+  ).toBeTruthy()
+  expect(within(card('Films')).queryByRole('progressbar')).toBeNull()
   expect(within(card('Films')).getByText(/^Last scanned /)).toBeTruthy()
   expect(within(card('Music')).getByText('/media/more-music')).toBeTruthy()
 

@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Card, Dialog, Select, TextField } from '@weirhq/m3e'
+import {
+  Button,
+  Card,
+  Dialog,
+  LinearProgressIndicator,
+  Select,
+  TextField
+} from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { librariesKey } from '../../components/AppShell'
 import { errorMessage } from '../../errors'
@@ -107,6 +114,12 @@ export function LibrariesPage() {
                     ))}
                   </ul>
                   <p className={styles.meta}>{scanState(l.id, jobs)}</p>
+                  {scanning(l.id, jobs) && (
+                    <LinearProgressIndicator
+                      wavy
+                      aria-label={`Scanning ${l.name}`}
+                    />
+                  )}
                   <div className={styles.actions}>
                     <Button
                       variant="tonal"
@@ -176,18 +189,20 @@ export function LibrariesPage() {
   )
 }
 
+const scans = (libraryId: string, jobs: Job[]) =>
+  jobs.filter((j) => j.kind === 'scan_library' && j.libraryId === libraryId)
+
+/** Whether a scan of the library is waiting or running. */
+function scanning(libraryId: string, jobs: Job[]): boolean {
+  return scans(libraryId, jobs).some(
+    (j) => j.state === JobState.WAITING || j.state === JobState.RUNNING
+  )
+}
+
 /** "Scanning…", or how the last scan went, from the recent jobs. */
 function scanState(libraryId: string, jobs: Job[]): string {
-  const scans = jobs.filter(
-    (j) => j.kind === 'scan_library' && j.libraryId === libraryId
-  )
-  if (
-    scans.some(
-      (j) => j.state === JobState.WAITING || j.state === JobState.RUNNING
-    )
-  )
-    return 'Scanning…'
-  const last = scans[0]
+  if (scanning(libraryId, jobs)) return 'Scanning…'
+  const last = scans(libraryId, jobs)[0]
   if (!last) return ''
   if (last.state === JobState.FAILED)
     return `Last scan failed: ${last.error || 'no reason given'}`

@@ -121,7 +121,9 @@ export function PlayerControls({
   children?: ReactNode
 }) {
   const m = useMedia(media)
-  const duration = m.duration || runtime
+  // A stream still being made, in an HLS event playlist, says only how much
+  // there is so far; the item's runtime is the whole of it.
+  const duration = Math.max(m.duration, runtime)
   // Where the scrubber is held, while it is.
   const [scrub, setScrub] = useState<number>()
   const [active, setActive] = useState(true)

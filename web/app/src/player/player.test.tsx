@@ -248,6 +248,23 @@ describe('the player’s own controls', () => {
     expect(video.currentTime).toBe(0)
   })
 
+  it('measures the scrubber by the runtime while the stream is still growing', async () => {
+    const browse = browseWith({
+      method: PlaybackMethod.REMUX,
+      url: '/media/sessions/s1/index.m3u8?sig=x',
+      sessionId: 's1'
+    })
+    renderSignedIn('/play/arrival', browse)
+    await screen.findByRole('link', { name: '‹ Arrival' })
+    // The stream has ten minutes so far; Arrival runs 1 h 56 min.
+    fakeVideo()
+    await vi.waitFor(() =>
+      expect(
+        screen.getByRole('slider', { name: 'Seek' }).getAttribute('max')
+      ).toBe(String(116 * 60))
+    )
+  })
+
   it('seeks with the scrubber once it’s let go, showing the time', async () => {
     const video = await open()
     const seek = screen.getByRole('slider', { name: 'Seek' })

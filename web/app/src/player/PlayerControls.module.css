@@ -105,12 +105,33 @@
   gap: 4px;
 }
 
+/* The volume slider unfolds beside its icon once that's clicked. Folded,
+   it's hidden, so it's out of the tab order too. */
 .volume {
   display: flex;
   align-items: center;
 }
 .volumeSlider {
+  width: 0;
+  margin-inline-start: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    width var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    margin-inline-start var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    visibility var(--md-sys-motion-spring-fast-effects-duration),
+    --weir-bar-grip var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+.volume[data-open] .volumeSlider {
   width: 96px;
+  margin-inline-start: 12px;
+  visibility: visible;
+  opacity: 1;
 }
 
 .spacer {
@@ -171,15 +192,8 @@
   .top,
   .bottom,
   .captions,
-  .bar {
-    transition: none;
-  }
-}
-
-/* Narrow windows keep the skips and fullscreen, and lose the volume
-   slider; phones have volume buttons. */
-@media (max-width: 600px) {
+  .bar,
   .volumeSlider {
-    display: none;
+    transition: none;
   }
 }

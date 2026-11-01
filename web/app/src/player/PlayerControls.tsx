@@ -14,6 +14,7 @@ import {
   type ReactNode,
   type RefObject
 } from 'react'
+import { useMediaQuery } from '../media'
 import styles from './PlayerControls.module.css'
 
 const volumeKey = 'weir.volume'
@@ -209,6 +210,17 @@ export function PlayerControls({
   const [menuOpen, setMenuOpen] = useState(false)
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined)
   const shown = active || !m.playing || scrub !== undefined || menuOpen
+  // The volume slider, folded beside its icon until that's clicked, and
+  // folded again when the controls fade.
+  const [volumeOpen, setVolumeOpen] = useState(false)
+  // Narrow windows have no volume slider; phones have volume buttons.
+  const volumeSlider = useMediaQuery('(min-width: 601px)')
+  const volumeFolded = volumeSlider && !volumeOpen
+  const [wasShown, setWasShown] = useState(shown)
+  if (shown !== wasShown) {
+    setWasShown(shown)
+    if (!shown) setVolumeOpen(false)
+  }
 
   // Movement brings the controls back; stillness while playing hides them.
   const wake = useCallback(() => {
@@ -321,10 +333,12 @@ export function PlayerControls({
           break
         case 'ArrowUp':
           e.preventDefault()
+          setVolumeOpen(true)
           setVolume(Math.min(1, el.volume + 0.1))
           break
         case 'ArrowDown':
           e.preventDefault()
+          setVolumeOpen(true)
           setVolume(Math.max(0, el.volume - 0.1))
           break
         case 'm':
@@ -419,23 +433,32 @@ export function PlayerControls({
             label="Forward 30 seconds"
             onClick={() => seekTo((video()?.currentTime ?? 0) + 30)}
           />
-          <div className={styles.volume}>
+          <div
+            className={styles.volume}
+            data-open={(volumeSlider && volumeOpen) || undefined}
+          >
+            {/* Opens the slider first, then mutes and unmutes; the one
+                button, so it keeps focus. */}
             <IconButton
               icon={volume === 0 ? 'volume_off' : 'volume_up'}
-              label={m.muted ? 'Unmute' : 'Mute'}
+              label={volumeFolded ? 'Volume' : m.muted ? 'Unmute' : 'Mute'}
+              aria-expanded={volumeFolded ? false : undefined}
               onClick={() => {
                 const el = video()
-                if (el) el.muted = !el.muted
+                if (volumeFolded) setVolumeOpen(true)
+                else if (el) el.muted = !el.muted
               }}
             />
-            <Slider
-              className={`${styles.bar} ${styles.volumeSlider}`}
-              aria-label="Volume"
-              min={0}
-              max={1}
-              value={volume}
-              onValueChange={setVolume}
-            />
+            {volumeSlider && (
+              <Slider
+                className={`${styles.bar} ${styles.volumeSlider}`}
+                aria-label="Volume"
+                min={0}
+                max={1}
+                value={volume}
+                onValueChange={setVolume}
+              />
+            )}
           </div>
           <span className={styles.spacer} />
           {tracks &&

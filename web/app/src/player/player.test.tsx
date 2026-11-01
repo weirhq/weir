@@ -332,7 +332,7 @@ describe('the player’s own controls', () => {
     expect(browse.starts[2]!.subtitleStreamIndex).toBe(-1)
   })
 
-  it('goes full screen with the controls, and remembers the volume', async () => {
+  it('goes full screen with the controls, and unfolds and remembers the volume', async () => {
     const user = userEvent.setup()
     const requestFullscreen = vi.fn(() => Promise.resolve())
     HTMLElement.prototype.requestFullscreen = requestFullscreen
@@ -341,6 +341,11 @@ describe('the player’s own controls', () => {
     // The whole player, so its controls come too, not the bare video.
     expect(requestFullscreen.mock.contexts[0]).toBe(video.parentElement)
 
+    // The slider unfolds from its icon, which then mutes.
+    await user.click(screen.getByRole('button', { name: 'Volume' }))
+    await user.click(screen.getByRole('button', { name: 'Mute' }))
+    expect(video.muted).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Unmute' }))
     fireEvent.change(screen.getByRole('slider', { name: 'Volume' }), {
       target: { value: '0.4' }
     })

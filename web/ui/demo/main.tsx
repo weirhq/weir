@@ -16,6 +16,9 @@ import {
   DatePickerDialog,
   DateRangePicker,
   DateRangePickerDialog,
+  TimeInput,
+  TimePicker,
+  TimePickerDialog,
   type DateRange,
   Dialog,
   SplitButton,
@@ -380,6 +383,48 @@ function DateRanges() {
           {confirmed.start ?? '…'} to {confirmed.end ?? '…'}
         </output>
         <DateRangePickerDialog
+          locale="en-US"
+          open={open}
+          onOpenChange={setOpen}
+          value={confirmed}
+          onConfirm={setConfirmed}
+        />
+      </div>
+    </div>
+  )
+}
+
+function TimePickers() {
+  const [time, setTime] = useState('09:30')
+  const [h24, setH24] = useState('16:45')
+  const [typed, setTyped] = useState('07:15')
+  const [open, setOpen] = useState(false)
+  const [confirmed, setConfirmed] = useState('12:00')
+  return (
+    <div className="pickers">
+      <div className="picker-box time-box" data-testid="time-picker">
+        <TimePicker locale="en-US" value={time} onValueChange={setTime} />
+      </div>
+      <div className="picker-box time-box" data-testid="time-picker-24">
+        <TimePicker
+          locale="en-GB"
+          value={h24}
+          onValueChange={setH24}
+          layout="horizontal"
+        />
+      </div>
+      <div className="picker-box time-box" data-testid="time-input">
+        <TimeInput locale="en-US" value={typed} onValueChange={setTyped} />
+      </div>
+      <div className="column">
+        <output data-testid="time-value">
+          {time} · {h24} · {typed}
+        </output>
+        <Button variant="tonal" onClick={() => setOpen(true)}>
+          Pick a time
+        </Button>
+        <output data-testid="time-confirmed">{confirmed}</output>
+        <TimePickerDialog
           locale="en-US"
           open={open}
           onOpenChange={setOpen}
@@ -1385,6 +1430,11 @@ function Demo() {
       <section aria-labelledby="date-ranges">
         <h2 id="date-ranges">Date range pickers</h2>
         <DateRanges />
+      </section>
+
+      <section aria-labelledby="time-pickers">
+        <h2 id="time-pickers">Time pickers</h2>
+        <TimePickers />
       </section>
 
       <section aria-labelledby="fab-menu">

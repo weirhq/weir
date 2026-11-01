@@ -1,0 +1,484 @@
+/* M3 time pickers, following Compose's TimePicker, TimeInput and
+   TimePickerDialog at the pinned commit: the classic dial, with the
+   updated AM/PM toggle Compose now uses by default. */
+
+/* The hand's angle and length animate as one, so the handle travels round
+   the dial rather than across it. */
+@property --_dial-angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@property --_dial-reach {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+/* The picker: the time 36dp above the 256dp dial and 24dp below it, or,
+   laid out horizontally, the time 36dp to its left. */
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 24px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.horizontal {
+  flex-direction: row;
+  padding-bottom: 0;
+}
+
+.display {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 36px;
+}
+
+.horizontal .display {
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 36px 0 0;
+}
+
+.numbers {
+  display: flex;
+}
+
+/* The hour and minute: 96x80dp, rounded 8dp, in display large. */
+.selector {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: var(--md-comp-time-picker-time-selector-container-width);
+  height: var(--md-comp-time-picker-time-selector-container-height);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-comp-time-picker-time-selector-container-shape);
+  background: var(
+    --md-comp-time-picker-time-selector-unselected-container-color
+  );
+  color: var(--md-comp-time-picker-time-selector-unselected-label-text-color);
+  font-family: var(--md-comp-time-picker-time-selector-label-text-font);
+  font-size: var(--md-comp-time-picker-time-selector-label-text-size);
+  line-height: var(--md-comp-time-picker-time-selector-label-text-line-height);
+  font-weight: var(--md-comp-time-picker-time-selector-label-text-weight);
+  letter-spacing: var(--md-comp-time-picker-time-selector-label-text-tracking);
+  cursor: pointer;
+}
+
+.selector[aria-checked='true'] {
+  background: var(--md-comp-time-picker-time-selector-selected-container-color);
+  color: var(--md-comp-time-picker-time-selector-selected-label-text-color);
+}
+
+/* The colon: centred in 24dp, 4dp high. */
+.separator {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: var(--md-comp-time-picker-period-selector-vertical-container-height);
+  color: var(--md-comp-time-picker-time-selector-separator-color);
+  font-family: var(--md-comp-time-picker-time-selector-separator-font);
+  font-size: var(--md-comp-time-picker-time-selector-separator-size);
+  line-height: 1;
+  font-weight: var(--md-comp-time-picker-time-selector-separator-weight);
+  user-select: none;
+}
+
+.separator > span {
+  translate: 0 -4px;
+}
+
+/* AM and PM: two toggle buttons 4dp apart, 52x80dp stacked or 216x38dp
+   side by side. Round, the chosen one square at 12dp and bold, in primary
+   container on surface container lowest (TimePickerDefaults). */
+.period {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: var(--md-comp-time-picker-period-selector-vertical-container-width);
+  height: var(--md-comp-time-picker-period-selector-vertical-container-height);
+}
+
+.horizontalPeriod {
+  flex-direction: row;
+  width: var(--md-comp-time-picker-period-selector-horizontal-container-width);
+  height: var(
+    --md-comp-time-picker-period-selector-horizontal-container-height
+  );
+}
+
+.periodItem {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-comp-time-picker-period-selector-unselected-label-text-color);
+  font-family: var(--md-comp-time-picker-period-selector-label-text-font);
+  font-size: var(--md-comp-time-picker-period-selector-label-text-size);
+  line-height: var(
+    --md-comp-time-picker-period-selector-label-text-line-height
+  );
+  font-weight: var(--md-comp-time-picker-period-selector-label-text-weight);
+  letter-spacing: var(
+    --md-comp-time-picker-period-selector-label-text-tracking
+  );
+  cursor: pointer;
+  transition-property: border-radius, background-color, color;
+  transition-duration:
+    var(--md-sys-motion-spring-fast-spatial-duration),
+    var(--md-sys-motion-spring-fast-effects-duration),
+    var(--md-sys-motion-spring-fast-effects-duration);
+  transition-timing-function:
+    var(--md-sys-motion-spring-fast-spatial),
+    var(--md-sys-motion-spring-fast-effects),
+    var(--md-sys-motion-spring-fast-effects);
+}
+
+.periodItem:active,
+.periodItem[aria-checked='true'] {
+  border-radius: 12px;
+}
+
+.periodItem[aria-checked='true'] {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 700;
+}
+
+/* The dial. The hand runs from an 8dp dot at the centre to a 48dp handle
+   over the chosen number, which shows through in on primary: the numbers
+   are drawn twice, once with a hole where the handle is and once only
+   inside it. */
+.dial {
+  --_x: calc(50% + sin(var(--_dial-angle)) * var(--_dial-reach));
+  --_y: calc(50% - cos(var(--_dial-angle)) * var(--_dial-reach));
+  --_handle: calc(
+    var(--md-comp-time-picker-clock-dial-selector-handle-container-size) / 2
+  );
+  position: relative;
+  flex: none;
+  width: var(--md-comp-time-picker-clock-dial-container-size);
+  height: var(--md-comp-time-picker-clock-dial-container-size);
+  border-radius: var(--md-comp-time-picker-clock-dial-shape);
+  background: var(--md-comp-time-picker-clock-dial-color);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    --_dial-angle var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial),
+    --_dial-reach var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial);
+}
+
+.dial[data-dragging] {
+  transition: none;
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: calc(
+    50% - var(--md-comp-time-picker-clock-dial-selector-track-container-width) /
+      2
+  );
+  width: var(--md-comp-time-picker-clock-dial-selector-track-container-width);
+  height: var(--_dial-reach);
+  background: var(
+    --md-comp-time-picker-clock-dial-selector-track-container-color
+  );
+  transform-origin: bottom;
+  rotate: var(--_dial-angle);
+  pointer-events: none;
+}
+
+.hand::before,
+.hand::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  border-radius: var(--md-sys-shape-corner-full);
+  translate: -50% 0;
+}
+
+.hand::before {
+  top: calc(-1 * var(--_handle));
+  width: var(--md-comp-time-picker-clock-dial-selector-handle-container-size);
+  height: var(--md-comp-time-picker-clock-dial-selector-handle-container-size);
+  background: var(
+    --md-comp-time-picker-clock-dial-selector-handle-container-color
+  );
+}
+
+.hand::after {
+  bottom: calc(
+    var(--md-comp-time-picker-clock-dial-selector-center-container-size) / -2
+  );
+  width: var(--md-comp-time-picker-clock-dial-selector-center-container-size);
+  height: var(--md-comp-time-picker-clock-dial-selector-center-container-size);
+  background: var(
+    --md-comp-time-picker-clock-dial-selector-center-container-color
+  );
+}
+
+/* Hours and minutes cross-fade (DefaultEffects); this fades the new face
+   in over the hand. */
+.face {
+  position: absolute;
+  inset: 0;
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects);
+}
+
+.labels,
+.selectedLabels {
+  position: absolute;
+  inset: 0;
+}
+
+.labels {
+  mask-image: radial-gradient(
+    circle var(--_handle) at var(--_x) var(--_y),
+    transparent calc(var(--_handle) - 0.5px),
+    #000 var(--_handle)
+  );
+}
+
+.selectedLabels {
+  color: var(--md-comp-time-picker-clock-dial-selected-label-text-color);
+  clip-path: circle(var(--_handle) at var(--_x) var(--_y));
+  pointer-events: none;
+}
+
+.label {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--md-comp-time-picker-clock-dial-unselected-label-text-color);
+  font-family: var(--md-comp-time-picker-clock-dial-label-text-font);
+  font-size: var(--md-comp-time-picker-clock-dial-label-text-size);
+  line-height: var(--md-comp-time-picker-clock-dial-label-text-line-height);
+  font-weight: var(--md-comp-time-picker-clock-dial-label-text-weight);
+  letter-spacing: var(--md-comp-time-picker-clock-dial-label-text-tracking);
+  cursor: pointer;
+}
+
+.selectedLabels .label {
+  color: inherit;
+}
+
+/* Typing: two 96x72dp fields in display medium, each over a supporting
+   line 7dp down, then the AM/PM toggle 52x72dp. The chosen field is
+   primary container with a 1dp outline, 2dp in primary when focused; the
+   other looks like the picker's unchosen hour. */
+.input {
+  display: flex;
+  align-items: flex-start;
+  color: var(--md-sys-color-on-surface);
+}
+
+.input .separator {
+  height: var(--md-comp-time-input-time-field-container-height);
+  color: var(--md-comp-time-input-time-field-separator-color);
+  font-family: var(--md-comp-time-input-time-field-separator-font);
+  font-size: var(--md-comp-time-input-time-field-separator-size);
+  font-weight: var(--md-comp-time-input-time-field-separator-weight);
+}
+
+.input .period {
+  width: var(--md-comp-time-input-period-selector-container-width);
+  height: var(--md-comp-time-input-period-selector-container-height);
+  margin-left: 4px;
+}
+
+.field {
+  width: var(--md-comp-time-input-time-field-container-width);
+}
+
+.timeField {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: var(--md-comp-time-input-time-field-container-height);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-comp-time-input-time-field-container-shape);
+  outline: none;
+  background: var(--md-comp-time-input-time-field-container-color);
+  color: var(--md-comp-time-input-time-field-label-text-color);
+  caret-color: var(--md-sys-color-primary);
+  font-family: var(--md-comp-time-input-time-field-label-text-font);
+  font-size: var(--md-comp-time-input-time-field-label-text-size);
+  line-height: var(--md-comp-time-input-time-field-label-text-line-height);
+  font-weight: var(--md-comp-time-input-time-field-label-text-weight);
+  letter-spacing: var(--md-comp-time-input-time-field-label-text-tracking);
+  text-align: center;
+}
+
+.timeField[data-selected] {
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline);
+  background: var(--md-comp-time-input-time-field-focus-container-color);
+  color: var(--md-comp-time-input-time-field-focus-label-text-color);
+}
+
+.timeField[data-selected]:focus {
+  box-shadow: inset 0 0 0
+    var(--md-comp-time-input-time-field-focus-outline-width)
+    var(--md-comp-time-input-time-field-focus-outline-color);
+}
+
+.timeField[aria-invalid='true'] {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.timeField[aria-invalid='true'][data-selected] {
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-error);
+  color: var(--md-sys-color-error);
+}
+
+.timeField[aria-invalid='true'][data-selected]:focus {
+  box-shadow: inset 0 0 0
+    var(--md-comp-time-input-time-field-focus-outline-width)
+    var(--md-sys-color-error);
+}
+
+/* Two lines tall, so an error fits without moving anything. */
+.supporting {
+  min-height: calc(
+    2 * var(--md-comp-time-input-time-field-supporting-text-line-height)
+  );
+  margin: 7px 0 0;
+  color: var(--md-comp-time-input-time-field-supporting-text-color);
+  font-family: var(--md-comp-time-input-time-field-supporting-text-font);
+  font-size: var(--md-comp-time-input-time-field-supporting-text-size);
+  line-height: var(--md-comp-time-input-time-field-supporting-text-line-height);
+  font-weight: var(--md-comp-time-input-time-field-supporting-text-weight);
+  letter-spacing: var(--md-comp-time-input-time-field-supporting-text-tracking);
+}
+
+.error {
+  color: var(--md-sys-color-error);
+}
+
+/* The dialog: as wide as the picker plus 24dp each side, rounded 28dp, on
+   a scrim. The title 24dp down with 20dp under it, the buttons straight
+   after the picker and 24dp from the bottom. Landscape keeps the title in
+   the corner and the picker 16dp from the top, the buttons 4dp under it
+   and 8dp from the bottom. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 101;
+  max-width: calc(100vw - 16px);
+  max-height: 100dvh;
+  overflow: auto;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--md-comp-time-picker-container-color);
+  translate: -50% -50%;
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+.body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  padding: 24px;
+}
+
+.title {
+  align-self: stretch;
+  margin: 0;
+  padding-bottom: 20px;
+  color: var(--md-comp-time-picker-headline-color);
+  font-family: var(--md-comp-time-picker-headline-font);
+  font-size: var(--md-comp-time-picker-headline-size);
+  line-height: var(--md-comp-time-picker-headline-line-height);
+  font-weight: var(--md-comp-time-picker-headline-weight);
+  letter-spacing: var(--md-comp-time-picker-headline-tracking);
+}
+
+.landscape {
+  padding: 16px 24px 8px;
+}
+
+.landscape .title {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+}
+
+.actions {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  gap: 8px;
+}
+
+.landscape .actions {
+  margin-top: 4px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dial,
+  .periodItem {
+    transition: none;
+  }
+
+  .face {
+    animation: none;
+  }
+}

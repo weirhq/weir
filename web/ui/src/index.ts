@@ -42,6 +42,16 @@ export {
   type DateRangePickerDialogProps,
   type DateRangePickerProps
 } from './date-range-picker'
+export {
+  TimeInput,
+  TimePicker,
+  TimePickerDialog,
+  timePickerStrings,
+  type TimeInputProps,
+  type TimePickerDialogProps,
+  type TimePickerProps,
+  type TimePickerStrings
+} from './time-picker'
 export { Dialog, type DialogProps } from './dialog'
 export { Icon, type IconProps } from './icon'
 export { iconNames, type IconName } from './icon-names'

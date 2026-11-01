@@ -258,6 +258,13 @@ h2 {
   border-radius: var(--md-sys-shape-corner-extra-large);
 }
 
+/* Time pickers have no container of their own; show them on the dialog's. */
+.time-box {
+  width: auto;
+  padding: 24px 24px 0;
+  background: var(--md-sys-color-surface-container-high);
+}
+
 .pickers .column {
   display: flex;
   flex-direction: column;

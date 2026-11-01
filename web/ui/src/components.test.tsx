@@ -49,6 +49,9 @@ import {
   TabPanel,
   Tabs,
   TextField,
+  TimeInput,
+  TimePicker,
+  TimePickerDialog,
   Tooltip,
   TopAppBar,
   useSnackbar,
@@ -1473,4 +1476,215 @@ describe('DateRangePicker', () => {
       end: '2026-11-05'
     })
   })
+})
+
+describe('TimePicker', () => {
+  function Harness({
+    initial = '09:30',
+    is24Hour = false,
+    onChange
+  }: {
+    initial?: string
+    is24Hour?: boolean
+    onChange?: (value: string) => void
+  }) {
+    const [value, setValue] = useState(initial)
+    return (
+      <TimePicker
+        locale="en-US"
+        is24Hour={is24Hour}
+        value={value}
+        onValueChange={(v) => {
+          setValue(v)
+          onChange?.(v)
+        }}
+      />
+    )
+  }
+
+  it('picks the hour, then the minutes, and switches AM and PM', () => {
+    const change = vi.fn()
+    render(<Harness onChange={change} />)
+    const hour = screen.getByRole('radio', { name: "Select hour 9 o'clock" })
+    expect(hour.getAttribute('aria-checked')).toBe('true')
+    expect(hour.lastElementChild!.textContent).toBe('09')
+    expect(screen.getByRole('radiogroup', { name: 'Select hour' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: "4 o'clock" }))
+    expect(change).toHaveBeenLastCalledWith('04:30')
+    // Choosing an hour moves on to the minutes.
+    expect(
+      screen.getByRole('radiogroup', { name: 'Select minutes' })
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: '45 minutes' }))
+    expect(change).toHaveBeenLastCalledWith('04:45')
+    fireEvent.click(screen.getByRole('radio', { name: 'PM' }))
+    expect(change).toHaveBeenLastCalledWith('16:45')
+    expect(
+      screen
+        .getByRole('radiogroup', { name: 'Select AM or PM' })
+        .querySelector('[aria-checked="true"]')!.textContent
+    ).toContain('PM')
+    fireEvent.click(
+      screen.getByRole('radio', { name: "Select hour 4 o'clock" })
+    )
+    expect(screen.getByRole('radiogroup', { name: 'Select hour' })).toBeTruthy()
+  })
+
+  it('steps through the numbers from the keyboard', () => {
+    const change = vi.fn()
+    render(<Harness initial="11:07" onChange={change} />)
+    const eleven = screen.getByRole('radio', { name: "11 o'clock" })
+    expect(eleven.tabIndex).toBe(0)
+    eleven.focus()
+    fireEvent.keyDown(eleven, { key: 'ArrowRight' })
+    expect(change).toHaveBeenLastCalledWith('00:07')
+    expect(document.activeElement!.getAttribute('aria-label')).toBe(
+      "12 o'clock"
+    )
+    // Enter chooses without moving on to the minutes.
+    fireEvent.keyDown(screen.getByRole('radio', { name: "3 o'clock" }), {
+      key: 'Enter'
+    })
+    expect(change).toHaveBeenLastCalledWith('03:07')
+    expect(screen.getByRole('radiogroup', { name: 'Select hour' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: /^Select minutes/ }))
+    // 7 minutes is nearest 5 on the dial.
+    const five = screen.getByRole('radio', { name: '5 minutes' })
+    expect(five.getAttribute('aria-checked')).toBe('true')
+    fireEvent.keyDown(five, { key: 'ArrowLeft' })
+    expect(change).toHaveBeenLastCalledWith('03:00')
+  })
+
+  it('sets the time by tapping and dragging on the dial', () => {
+    vi.useFakeTimers()
+    const change = vi.fn()
+    render(<Harness is24Hour onChange={change} />)
+    const dial = screen.getByRole('radiogroup', { name: 'Select hour' })
+    dial.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 256, height: 256 }) as DOMRect
+    const at = (degrees: number, radius: number) => {
+      const a = (degrees * Math.PI) / 180
+      return {
+        clientX: 128 + radius * Math.sin(a),
+        clientY: 128 - radius * Math.cos(a),
+        button: 0,
+        pointerId: 1
+      }
+    }
+    // The 24-hour clock's inner ring is the afternoon.
+    fireEvent.pointerDown(dial, at(90, 69))
+    fireEvent.pointerUp(dial, at(90, 69))
+    expect(change).toHaveBeenLastCalledWith('15:30')
+    expect(screen.getByRole('radio', { name: '15 hours' })).toBeTruthy()
+    act(() => vi.advanceTimersByTime(100))
+    const minutes = screen.getByRole('radiogroup', { name: 'Select minutes' })
+    minutes.getBoundingClientRect = dial.getBoundingClientRect
+    // Dragging picks single minutes, and lets go on the minutes.
+    fireEvent.pointerDown(minutes, at(0, 101))
+    fireEvent.pointerMove(minutes, at(40, 101))
+    fireEvent.pointerMove(minutes, at(42, 101))
+    expect(change).toHaveBeenLastCalledWith('15:07')
+    expect(minutes.dataset.dragging).toBe('true')
+    fireEvent.pointerUp(minutes, at(42, 101))
+    expect(minutes.dataset.dragging).toBeUndefined()
+    vi.useRealTimers()
+  })
+})
+
+describe('TimeInput', () => {
+  function Harness({
+    onChange,
+    onValidity
+  }: {
+    onChange?: (value: string) => void
+    onValidity?: (valid: boolean) => void
+  }) {
+    const [value, setValue] = useState('09:30')
+    return (
+      <TimeInput
+        locale="en-US"
+        value={value}
+        onValueChange={(v) => {
+          setValue(v)
+          onChange?.(v)
+        }}
+        onValidityChange={onValidity}
+      />
+    )
+  }
+
+  it('takes typed hours and minutes, moving on when the hour is done', () => {
+    const change = vi.fn()
+    render(<Harness onChange={change} />)
+    const hour = screen.getByLabelText('Hour') as HTMLInputElement
+    const minute = screen.getByLabelText('Minute') as HTMLInputElement
+    expect(hour.value).toBe('09')
+    hour.focus()
+    fireEvent.change(hour, { target: { value: '7' } })
+    expect(change).toHaveBeenLastCalledWith('07:30')
+    // 7 can't begin a two-digit hour, so the minutes come next.
+    expect(document.activeElement).toBe(minute)
+    expect(hour.value).toBe('07')
+    fireEvent.change(minute, { target: { value: '05' } })
+    expect(change).toHaveBeenLastCalledWith('07:05')
+    hour.focus()
+    fireEvent.change(hour, { target: { value: '1' } })
+    expect(document.activeElement).toBe(hour)
+    fireEvent.change(hour, { target: { value: '12' } })
+    expect(change).toHaveBeenLastCalledWith('00:05')
+    expect(document.activeElement).toBe(minute)
+  })
+
+  it('says what is wrong, and holds AM and PM until the hour is right', () => {
+    const change = vi.fn()
+    const validity = vi.fn()
+    render(<Harness onChange={change} onValidity={validity} />)
+    const hour = screen.getByLabelText('Hour') as HTMLInputElement
+    hour.focus()
+    fireEvent.change(hour, { target: { value: '13' } })
+    expect(validity).toHaveBeenLastCalledWith(false)
+    expect(hour.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByText('Hour must be 1–12')).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: 'PM' }))
+    expect(change).not.toHaveBeenCalled()
+    fireEvent.change(hour, { target: { value: '1' } })
+    expect(validity).toHaveBeenLastCalledWith(true)
+    fireEvent.click(screen.getByRole('radio', { name: 'PM' }))
+    expect(change).toHaveBeenLastCalledWith('13:30')
+    const minute = screen.getByLabelText('Minute') as HTMLInputElement
+    fireEvent.change(minute, { target: { value: '75' } })
+    expect(screen.getByText('Minute must be 0–59')).toBeTruthy()
+    expect(validity).toHaveBeenLastCalledWith(false)
+  })
+})
+
+it('confirms a time from the dialog, typed or picked', () => {
+  const confirm = vi.fn()
+  render(
+    <TimePickerDialog
+      locale="en-US"
+      open
+      onOpenChange={() => {}}
+      value="18:20"
+      onConfirm={confirm}
+    />
+  )
+  expect(screen.getByRole('dialog', { name: 'Select Time' })).toBeTruthy()
+  expect(document.activeElement!.getAttribute('aria-labelledby')).toBeTruthy()
+  fireEvent.click(screen.getByRole('radio', { name: "8 o'clock" }))
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Switch to text input mode' })
+  )
+  expect(screen.getByRole('dialog', { name: 'Enter Time' })).toBeTruthy()
+  const hour = screen.getByLabelText('Hour') as HTMLInputElement
+  expect(hour.value).toBe('08')
+  fireEvent.change(hour, { target: { value: '0' } })
+  fireEvent.change(hour, { target: { value: '00' } })
+  fireEvent.change(hour, { target: { value: '99' } })
+  const ok = screen.getByRole('button', { name: 'OK' }) as HTMLButtonElement
+  expect(ok.disabled).toBe(true)
+  fireEvent.change(hour, { target: { value: '11' } })
+  expect(ok.disabled).toBe(false)
+  fireEvent.click(ok)
+  expect(confirm).toHaveBeenCalledWith('23:20')
 })

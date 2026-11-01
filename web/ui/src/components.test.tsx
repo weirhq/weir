@@ -13,6 +13,8 @@ import {
   Dialog,
   ExtendedFab,
   Fab,
+  FabMenu,
+  FabMenuItem,
   FilterChip,
   IconButton,
   InputChip,
@@ -1158,4 +1160,53 @@ it('reports a loading indicator as a progress bar, with a value when it has one'
   const fetching = screen.getByRole('progressbar', { name: 'Fetching' })
   expect(fetching.getAttribute('aria-valuenow')).toBe('25')
   expect(fetching.className).toContain('md-comp-loading-indicator')
+})
+
+describe('FabMenu', () => {
+  function Harness({ onShare }: { onShare: () => void }) {
+    const [open, setOpen] = useState(false)
+    return (
+      <FabMenu open={open} onOpenChange={setOpen} label="Create">
+        <FabMenuItem icon="add" onClick={onShare}>
+          New playlist
+        </FabMenuItem>
+        <FabMenuItem icon="edit">Rename</FabMenuItem>
+      </FabMenu>
+    )
+  }
+
+  it('opens its items from the button, and closes after one is chosen', () => {
+    const share = vi.fn()
+    render(<Harness onShare={share} />)
+    const button = screen.getByRole('button', { name: 'Create' })
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    // Closed, the items are inert (which jsdom's queries don't heed).
+    const list = document.getElementById(button.getAttribute('aria-controls')!)!
+    expect(list.hasAttribute('inert')).toBe(true)
+    fireEvent.click(button)
+    expect(button.getAttribute('aria-expanded')).toBe('true')
+    expect(list.hasAttribute('inert')).toBe(false)
+    expect(list.querySelectorAll('button')).toHaveLength(2)
+    // Tab goes from the button to the top item.
+    expect(
+      button.compareDocumentPosition(
+        screen.getByRole('button', { name: 'New playlist' })
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'New playlist' }))
+    expect(share).toHaveBeenCalledOnce()
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(button)
+  })
+
+  it('closes with Escape, back to the button', () => {
+    render(<Harness onShare={() => {}} />)
+    const button = screen.getByRole('button', { name: 'Create' })
+    fireEvent.click(button)
+    const item = screen.getByRole('button', { name: 'Rename' })
+    item.focus()
+    fireEvent.keyDown(item, { key: 'Escape' })
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(button)
+  })
 })

@@ -18,6 +18,8 @@ import {
   type ButtonSize,
   ExtendedFab,
   Fab,
+  FabMenu,
+  FabMenuItem,
   FilterChip,
   Icon,
   IconButton,
@@ -302,6 +304,40 @@ function Menus() {
           options={kinds}
           disabled
         />
+      </div>
+    </div>
+  )
+}
+
+function FabMenus() {
+  const [open, setOpen] = useState<string>()
+  const [chose, setChose] = useState('Nothing yet')
+  const menu = (size: 'baseline' | 'medium' | 'large') => (
+    <FabMenu
+      key={size}
+      open={open === size}
+      onOpenChange={(o) => setOpen(o ? size : undefined)}
+      label={`Create (${size})`}
+      size={size}
+    >
+      <FabMenuItem icon="queue_music" onClick={() => setChose('Playlist')}>
+        Playlist
+      </FabMenuItem>
+      <FabMenuItem icon="favorite" onClick={() => setChose('Favourite')}>
+        Favourite
+      </FabMenuItem>
+      <FabMenuItem icon="edit" onClick={() => setChose('Note')}>
+        Note
+      </FabMenuItem>
+    </FabMenu>
+  )
+  return (
+    <div className="fab-menus">
+      <output data-testid="fab-menu-result">{chose}</output>
+      <div className="fab-menu-row">
+        {menu('baseline')}
+        {menu('medium')}
+        {menu('large')}
       </div>
     </div>
   )
@@ -1257,6 +1293,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="fab-menu">
+        <h2 id="fab-menu">FAB menu</h2>
+        <FabMenus />
       </section>
 
       <section aria-labelledby="loading">

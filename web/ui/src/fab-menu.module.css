@@ -1,0 +1,180 @@
+/* The M3 Expressive FAB menu, following Compose's FloatingActionButtonMenu,
+   FloatingActionButtonMenuItem and ToggleFloatingActionButton at the pinned
+   commit: a toggle FAB with its items stacked above it, 16dp in at the
+   sides and 16dp up from the bottom, the items 4dp apart and 8dp above
+   the button. */
+
+.menu {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0 16px 16px;
+  pointer-events: none;
+}
+
+.start {
+  align-items: flex-start;
+}
+
+/* The items, above the button though after it in the page, so Tab goes
+   from the button to the top item, as Compose sends it. */
+.items {
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: var(--md-comp-fab-menu-baseline-list-item-between-space);
+  margin: 0 0 var(--md-comp-fab-menu-baseline-close-button-between-space);
+  padding: 0;
+  list-style: none;
+}
+
+/* An item: a 56dp pill, 24dp in, the icon 8dp before a title medium
+   label, primary container. No shadow; Compose's Surface sets none. Each
+   grows from the menu's side (FastSpatial) and fades (FastEffects) in
+   turn, after its --_delay. */
+.item {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--md-comp-fab-menu-baseline-list-item-icon-label-space);
+  min-width: var(--md-comp-fab-menu-baseline-list-item-container-height);
+  height: var(--md-comp-fab-menu-baseline-list-item-container-height);
+  margin: 0;
+  padding-inline: var(--md-comp-fab-menu-baseline-list-item-leading-space)
+    var(--md-comp-fab-menu-baseline-list-item-trailing-space);
+  border: 0;
+  border-radius: var(--md-comp-fab-menu-baseline-list-item-container-shape);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-family: var(--md-sys-typescale-title-medium-font);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --md-icon-size: var(--md-comp-fab-menu-baseline-list-item-icon-size);
+  clip-path: inset(0 0 0 100% round 28px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    clip-path var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial) var(--_delay, 0ms),
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects) var(--_delay, 0ms),
+    visibility 0s linear
+      calc(
+        var(--_delay, 0ms) + var(--md-sys-motion-spring-fast-spatial-duration)
+      );
+}
+
+.start .item {
+  clip-path: inset(0 100% 0 0 round 28px);
+}
+
+.open .item {
+  clip-path: inset(0 round 28px);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: var(--_delay, 0ms), var(--_delay, 0ms), var(--_delay, 0ms);
+}
+
+.item:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+
+/* The toggle: a FAB that becomes a 56dp circle in primary, its icon 20dp
+   in on-primary, with FastSpatial. A medium or large FAB keeps its corner
+   of the box it started in. Its shadow is level 3, as Compose's. */
+.slot {
+  display: flex;
+  justify-content: flex-end;
+  width: var(--_from);
+  height: var(--_from);
+  pointer-events: auto;
+}
+
+.start .slot {
+  justify-content: flex-start;
+}
+
+.toggle {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--_size);
+  height: var(--_size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--_corner);
+  background: var(--_container);
+  color: var(--_icon);
+  box-shadow: var(--md-comp-fab-primary-container-container-shadow);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --_size: var(--_from);
+  --_corner: var(--_from-corner);
+  --_container: var(--md-sys-color-primary-container);
+  --_icon: var(--md-sys-color-on-primary-container);
+  --md-icon-size: var(--_from-icon);
+  transition-property: width, height, border-radius, background-color, color;
+  transition-duration: var(--md-sys-motion-spring-fast-spatial-duration);
+  transition-timing-function: var(--md-sys-motion-spring-fast-spatial);
+}
+
+.toggle > [translate='no'] {
+  transition: font-size var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+
+.toggle:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+
+.open .toggle {
+  --_size: var(--md-comp-fab-menu-baseline-close-button-container-width);
+  --_corner: calc(
+    var(--md-comp-fab-menu-baseline-close-button-container-width) / 2
+  );
+  --_container: var(--md-sys-color-primary);
+  --_icon: var(--md-sys-color-on-primary);
+  --md-icon-size: var(--md-comp-fab-menu-baseline-close-button-icon-size);
+}
+
+/* Sizes it starts from: 56, 80 or 96dp, corners 16, 20 or 28dp, icons 24,
+   28 or 36dp (Compose's FabLargeInitialIconSize; the token's 32 it marks
+   wrong). */
+.baseline {
+  --_from: var(--md-comp-fab-baseline-container-height);
+  --_from-corner: 16px;
+  --_from-icon: var(--md-comp-fab-baseline-icon-size);
+}
+
+.medium {
+  --_from: var(--md-comp-fab-medium-container-height);
+  --_from-corner: 20px;
+  --_from-icon: var(--md-comp-fab-medium-icon-size);
+}
+
+.large {
+  --_from: var(--md-comp-fab-large-container-height);
+  --_from-corner: 28px;
+  --_from-icon: 36px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .toggle {
+    transition-duration: 0s;
+  }
+}

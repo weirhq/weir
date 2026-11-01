@@ -237,3 +237,10 @@ h2 {
   height: 48px;
   fill: var(--md-sys-color-primary);
 }
+
+.fab-menu-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-height: 340px;
+}

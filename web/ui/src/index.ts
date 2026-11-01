@@ -6,6 +6,12 @@ export {
 } from './icon-button'
 export { ExtendedFab, Fab, type ExtendedFabProps, type FabProps } from './fab'
 export {
+  FabMenu,
+  FabMenuItem,
+  type FabMenuItemProps,
+  type FabMenuProps
+} from './fab-menu'
+export {
   ButtonGroup,
   ConnectedButtonGroup,
   type ButtonGroupProps

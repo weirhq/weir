@@ -79,23 +79,25 @@ export function UsersPage() {
         onOpenChange={(open) => !open && setDeleting(undefined)}
         title={`Delete ${deleting?.displayName}?`}
         description="They’re signed out everywhere, and their playlists and watch history go with them."
+        actions={
+          <>
+            <Button variant="text" onClick={() => setDeleting(undefined)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={remove.isPending}
+              onClick={() => deleting && remove.mutate(deleting.id)}
+            >
+              Delete
+            </Button>
+          </>
+        }
       >
         {remove.error && (
           <p role="alert" className={styles.error}>
             {errorMessage(remove.error)}
           </p>
         )}
-        <div className={styles.dialogActions}>
-          <Button variant="text" onClick={() => setDeleting(undefined)}>
-            Cancel
-          </Button>
-          <Button
-            disabled={remove.isPending}
-            onClick={() => deleting && remove.mutate(deleting.id)}
-          >
-            Delete
-          </Button>
-        </div>
       </Dialog>
     </section>
   )

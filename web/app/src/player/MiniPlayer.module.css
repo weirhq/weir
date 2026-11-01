@@ -55,13 +55,8 @@
 }
 
 .queue {
-  max-height: 40vh;
-  margin: 0;
-  padding: 8px;
-  overflow-y: auto;
-  list-style: none;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  /* Items on the bar's own colour. */
+  padding: 0 8px 8px;
+  /* Items on the sheet's own colour. */
   --md-comp-list-item-container-color: transparent;
 }
 

@@ -1,8 +1,29 @@
+/* M3 basic dialogs, laid out as Compose's AlertDialog (AlertDialog.kt at
+   the pinned commit): 24dp in from the edges, an optional centred icon and
+   the headline each 16dp above what follows, the body 24dp above the
+   actions, and the actions at the end, 8dp apart. 280 to 560dp wide. */
+
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--md-comp-scrim-container-color)
+      calc(var(--md-comp-scrim-container-opacity) * 100%),
+    transparent
+  );
+}
+
+/* The scrim fades with DefaultEffects, as ModalBottomSheet's does. */
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects) forwards;
 }
 
 .dialog {
@@ -10,33 +31,115 @@
   top: 50%;
   left: 50%;
   z-index: 101;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: min(560px, calc(100vw - 32px));
-  max-height: calc(100vh - 48px);
-  overflow-y: auto;
+  width: max-content;
+  min-width: min(280px, calc(100vw - 48px));
+  max-width: min(560px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
   padding: 24px;
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
+  border-radius: var(--md-comp-dialog-container-shape);
+  /* AlertDialog's Surface has no shadow and no tonal elevation. */
+  background: var(--md-comp-dialog-container-color);
+  color: var(--md-comp-dialog-headline-color);
   transform: translate(-50%, -50%);
 }
+
 .dialog:focus {
   outline: none;
 }
 
+/* Compose leaves dialog motion to the platform window; here it fades and
+   grows a little as it opens, and fades as it closes. */
+.dialog[data-state='open'] {
+  animation: dialog-in var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.dialog[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-duration-short3)
+    var(--md-sys-motion-easing-emphasized-accelerate) forwards;
+}
+
+.icon {
+  align-self: center;
+  padding-bottom: 16px;
+  color: var(--md-comp-dialog-icon-color);
+  --md-icon-size: var(--md-comp-dialog-icon-size);
+}
+
 .title {
   margin: 0;
-  font-family: var(--md-sys-typescale-headline-small-font);
-  font-size: var(--md-sys-typescale-headline-small-size);
-  font-weight: var(--md-sys-typescale-headline-small-weight);
-  line-height: var(--md-sys-typescale-headline-small-line-height);
+  padding-bottom: 16px;
+  font-family: var(--md-comp-dialog-headline-font);
+  font-size: var(--md-comp-dialog-headline-size);
+  line-height: var(--md-comp-dialog-headline-line-height);
+  font-weight: var(--md-comp-dialog-headline-weight);
+  letter-spacing: var(--md-comp-dialog-headline-tracking);
+}
+
+/* With an icon, the headline is centred under it. */
+.icon + .title {
+  text-align: center;
+}
+
+/* The body takes what room is left and scrolls (weight 1, not filled),
+   24dp above the actions. */
+.body {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: 24px;
+  color: var(--md-comp-dialog-supporting-text-color);
+  font-family: var(--md-comp-dialog-supporting-text-font);
+  font-size: var(--md-comp-dialog-supporting-text-size);
+  line-height: var(--md-comp-dialog-supporting-text-line-height);
+  font-weight: var(--md-comp-dialog-supporting-text-weight);
+  letter-spacing: var(--md-comp-dialog-supporting-text-tracking);
+}
+
+.body:empty {
+  display: none;
 }
 
 .description {
   margin: 0;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: var(--md-sys-typescale-body-medium-size);
-  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+/* AlertDialogFlowRow: in a row the confirming action comes last; when they
+   wrap, it goes on top. Actions are given dismiss first, confirm last. */
+.actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[data-state='open'] {
+    animation-name: fade-in;
+  }
 }

@@ -152,23 +152,25 @@ export function LibrariesPage() {
         onOpenChange={(open) => !open && setDeleting(undefined)}
         title={`Delete “${deleting?.name}”?`}
         description="Weir forgets everything it scanned into this library. Files on disk are not touched."
+        actions={
+          <>
+            <Button variant="text" onClick={() => setDeleting(undefined)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={remove.isPending}
+              onClick={() => deleting && remove.mutate(deleting.id)}
+            >
+              Delete
+            </Button>
+          </>
+        }
       >
         {remove.error && (
           <p role="alert" className={styles.error}>
             {errorMessage(remove.error)}
           </p>
         )}
-        <div className={styles.dialogActions}>
-          <Button variant="text" onClick={() => setDeleting(undefined)}>
-            Cancel
-          </Button>
-          <Button
-            disabled={remove.isPending}
-            onClick={() => deleting && remove.mutate(deleting.id)}
-          >
-            Delete
-          </Button>
-        </div>
       </Dialog>
     </section>
   )

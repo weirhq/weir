@@ -1,9 +1,8 @@
 import { useRouteContext } from '@tanstack/react-router'
 import { Button, Dialog, TextField } from '@weirhq/m3e'
-import { useState, useSyncExternalStore, type FormEvent } from 'react'
+import { useId, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { deviceInfo } from '../device'
 import { errorMessage } from '../errors'
-import styles from './ReauthDialog.module.css'
 
 /** Asks for the password again when an admin call needs a recent sign-in. */
 export function ReauthDialog() {
@@ -12,6 +11,7 @@ export function ReauthDialog() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const form = useId()
 
   function close(ok: boolean) {
     setPassword('')
@@ -43,8 +43,18 @@ export function ReauthDialog() {
       onOpenChange={(open) => !open && close(false)}
       title="Confirm it’s you"
       description="Changing server settings needs your password from the last 10 minutes."
+      actions={
+        <>
+          <Button variant="text" type="button" onClick={() => close(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" form={form} disabled={!password || busy}>
+            Continue
+          </Button>
+        </>
+      }
     >
-      <form className={styles.form} onSubmit={submit}>
+      <form id={form} onSubmit={submit}>
         {/* Tells password managers whose password this is. */}
         <input
           type="text"
@@ -62,14 +72,6 @@ export function ReauthDialog() {
           error={error || undefined}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <div className={styles.actions}>
-          <Button variant="text" type="button" onClick={() => close(false)}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={!password || busy}>
-            Continue
-          </Button>
-        </div>
       </form>
     </Dialog>
   )

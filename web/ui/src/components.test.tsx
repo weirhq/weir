@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import {
   AssistChip,
+  BottomSheet,
   Button,
   ButtonGroup,
   Card,
@@ -132,9 +133,8 @@ it('opens a labelled modal dialog and closes it with Escape', () => {
         onOpenChange={setOpen}
         title="Delete Films?"
         description="Files on disk are not touched."
-      >
-        <Button>Delete</Button>
-      </Dialog>
+        actions={<Button>Delete</Button>}
+      />
     )
   }
   render(<Harness />)
@@ -658,5 +658,110 @@ describe('Card', () => {
     expect(item.className).toContain('md-comp-outlined-card')
     expect(item.textContent).toBe('Films')
     expect(screen.getByRole('link', { name: 'Open Films' })).toBeTruthy()
+  })
+})
+
+describe('Dialog', () => {
+  it('puts an icon above the title, then the body, then the actions', () => {
+    render(
+      <Dialog
+        open
+        onOpenChange={() => {}}
+        icon="delete"
+        title="Delete Films?"
+        description="Files on disk are not touched."
+        actions={
+          <>
+            <Button variant="text">Cancel</Button>
+            <Button variant="text">Delete</Button>
+          </>
+        }
+      >
+        <TextField label="Type the name" />
+      </Dialog>
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Delete Films?' })
+    const order = [
+      dialog.querySelector('[translate="no"]'),
+      screen.getByRole('heading', { name: 'Delete Films?' }),
+      screen.getByText('Files on disk are not touched.'),
+      screen.getByLabelText('Type the name'),
+      screen.getByRole('button', { name: 'Cancel' }),
+      screen.getByRole('button', { name: 'Delete' })
+    ]
+    for (let i = 1; i < order.length; i++)
+      expect(
+        order[i - 1]!.compareDocumentPosition(order[i]!) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy()
+  })
+})
+
+it('gives focus back to what opened a dialog when it closes', async () => {
+  function Harness() {
+    const [open, setOpen] = useState(false)
+    return (
+      <>
+        <Button onClick={() => setOpen(true)}>Delete</Button>
+        <Dialog
+          open={open}
+          onOpenChange={setOpen}
+          title="Delete Films?"
+          actions={<Button onClick={() => setOpen(false)}>Cancel</Button>}
+        />
+      </>
+    )
+  }
+  render(<Harness />)
+  const opener = screen.getByRole('button', { name: 'Delete' })
+  opener.focus()
+  fireEvent.click(opener)
+  expect(document.activeElement).not.toBe(opener)
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  await waitFor(() => expect(document.activeElement).toBe(opener))
+})
+
+describe('BottomSheet', () => {
+  function Harness({ handle = true }: { handle?: boolean }) {
+    const [open, setOpen] = useState(true)
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Open</button>
+        <BottomSheet
+          open={open}
+          onOpenChange={setOpen}
+          title="Queue"
+          dragHandle={handle}
+        >
+          <List aria-label="Tracks">
+            <ListItem headline="Half Loop" />
+          </List>
+        </BottomSheet>
+      </>
+    )
+  }
+
+  it('opens a modal named by its title, which it doesn\u2019t show', () => {
+    render(<Harness />)
+    const sheet = screen.getByRole('dialog', { name: 'Queue' })
+    expect(sheet.getAttribute('aria-describedby')).toBeNull()
+    expect(screen.getByRole('list', { name: 'Tracks' })).toBeTruthy()
+    // The rest of the page is hidden from screen readers while it's open.
+    expect(screen.queryByRole('button', { name: 'Open' })).toBeNull()
+  })
+
+  it('closes from its handle and with Escape', () => {
+    render(<Harness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Close sheet' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('can leave the handle out', () => {
+    render(<Harness handle={false} />)
+    expect(screen.getByRole('dialog', { name: 'Queue' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Close sheet' })).toBeNull()
   })
 })

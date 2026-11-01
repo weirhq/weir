@@ -80,12 +80,6 @@
   gap: 8px;
 }
 
-.dialogActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .form {
   display: flex;
   flex-direction: column;

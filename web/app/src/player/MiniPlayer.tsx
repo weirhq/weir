@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { IconButton, List, ListItem } from '@weirhq/m3e'
+import { BottomSheet, IconButton, List, ListItem } from '@weirhq/m3e'
 import { useState } from 'react'
 import { sized } from '../art'
 import { useQueue } from './queue'
@@ -26,7 +26,7 @@ export function MiniPlayer() {
   const error = startError ? startErrorMessage(startError) : mediaError
   return (
     <section className={styles.bar} aria-label="Now playing">
-      {showQueue && (
+      <BottomSheet open={showQueue} onOpenChange={setShowQueue} title="Queue">
         <List ordered className={styles.queue} aria-label="Queue">
           {tracks.map((t, i) => (
             <ListItem
@@ -38,7 +38,7 @@ export function MiniPlayer() {
             />
           ))}
         </List>
-      )}
+      </BottomSheet>
       <div className={styles.row}>
         {track.posterUrl && (
           <img className={styles.art} src={sized(track.posterUrl, 96)} alt="" />
@@ -84,8 +84,8 @@ export function MiniPlayer() {
         <IconButton
           icon="queue_music"
           label="Queue"
-          aria-expanded={showQueue}
-          onClick={() => setShowQueue(!showQueue)}
+          aria-haspopup="dialog"
+          onClick={() => setShowQueue(true)}
         />
         <IconButton icon="close" label="Close player" onClick={clear} />
       </div>

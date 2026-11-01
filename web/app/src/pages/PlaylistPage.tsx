@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router'
 import {
   Button,
+  Dialog,
   IconButton,
   List,
   ListItem,
@@ -72,7 +73,7 @@ export function PlaylistPage() {
   const items = playlist.data!.items
   const owned = pl.ownerId === session.user?.id
   const tracks = items.filter((i) => i.kind === ItemKind.TRACK)
-  const failed = update.error ?? remove.error
+  const failed = update.error
 
   function rename(e: FormEvent) {
     e.preventDefault()
@@ -140,25 +141,37 @@ export function PlaylistPage() {
               />
               Shared with everyone
             </label>
-            {confirmDelete ? (
-              <span className={styles.confirm}>
-                Delete “{pl.name}”?
-                <Button
-                  variant="tonal"
-                  disabled={remove.isPending}
-                  onClick={() => remove.mutate()}
-                >
-                  Delete
-                </Button>
-                <Button variant="text" onClick={() => setConfirmDelete(false)}>
-                  Cancel
-                </Button>
-              </span>
-            ) : (
-              <Button variant="text" onClick={() => setConfirmDelete(true)}>
-                Delete playlist
-              </Button>
-            )}
+            <Button variant="text" onClick={() => setConfirmDelete(true)}>
+              Delete playlist
+            </Button>
+            <Dialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              title={`Delete “${pl.name}”?`}
+              description="Its items stay on the server."
+              actions={
+                <>
+                  <Button
+                    variant="text"
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={remove.isPending}
+                    onClick={() => remove.mutate()}
+                  >
+                    Delete
+                  </Button>
+                </>
+              }
+            >
+              {remove.error && (
+                <p role="alert" className={styles.dialogError}>
+                  {errorMessage(remove.error)}
+                </p>
+              )}
+            </Dialog>
           </>
         )}
       </div>

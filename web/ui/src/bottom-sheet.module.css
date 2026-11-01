@@ -1,0 +1,165 @@
+/* M3 modal bottom sheets, following Compose's ModalBottomSheet (and
+   BottomSheet.kt and SheetDefaults.kt at the pinned commit): up to 640dp
+   wide, rounded at the top, over a scrim, sliding in and out over 300ms
+   with FastOutSlowIn. It opens fully, as with skipPartiallyExpanded. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: color-mix(
+    in srgb,
+    var(--md-comp-scrim-container-color)
+      calc(var(--md-comp-scrim-container-opacity) * 100%),
+    transparent
+  );
+}
+
+/* The scrim fades with DefaultEffects. */
+.scrim[data-state='open'] {
+  animation: fade-in var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects);
+}
+
+.scrim[data-state='closed'] {
+  animation: fade-out var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects) forwards;
+}
+
+.sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 101;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: 100dvh;
+  margin-inline: auto;
+  border-radius: var(--md-comp-sheet-bottom-docked-container-shape);
+  /* No shadow; tonal elevation only tints a surface-coloured sheet. */
+  background: var(--md-comp-sheet-bottom-docked-container-color);
+  color: var(--md-sys-color-on-surface);
+  transform: translateY(var(--_drag, 0px));
+}
+
+.sheet:focus {
+  outline: none;
+}
+
+/* BottomSheetAnimationSpec: tween(300, FastOutSlowInEasing). */
+.sheet[data-state='open'] {
+  animation: sheet-in 300ms var(--md-sys-motion-easing-legacy);
+}
+
+.sheet[data-state='closed'] {
+  animation: sheet-out 300ms var(--md-sys-motion-easing-legacy) forwards;
+}
+
+/* Settling back after a drag that didn't go far enough. */
+.settling {
+  transition: transform 300ms var(--md-sys-motion-easing-legacy);
+}
+
+/* The top of the sheet, where it's dragged from. */
+.top {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.dragging,
+.dragging .top {
+  cursor: grabbing;
+}
+
+/* SheetDefaults.DragHandle: 32 by 4dp, fully rounded, 22dp above and
+   below. Pressing it closes an open sheet. The target is 48dp wide. */
+.handle {
+  position: relative;
+  box-sizing: border-box;
+  width: 48px;
+  height: calc(var(--md-comp-sheet-bottom-docked-drag-handle-height) + 44px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: none;
+  color: var(--md-comp-sheet-bottom-docked-drag-handle-color);
+  cursor: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.handle::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: calc(50% - var(--md-comp-sheet-bottom-docked-drag-handle-width) / 2);
+  width: var(--md-comp-sheet-bottom-docked-drag-handle-width);
+  height: var(--md-comp-sheet-bottom-docked-drag-handle-height);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background: currentColor;
+}
+
+.handle:focus-visible {
+  outline: 3px solid var(--md-comp-sheet-bottom-focus-indicator-color);
+  outline-offset: -3px;
+}
+
+.content {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-out {
+  from {
+    transform: translateY(var(--_drag, 0px));
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet[data-state='open'] {
+    animation-name: fade-in;
+  }
+  .sheet[data-state='closed'] {
+    animation-name: fade-out;
+  }
+}

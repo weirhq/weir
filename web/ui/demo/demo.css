@@ -129,3 +129,8 @@ h2 {
   font-size: var(--md-sys-typescale-body-medium-size);
   line-height: var(--md-sys-typescale-body-medium-line-height);
 }
+
+/* List items on the sheet's own colour. */
+.in-sheet {
+  --md-comp-list-item-container-color: transparent;
+}

@@ -4,11 +4,13 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   AssistChip,
+  BottomSheet,
   Button,
   ButtonGroup,
   Card,
   Checkbox,
   ConnectedButtonGroup,
+  Dialog,
   SplitButton,
   type ButtonProps,
   type ButtonSize,
@@ -279,6 +281,135 @@ function Menus() {
           disabled
         />
       </div>
+    </div>
+  )
+}
+
+function Dialogs() {
+  const [basic, setBasic] = useState(false)
+  const [withIcon, setWithIcon] = useState(false)
+  const [form, setForm] = useState(false)
+  const [long, setLong] = useState(false)
+  const [sheet, setSheet] = useState(false)
+  const [name, setName] = useState('')
+  const [said, setSaid] = useState('Nothing yet')
+  const close = (what: string) => () => {
+    setSaid(what)
+    setBasic(false)
+    setWithIcon(false)
+    setForm(false)
+    setLong(false)
+  }
+  return (
+    <div className="row">
+      <Button variant="tonal" onClick={() => setBasic(true)}>
+        Basic
+      </Button>
+      <Button variant="tonal" onClick={() => setWithIcon(true)}>
+        With an icon
+      </Button>
+      <Button variant="tonal" onClick={() => setForm(true)}>
+        With a form
+      </Button>
+      <Button variant="tonal" onClick={() => setLong(true)}>
+        Long
+      </Button>
+      <Button variant="tonal" onClick={() => setSheet(true)}>
+        Bottom sheet
+      </Button>
+      <output data-testid="dialog-result">{said}</output>
+      <Dialog
+        open={basic}
+        onOpenChange={setBasic}
+        title="Discard draft?"
+        actions={
+          <>
+            <Button variant="text" onClick={close('Cancelled')}>
+              Cancel
+            </Button>
+            <Button variant="text" onClick={close('Discarded')}>
+              Discard
+            </Button>
+          </>
+        }
+      />
+      <Dialog
+        open={withIcon}
+        onOpenChange={setWithIcon}
+        icon="delete"
+        title="Delete this library?"
+        description="Its items leave the server; files on disk are not touched."
+        actions={
+          <>
+            <Button variant="text" onClick={close('Kept')}>
+              Cancel
+            </Button>
+            <Button variant="text" onClick={close('Deleted')}>
+              Delete
+            </Button>
+          </>
+        }
+      />
+      <Dialog
+        open={form}
+        onOpenChange={setForm}
+        title="Rename playlist"
+        actions={
+          <>
+            <Button variant="text" onClick={close('Not renamed')}>
+              Cancel
+            </Button>
+            <Button variant="text" type="submit" form="rename">
+              Rename
+            </Button>
+          </>
+        }
+      >
+        <form
+          id="rename"
+          onSubmit={(e) => {
+            e.preventDefault()
+            close(`Renamed to ${name}`)()
+          }}
+        >
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </form>
+      </Dialog>
+      <Dialog
+        open={long}
+        onOpenChange={setLong}
+        title="Terms"
+        description={'All work and no play makes a long dialog. '.repeat(60)}
+        actions={
+          <>
+            <Button variant="text" onClick={close('Declined')}>
+              Decline every one of the terms and conditions
+            </Button>
+            <Button variant="text" onClick={close('Accepted')}>
+              Accept every one of the terms and conditions
+            </Button>
+          </>
+        }
+      />
+      <BottomSheet open={sheet} onOpenChange={setSheet} title="Share">
+        <List aria-label="Share to" className="in-sheet">
+          {['Copy link', 'Email', 'Messages', 'Nearby'].map((n) => (
+            <ListItem
+              key={n}
+              leading="add"
+              headline={n}
+              onClick={() => {
+                setSaid(`Shared by ${n}`)
+                setSheet(false)
+              }}
+            />
+          ))}
+        </List>
+      </BottomSheet>
     </div>
   )
 }
@@ -699,6 +830,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="dialogs">
+        <h2 id="dialogs">Dialogs and sheets</h2>
+        <Dialogs />
       </section>
 
       <section aria-labelledby="cards">

@@ -83,11 +83,21 @@ it('keeps playing while browsing, and jumps within the queue', async () => {
   expect(browse.stops).toHaveLength(0)
 
   await user.click(within(bar).getByRole('button', { name: 'Queue' }))
-  const queue = within(bar).getByRole('list', { name: 'Queue' })
+  const sheet = screen.getByRole('dialog', { name: 'Queue' })
+  const queue = within(sheet).getByRole('list', { name: 'Queue' })
   await user.click(
     within(queue).getByRole('button', { name: 'The Color of the Fire' })
   )
   await within(bar).findByText('3 of 3')
+  // Picking a track leaves the queue open; Escape closes it.
+  expect(
+    within(queue)
+      .getByRole('button', { name: 'The Color of the Fire' })
+      .closest('li')!
+      .getAttribute('aria-current')
+  ).toBe('true')
+  await user.keyboard('{Escape}')
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   await vi.waitFor(() =>
     expect(browse.starts.map((s) => s.itemId)).toEqual(['t1', 't3'])
   )

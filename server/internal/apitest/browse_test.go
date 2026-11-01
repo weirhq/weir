@@ -311,3 +311,38 @@ func TestPeople(t *testing.T) {
 	_, err = browse.GetPerson(ctx, connect.NewRequest(&apiv1alpha.GetPersonRequest{}))
 	wantCode(t, err, connect.CodeNotFound)
 }
+
+// Summaries say what they belong to, and tracks borrow their album's cover.
+func TestSummariesNameTheirParents(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	creds := h.bootstrap(t)
+	browse := apiv1alpha.NewBrowseClient(http.DefaultClient, h.url, bearer(creds))
+	h.scanFolder(t, library.Music, "music", "Kate Bush/Hounds of Love/01 Running Up That Hill.flac")
+	h.scanFolder(t, library.Shows, "tv", "Severance (2022)/Season 01/Severance - S01E01.mp4")
+	album := uuid.MustParse(itemID(t, h, "Hounds of Love"))
+	if err := h.store.UpsertArtwork(ctx, dbgen.UpsertArtworkParams{ItemID: album, Kind: "poster", Source: "local", Location: "/covers/hounds.jpg"}); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := browse.Search(ctx, connect.NewRequest(&apiv1alpha.SearchRequest{Query: "Running Up That Hill"}))
+	if err != nil || len(found.Msg.Items) == 0 {
+		t.Fatalf("search: %v %v", found, err)
+	}
+	track := found.Msg.Items[0]
+	if track.Kind != apiv1alpha.ItemKind_ITEM_KIND_TRACK || track.ParentTitle != "Hounds of Love" {
+		t.Errorf("track %q in %q", track.Title, track.ParentTitle)
+	}
+	if !strings.Contains(track.PosterUrl, album.String()+"/poster?") {
+		t.Errorf("track poster %q, want the album's", track.PosterUrl)
+	}
+
+	season, err := browse.ListItems(ctx, connect.NewRequest(&apiv1alpha.ListItemsRequest{ParentId: itemID(t, h, "Season 1")}))
+	if err != nil || len(season.Msg.Items) != 1 {
+		t.Fatalf("episodes: %v %v", season, err)
+	}
+	// An episode names its show, not its season.
+	if ep := season.Msg.Items[0]; ep.ParentTitle != "Severance" || ep.PosterUrl != "" {
+		t.Errorf("episode in %q, poster %q", ep.ParentTitle, ep.PosterUrl)
+	}
+}

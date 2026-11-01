@@ -37,7 +37,11 @@ ON CONFLICT (user_id, item_id) DO UPDATE SET
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
        coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
-       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms,
+       coalesce(CASE WHEN i.kind = 'episode'
+           THEN (SELECT rs.title FROM item s JOIN resolved_metadata rs ON rs.item_id = s.parent_id WHERE s.id = i.parent_id)
+           ELSE (SELECT rp.title FROM resolved_metadata rp WHERE rp.item_id = i.parent_id) END, '')::text AS parent_title,
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.parent_id AND i.kind = 'track'), '{}')::text[] AS parent_art_kinds
 FROM playback_state ps
 JOIN item i ON i.id = ps.item_id
 JOIN resolved_metadata r ON r.item_id = i.id
@@ -50,7 +54,11 @@ LIMIT sqlc.arg(max_results)::int;
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
        coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
-       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms,
+       coalesce(CASE WHEN i.kind = 'episode'
+           THEN (SELECT rs.title FROM item s JOIN resolved_metadata rs ON rs.item_id = s.parent_id WHERE s.id = i.parent_id)
+           ELSE (SELECT rp.title FROM resolved_metadata rp WHERE rp.item_id = i.parent_id) END, '')::text AS parent_title,
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.parent_id AND i.kind = 'track'), '{}')::text[] AS parent_art_kinds
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
 LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)

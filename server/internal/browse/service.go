@@ -54,6 +54,9 @@ type view struct {
 	lastPlayed *time.Time
 	artKinds   []string
 	durationMs int64
+	// What it belongs to, and for a track its album's artwork.
+	parentTitle    string
+	parentArtKinds []string
 }
 
 // urls signs artwork links for one caller; one signature covers them all.
@@ -77,6 +80,11 @@ func (u urls) cast(item uuid.UUID, n int) string {
 
 func (u urls) decorate(sum *apiv1alpha.ItemSummary, id uuid.UUID, v view) *apiv1alpha.ItemSummary {
 	sum.PosterUrl = u.art(id, "poster", v.artKinds)
+	if parent, err := uuid.Parse(sum.ParentId); sum.PosterUrl == "" && err == nil {
+		// A track shows its album's cover.
+		sum.PosterUrl = u.art(parent, "poster", v.parentArtKinds)
+	}
+	sum.ParentTitle = v.parentTitle
 	sum.ThumbUrl = u.art(id, "thumb", v.artKinds)
 	if sum.ThumbUrl == "" {
 		// Films and shows have no stills; their backdrop is the wide picture.
@@ -185,7 +193,7 @@ func (s *Service) ListItems(ctx context.Context, req *connect.Request[apiv1alpha
 	resp := &apiv1alpha.ListItemsResponse{}
 	for _, r := range rows {
 		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
-		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs}))
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs, r.ParentTitle, r.ParentArtKinds}))
 		resp.Total = uint32(r.Total)
 	}
 	if next := offset + len(rows); len(rows) > 0 && uint32(next) < resp.Total {
@@ -234,7 +242,7 @@ func (s *Service) GetItem(ctx context.Context, req *connect.Request[apiv1alpha.G
 			item.Cast[i].PhotoUrl = u.cast(it.ID, i)
 		}
 	}
-	u.decorate(item.Summary, it.ID, view{uv.PositionMs, uv.Watched, uv.PlayCount, uv.LastPlayed, uv.ArtKinds, uv.DurationMs})
+	u.decorate(item.Summary, it.ID, view{uv.PositionMs, uv.Watched, uv.PlayCount, uv.LastPlayed, uv.ArtKinds, uv.DurationMs, "", nil})
 	item.BackdropUrl = u.art(it.ID, "backdrop", uv.ArtKinds)
 	item.LogoUrl = u.art(it.ID, "logo", uv.ArtKinds)
 
@@ -282,7 +290,7 @@ func (s *Service) Search(ctx context.Context, req *connect.Request[apiv1alpha.Se
 	resp := &apiv1alpha.SearchResponse{}
 	for _, r := range rows {
 		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
-		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs}))
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs, r.ParentTitle, r.ParentArtKinds}))
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -303,7 +311,7 @@ func (s *Service) ListContinueWatching(ctx context.Context, req *connect.Request
 	for _, r := range rows {
 		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
 		watched, count := r.Watched, r.PlayCount
-		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{&r.PositionMs, &watched, &count, r.LastPlayed, r.ArtKinds, r.DurationMs}))
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{&r.PositionMs, &watched, &count, r.LastPlayed, r.ArtKinds, r.DurationMs, r.ParentTitle, r.ParentArtKinds}))
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -339,7 +347,7 @@ func (s *Service) ListRecentlyAdded(ctx context.Context, req *connect.Request[ap
 	resp := &apiv1alpha.ListRecentlyAddedResponse{}
 	for _, r := range rows {
 		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
-		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs}))
+		resp.Items = append(resp.Items, u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs, r.ParentTitle, r.ParentArtKinds}))
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -394,7 +402,7 @@ func (s *Service) GetPerson(ctx context.Context, req *connect.Request[apiv1alpha
 		}
 		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
 		resp.Credits = append(resp.Credits, &apiv1alpha.Credit{
-			Item: u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs}),
+			Item: u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs, r.ParentTitle, r.ParentArtKinds}),
 			Role: r.Role,
 		})
 	}

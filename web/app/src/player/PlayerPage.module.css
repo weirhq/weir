@@ -15,6 +15,14 @@
   object-fit: contain;
 }
 
+/* Captions the browser draws, in iOS's own full screen or
+   picture-in-picture, in the app's type on a shade. */
+.video::cue {
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  font-family: var(--md-sys-typescale-body-large-font);
+}
+
 .back {
   color: #fff;
   font-family: var(--md-sys-typescale-title-medium-font);

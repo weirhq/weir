@@ -34,6 +34,21 @@ globalThis.ResizeObserver ??= class {
 // jsdom has media elements but no media.
 window.HTMLMediaElement.prototype.play = () => Promise.resolve()
 window.HTMLMediaElement.prototype.load = () => {}
+// Nor text tracks that send events; an empty list that does.
+const textTracks = new WeakMap<HTMLMediaElement, EventTarget>()
+Object.defineProperty(window.HTMLMediaElement.prototype, 'textTracks', {
+  get(this: HTMLMediaElement) {
+    if (!textTracks.has(this))
+      textTracks.set(
+        this,
+        Object.assign(new EventTarget(), {
+          length: 0,
+          [Symbol.iterator]: () => [][Symbol.iterator]()
+        })
+      )
+    return textTracks.get(this)
+  }
+})
 
 // The queue outlives a render, as it does in the browser.
 afterEach(() => useQueue.getState().clear())

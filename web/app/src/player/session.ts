@@ -16,6 +16,9 @@ type Options = {
   versionId?: string
   // Distinguishes two plays of the same item, e.g. a repeat in a queue.
   instance?: number
+  // Streams chosen over the server's picks; a subtitle of -1 is none.
+  audioStream?: number
+  subtitleStream?: number
   resumeMs: number
   // Whether resumeMs is known yet; media attaches only once it is.
   ready: boolean
@@ -31,6 +34,8 @@ export function usePlaybackSession<T extends HTMLMediaElement>({
   itemId,
   versionId,
   instance = 0,
+  audioStream,
+  subtitleStream,
   resumeMs,
   ready
 }: Options) {
@@ -44,12 +49,21 @@ export function usePlaybackSession<T extends HTMLMediaElement>({
 
   // One session per play: never refetched, never shared with another play.
   const start = useQuery({
-    queryKey: ['play', itemId, versionId, instance],
+    queryKey: [
+      'play',
+      itemId,
+      versionId,
+      instance,
+      audioStream,
+      subtitleStream
+    ],
     enabled: itemId !== undefined,
     queryFn: async () => {
       const resp = await api.playback.start({
         itemId: itemId!,
         versionId,
+        audioStreamIndex: audioStream,
+        subtitleStreamIndex: subtitleStream,
         capabilities: detectCapabilities(currentBrowser())
       })
       return resp.plan!

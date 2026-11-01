@@ -17,6 +17,7 @@ import {
 import { HdrFormat } from '../gen/weir/api/v1alpha/playback_pb'
 import { srcSet, sized } from '../art'
 import { useQueue } from '../player/queue'
+import { channels, codecName, languageName } from '../streams'
 import { itemRoute } from '../router'
 import styles from './ItemPage.module.css'
 
@@ -360,54 +361,12 @@ function VersionLine({ version }: { version: Version }) {
   return <>{parts.join(' · ')}</>
 }
 
-// What people call ffmpeg's codecs; the rest are shown in capitals.
-const codecNames: Record<string, string> = {
-  h264: 'H.264',
-  mpeg2video: 'MPEG-2',
-  mpeg4: 'MPEG-4',
-  ac3: 'Dolby Digital',
-  eac3: 'Dolby Digital Plus',
-  truehd: 'Dolby TrueHD',
-  dts: 'DTS',
-  opus: 'Opus',
-  vorbis: 'Vorbis',
-  pcm_s16le: 'PCM',
-  pcm_s24le: 'PCM'
-}
-
-function codecName(codec: string): string {
-  return codecNames[codec] ?? codec.toUpperCase()
-}
-
 /** 54.2 GB, or 740 MB under a gigabyte. */
 function size(bytes: number): string {
   if (!bytes) return ''
   return bytes >= 1e9
     ? `${(bytes / 1e9).toFixed(1)} GB`
     : `${Math.max(1, Math.round(bytes / 1e6))} MB`
-}
-
-function channels(n: number): string {
-  return n === 0
-    ? ''
-    : n === 1
-      ? 'mono'
-      : n === 2
-        ? 'stereo'
-        : n === 6
-          ? '5.1'
-          : n === 8
-            ? '7.1'
-            : `${n} ch`
-}
-
-function languageName(tag: string): string {
-  if (!tag) return ''
-  try {
-    return new Intl.DisplayNames(undefined, { type: 'language' }).of(tag) ?? tag
-  } catch {
-    return tag
-  }
 }
 
 /** 1:05:09 or 5:09. */

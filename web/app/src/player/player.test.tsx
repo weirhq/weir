@@ -278,6 +278,60 @@ describe('the player’s own controls', () => {
     expect(video.currentTime).toBe(125)
   })
 
+  it('switches subtitles from the menu, carrying on from where it was', async () => {
+    const user = userEvent.setup()
+    const browse = browseWith({
+      method: PlaybackMethod.DIRECT_PLAY,
+      url: '/media/files/a1?sig=x',
+      versionId: 'arrival-v1',
+      streams: [
+        { index: 0, action: StreamAction.DIRECT },
+        { index: 1, action: StreamAction.DIRECT }
+      ]
+    })
+    renderSignedIn('/play/arrival?from=start', browse)
+    await screen.findByRole('link', { name: '‹ Arrival' })
+    const video = fakeVideo()
+    video.currentTime = 754
+
+    await user.click(
+      screen.getByRole('button', { name: 'Audio and subtitles' })
+    )
+    const off = await screen.findByRole('menuitem', { name: 'Off' })
+    // No subtitle playing, so Off is ticked.
+    expect(off.textContent).toContain('check')
+    // The next start serves it beside the video.
+    browse.plan = create(PlaybackPlanSchema, {
+      method: PlaybackMethod.DIRECT_PLAY,
+      url: '/media/files/a1?sig=x',
+      versionId: 'arrival-v1',
+      streams: [
+        { index: 0, action: StreamAction.DIRECT },
+        { index: 1, action: StreamAction.DIRECT },
+        { index: 2, action: StreamAction.SIDECAR }
+      ],
+      subtitleUrl: '/media/subtitles/f/2.vtt?sig=x'
+    })
+    await user.click(screen.getByRole('menuitem', { name: 'English' }))
+    await vi.waitFor(() => expect(browse.starts).toHaveLength(2))
+    expect(browse.starts[1]!.subtitleStreamIndex).toBe(2)
+    await vi.waitFor(() =>
+      expect(document.querySelector('track')?.getAttribute('src')).toBe(
+        '/media/subtitles/f/2.vtt?sig=x'
+      )
+    )
+    expect(document.querySelector('track')!.getAttribute('label')).toBe(
+      'English'
+    )
+    // Off goes back without them.
+    await user.click(
+      screen.getByRole('button', { name: 'Audio and subtitles' })
+    )
+    await user.click(await screen.findByRole('menuitem', { name: 'Off' }))
+    await vi.waitFor(() => expect(browse.starts).toHaveLength(3))
+    expect(browse.starts[2]!.subtitleStreamIndex).toBe(-1)
+  })
+
   it('goes full screen with the controls, and remembers the volume', async () => {
     const user = userEvent.setup()
     const requestFullscreen = vi.fn(() => Promise.resolve())

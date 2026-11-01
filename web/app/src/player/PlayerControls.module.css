@@ -91,6 +91,48 @@
   flex: 1;
 }
 
+/* Captions, low over the picture, rising above the controls while those
+   are up. Each line is shaded to read over any picture. */
+.captions {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 80%;
+  translate: -50% 0;
+  pointer-events: none;
+  text-align: center;
+  transition: bottom var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-standard);
+}
+.overlay[data-shown] .captions {
+  bottom: max(6%, 128px);
+}
+.captions span {
+  padding: 2px 8px;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: rgb(0 0 0 / 65%);
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: clamp(18px, 3.4vh, 44px);
+  line-height: 1.35;
+  white-space: pre-line;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* A heading over each part of the audio and subtitles menu. */
+.menuHeading {
+  margin: 0;
+  padding: 8px 12px 4px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-label-medium-font);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: var(--md-sys-typescale-label-medium-weight);
+}
+
 .loading {
   position: absolute;
   top: 50%;
@@ -101,7 +143,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .top,
-  .bottom {
+  .bottom,
+  .captions {
     transition: none;
   }
 }

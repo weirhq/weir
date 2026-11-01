@@ -1,4 +1,11 @@
-import { IconButton, LoadingIndicator, Slider } from '@weirhq/m3e'
+import {
+  IconButton,
+  LoadingIndicator,
+  Menu,
+  MenuDivider,
+  MenuItem,
+  Slider
+} from '@weirhq/m3e'
 import {
   useCallback,
   useEffect,
@@ -18,11 +25,23 @@ type WebKitVideo = HTMLVideoElement & {
   webkitEnterFullscreen?: () => void
   webkitShowPlaybackTargetPicker?: () => void
   webkitSetPresentationMode?: (mode: string) => void
+  webkitPresentationMode?: string
 }
 type WebKitElement = HTMLElement & { webkitRequestFullscreen?: () => void }
 type WebKitDocument = Document & {
   webkitFullscreenElement?: Element | null
   webkitExitFullscreen?: () => void
+}
+
+/** A stream to choose in the audio and subtitles menu. */
+export type Track = { index: number; label: string; chosen: boolean }
+
+export type Tracks = {
+  audio: Track[]
+  subtitles: Track[]
+  /** A stream's index, or -1 for no subtitles. */
+  onAudio: (index: number) => void
+  onSubtitle: (index: number) => void
 }
 
 /** "1:02:03", or "2:03" under an hour. */
@@ -97,6 +116,59 @@ function useMedia(media: RefObject<HTMLVideoElement | null>) {
   return state
 }
 
+/** Whether the video is out of the page, in iOS's own full screen or
+    picture-in-picture, where only the browser can draw captions. */
+function presentedElsewhere(el: WebKitVideo): boolean {
+  return (
+    document.pictureInPictureElement === el ||
+    (el.webkitPresentationMode ?? 'inline') !== 'inline'
+  )
+}
+
+/**
+ * The captions to show now, from the video's subtitle track. The track is
+ * kept hidden so they can be drawn over the picture with the controls,
+ * except while the video is presented elsewhere.
+ */
+function useCaptions(media: RefObject<HTMLVideoElement | null>) {
+  const [cues, setCues] = useState<VTTCue[]>([])
+  useEffect(() => {
+    const el = media.current as WebKitVideo | null
+    if (!el) return
+    const tracks = el.textTracks
+    const onCue = (e: Event) => {
+      const t = e.target as TextTrack
+      setCues(
+        t.mode === 'hidden' ? ([...(t.activeCues ?? [])] as VTTCue[]) : []
+      )
+    }
+    const sync = () => {
+      const mode = presentedElsewhere(el) ? 'showing' : 'hidden'
+      for (const t of tracks) {
+        t.mode = mode
+        t.removeEventListener('cuechange', onCue)
+        t.addEventListener('cuechange', onCue)
+      }
+      if (mode === 'showing' || tracks.length === 0) setCues([])
+    }
+    const events = [
+      'enterpictureinpicture',
+      'leavepictureinpicture',
+      'webkitpresentationmodechanged'
+    ]
+    tracks.addEventListener('addtrack', sync)
+    tracks.addEventListener('removetrack', sync)
+    for (const e of events) el.addEventListener(e, sync)
+    return () => {
+      tracks.removeEventListener('addtrack', sync)
+      tracks.removeEventListener('removetrack', sync)
+      for (const e of events) el.removeEventListener(e, sync)
+      for (const t of tracks) t.removeEventListener('cuechange', onCue)
+    }
+  }, [media])
+  return cues
+}
+
 /**
  * Weir's own controls over a video, instead of each browser's: a scrubber,
  * play, skips, volume, AirPlay, picture-in-picture and fullscreen, with a
@@ -108,19 +180,24 @@ export function PlayerControls({
   stage,
   runtime,
   header,
+  tracks,
   children
 }: {
   media: RefObject<HTMLVideoElement | null>
-  /** What goes fullscreen: the video with these controls over it. */
-  stage: RefObject<HTMLDivElement | null>
+  /** What goes fullscreen, the video with these controls over it, and
+      where menus open. */
+  stage: HTMLElement | null
   /** The item's runtime in seconds, until the media knows its own. */
   runtime: number
   /** Shown along the top with the controls. */
   header: ReactNode
+  /** The audio and subtitle streams to choose between, if there's a choice. */
+  tracks?: Tracks
   /** Over the video, under the controls, such as messages and panels. */
   children?: ReactNode
 }) {
   const m = useMedia(media)
+  const cues = useCaptions(media)
   // A stream still being made, in an HLS event playlist, says only how much
   // there is so far; the item's runtime is the whole of it.
   const duration = Math.max(m.duration, runtime)
@@ -129,8 +206,9 @@ export function PlayerControls({
   const [active, setActive] = useState(true)
   const [fullscreen, setFullscreen] = useState(false)
   const [airplay, setAirplay] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const shown = active || !m.playing || scrub !== undefined
+  const shown = active || !m.playing || scrub !== undefined || menuOpen
 
   // Movement brings the controls back; stillness while playing hides them.
   const wake = useCallback(() => {
@@ -193,7 +271,7 @@ export function PlayerControls({
   }
   const toggleFullscreen = () => {
     const d = document as WebKitDocument
-    const el = stage.current as WebKitElement | null
+    const el = stage as WebKitElement | null
     if (d.fullscreenElement ?? d.webkitFullscreenElement) {
       void (d.exitFullscreen?.() ?? d.webkitExitFullscreen?.())
     } else if (el?.requestFullscreen) {
@@ -290,6 +368,16 @@ export function PlayerControls({
       )}
       <div className={styles.top}>{header}</div>
       {children}
+      {cues.length > 0 && (
+        <div className={styles.captions}>
+          {cues.map((c, i) => (
+            <span
+              key={`${c.startTime}-${i}`}
+              ref={(el) => el?.replaceChildren(c.getCueAsHTML())}
+            />
+          ))}
+        </div>
+      )}
       <div className={styles.bottom}>
         <div className={styles.scrubber}>
           <span className={styles.time}>{clock(time)}</span>
@@ -349,6 +437,66 @@ export function PlayerControls({
             />
           </div>
           <span className={styles.spacer} />
+          {tracks &&
+            (tracks.audio.length > 1 || tracks.subtitles.length > 0) && (
+              <Menu
+                side="top"
+                align="end"
+                // Inside the player, so it shows when that's full screen.
+                container={stage}
+                open={menuOpen}
+                onOpenChange={(open) => {
+                  setMenuOpen(open)
+                  // A choice made, the controls stay a moment longer.
+                  if (!open) wake()
+                }}
+                trigger={
+                  <IconButton icon="subtitles" label="Audio and subtitles" />
+                }
+              >
+                {tracks.audio.length > 1 && (
+                  <>
+                    <p className={styles.menuHeading}>Audio</p>
+                    {tracks.audio.map((t) => (
+                      <MenuItem
+                        key={t.index}
+                        trailingIcon={t.chosen ? 'check' : undefined}
+                        onSelect={() => !t.chosen && tracks.onAudio(t.index)}
+                      >
+                        {t.label}
+                      </MenuItem>
+                    ))}
+                  </>
+                )}
+                {tracks.audio.length > 1 && tracks.subtitles.length > 0 && (
+                  <MenuDivider />
+                )}
+                {tracks.subtitles.length > 0 && (
+                  <>
+                    <p className={styles.menuHeading}>Subtitles</p>
+                    <MenuItem
+                      trailingIcon={
+                        tracks.subtitles.some((t) => t.chosen)
+                          ? undefined
+                          : 'check'
+                      }
+                      onSelect={() => tracks.onSubtitle(-1)}
+                    >
+                      Off
+                    </MenuItem>
+                    {tracks.subtitles.map((t) => (
+                      <MenuItem
+                        key={t.index}
+                        trailingIcon={t.chosen ? 'check' : undefined}
+                        onSelect={() => !t.chosen && tracks.onSubtitle(t.index)}
+                      >
+                        {t.label}
+                      </MenuItem>
+                    ))}
+                  </>
+                )}
+              </Menu>
+            )}
           {airplay && (
             <IconButton
               icon="airplay"

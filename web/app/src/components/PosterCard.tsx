@@ -8,9 +8,13 @@ export function isWide(item: ItemSummary): boolean {
   return item.kind === ItemKind.EPISODE
 }
 
-/** Artists and albums show square pictures. */
+/** Music shows square pictures: artists, albums, and tracks' albums. */
 export function isSquare(item: ItemSummary): boolean {
-  return item.kind === ItemKind.ARTIST || item.kind === ItemKind.ALBUM
+  return (
+    item.kind === ItemKind.ARTIST ||
+    item.kind === ItemKind.ALBUM ||
+    item.kind === ItemKind.TRACK
+  )
 }
 
 /** A line under the title: year, episode number, or track number. */
@@ -21,7 +25,10 @@ export function subtitle(item: ItemSummary): string {
     case ItemKind.SEASON:
       return ''
     case ItemKind.TRACK:
-      return item.indexNumber ? `Track ${item.indexNumber}` : ''
+      return (
+        item.parentTitle ||
+        (item.indexNumber ? `Track ${item.indexNumber}` : '')
+      )
     default:
       return item.year ? String(item.year) : ''
   }

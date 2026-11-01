@@ -98,6 +98,7 @@ export class FakeBrowse {
       summary(`t${i + 1}`, ItemKind.TRACK, title, {
         libraryId: 'music',
         parentId: 'mhtrtc',
+        parentTitle: 'Music Has the Right to Children',
         indexNumber: i + 1
       })
     )
@@ -376,6 +377,7 @@ function summary(
     year?: number
     libraryId: string
     parentId?: string
+    parentTitle?: string
     indexNumber?: number
     posterUrl?: string
     position?: number
@@ -390,6 +392,7 @@ function summary(
     year: o.year ?? 0,
     libraryId: o.libraryId,
     parentId: o.parentId ?? '',
+    parentTitle: o.parentTitle ?? '',
     indexNumber: o.indexNumber ?? 0,
     posterUrl: o.posterUrl ?? '',
     duration: o.duration ? durationFromMs(o.duration) : undefined,

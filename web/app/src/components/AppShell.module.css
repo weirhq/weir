@@ -78,6 +78,9 @@
   border-radius: var(--md-sys-shape-corner-extra-small);
   background: var(--md-sys-color-surface-container-highest);
 }
+.thumb.square {
+  width: 48px;
+}
 .thumb img {
   display: block;
   width: 100%;

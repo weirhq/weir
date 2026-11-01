@@ -220,6 +220,21 @@ it('suggests matches under the search bar as you type', async () => {
   expect((input as HTMLInputElement).value).toBe('')
 })
 
+it('says which album a matching song is on', async () => {
+  const user = userEvent.setup()
+  renderSignedIn('/')
+  const input = await screen.findByRole('searchbox', { name: 'Search' })
+  await user.type(input, 'wild')
+  await vi.waitFor(() =>
+    expect(input.getAttribute('aria-expanded')).toBe('true')
+  )
+  const results = document.getElementById(input.getAttribute('aria-controls')!)!
+  const song = within(results).getByRole('link', { name: /Wildlife Analysis/ })
+  expect(song.textContent).toContain('Song · Music Has the Right to Children')
+  // Music gets a square thumbnail.
+  expect(song.querySelector('[class*=square]')).toBeTruthy()
+})
+
 it('says so when an item is gone', async () => {
   renderSignedIn('/item/nope')
   expect(

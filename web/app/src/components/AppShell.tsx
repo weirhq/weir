@@ -24,7 +24,8 @@ import {
 } from '@weirhq/m3e'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { sized } from '../art'
-import { ItemKind } from '../gen/weir/api/v1alpha/browse_pb'
+import { ItemKind, type ItemSummary } from '../gen/weir/api/v1alpha/browse_pb'
+import { isSquare } from './PosterCard'
 import { LibraryKind } from '../gen/weir/api/v1alpha/library_pb'
 import { Role } from '../gen/weir/api/v1alpha/user_pb'
 import { useMediaQuery } from '../media'
@@ -46,10 +47,24 @@ const kindIcons: Record<LibraryKind, IconName> = {
 const kindNames: Partial<Record<ItemKind, string>> = {
   [ItemKind.MOVIE]: 'Film',
   [ItemKind.SHOW]: 'Show',
+  [ItemKind.SEASON]: 'Season',
   [ItemKind.EPISODE]: 'Episode',
   [ItemKind.ARTIST]: 'Artist',
   [ItemKind.ALBUM]: 'Album',
-  [ItemKind.TRACK]: 'Track'
+  [ItemKind.TRACK]: 'Song'
+}
+
+/**
+ * A match's second line: what it is, and what it belongs to or when it's
+ * from, so two songs of one name tell their albums apart.
+ */
+function matchLine(item: ItemSummary): string {
+  const kind =
+    item.kind === ItemKind.EPISODE && item.indexNumber
+      ? `Episode ${item.indexNumber}`
+      : kindNames[item.kind]
+  const where = item.parentTitle || (item.year ? String(item.year) : '')
+  return [kind, where].filter(Boolean).join(' · ')
 }
 
 /** "Luna Nova" is "LN". */
@@ -222,19 +237,23 @@ export function AppShell() {
                     key={item.id}
                     asChild
                     leading={
-                      <span className={styles.thumb}>
-                        {item.posterUrl && (
-                          <img src={sized(item.posterUrl, 160)} alt="" />
+                      <span
+                        className={
+                          isSquare(item)
+                            ? `${styles.thumb} ${styles.square}`
+                            : styles.thumb
+                        }
+                      >
+                        {(item.posterUrl || item.thumbUrl) && (
+                          <img
+                            src={sized(item.posterUrl || item.thumbUrl, 160)}
+                            alt=""
+                          />
                         )}
                       </span>
                     }
                     headline={item.title}
-                    supporting={[
-                      kindNames[item.kind],
-                      item.year ? String(item.year) : ''
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    supporting={matchLine(item)}
                   >
                     <Link
                       to="/item/$itemId"

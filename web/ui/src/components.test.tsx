@@ -1810,6 +1810,10 @@ describe('SearchBar', () => {
     fireEvent.change(input, { target: { value: 'dune' } })
     expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
     fireEvent.keyDown(input, { key: 'ArrowDown' })
+    // Enter in the field submits the search; the bar's own buttons mustn't
+    // be submit buttons, or Enter would press the first of them.
+    for (const b of input.closest('form')!.querySelectorAll('button'))
+      expect(b.getAttribute('type')).toBe('button')
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
     expect(input.value).toBe('')
     expect(document.activeElement).toBe(input)

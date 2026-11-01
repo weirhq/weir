@@ -62,8 +62,9 @@
   border-radius: var(--md-comp-search-view-full-screen-container-shape);
 }
 
-/* The input row: icons 16dp from the ends and from the text. An icon
-   button sits 8dp further out, so its icon lines up the same. */
+/* The input row: icons 16dp from the ends and from the text. The bar's
+   own icon buttons sit 8dp further out, so their icons line up the same;
+   an avatar or other trailing content sits 16dp in. */
 .field {
   position: relative;
   display: flex;
@@ -99,7 +100,7 @@
   margin-inline-start: -8px;
 }
 
-.trailing:has(> button:last-child) {
+.clear {
   margin-inline-end: -8px;
 }
 

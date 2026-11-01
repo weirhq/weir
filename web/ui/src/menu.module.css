@@ -22,7 +22,9 @@
     --radix-dropdown-menu-content-transform-origin,
     var(--radix-select-content-transform-origin)
   );
-  z-index: 10;
+  /* Above app bars, sheets and dialogs (100 and 101), so a menu or select
+     opened in one shows; under tooltips (110). */
+  z-index: 105;
 }
 
 .menu[data-state='open'] {

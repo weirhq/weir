@@ -130,7 +130,9 @@ export function SearchBar({
         <form role="search" className={styles.field} onSubmit={submit}>
           <span className={styles.leading}>
             {open ? (
+              // Not submit buttons, which Enter in the field would press.
               <IconButton
+                type="button"
                 icon="arrow_back"
                 label="Close search"
                 onClick={() => {
@@ -159,8 +161,9 @@ export function SearchBar({
           />
           {open
             ? value && (
-                <span className={styles.trailing}>
+                <span className={cx(styles.trailing, styles.clear)}>
                   <IconButton
+                    type="button"
                     icon="close"
                     label="Clear"
                     onClick={() => {

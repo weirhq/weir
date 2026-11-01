@@ -36,6 +36,14 @@ export {
   type FilterChipProps,
   type InputChipProps
 } from './chip'
+export {
+  NavigationBar,
+  NavigationItem,
+  NavigationRail,
+  type NavigationBarProps,
+  type NavigationItemProps,
+  type NavigationRailProps
+} from './navigation'
 export { Slider, type SliderProps } from './slider'
 export {
   Snackbar,

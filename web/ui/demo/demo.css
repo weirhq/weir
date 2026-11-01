@@ -172,3 +172,31 @@ h2 {
   justify-content: flex-end;
   overflow: hidden;
 }
+
+.navigation-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.nav-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: min(480px, 100%);
+}
+
+.rail-box {
+  display: flex;
+  height: 480px;
+  overflow: hidden;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+}
+
+.rail-page {
+  margin: 0;
+  padding: 24px;
+  min-width: 160px;
+}

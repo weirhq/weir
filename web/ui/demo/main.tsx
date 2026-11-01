@@ -28,6 +28,9 @@ import {
   Menu,
   MenuDivider,
   MenuItem,
+  NavigationBar,
+  NavigationItem,
+  NavigationRail,
   iconNames,
   Radio,
   RichTooltip,
@@ -294,6 +297,74 @@ function Menus() {
           options={kinds}
           disabled
         />
+      </div>
+    </div>
+  )
+}
+
+function Navigation() {
+  const items = [
+    ['search', 'Search'],
+    ['favorite', 'Favourites'],
+    ['queue_music', 'Queue'],
+    ['settings', 'Settings']
+  ] as const
+  const [bar, setBar] = useState('Search')
+  const [wide, setWide] = useState('Favourites')
+  const [rail, setRail] = useState('Search')
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="navigation-demo">
+      <div className="nav-column">
+        <NavigationBar aria-label="Bar">
+          {items.map(([icon, label]) => (
+            <NavigationItem
+              key={label}
+              icon={icon}
+              label={label}
+              selected={bar === label}
+              onClick={() => setBar(label)}
+            />
+          ))}
+        </NavigationBar>
+        <NavigationBar aria-label="Bar, icons first" iconPosition="start">
+          {items.slice(0, 3).map(([icon, label]) => (
+            <NavigationItem
+              key={label}
+              icon={icon}
+              label={label}
+              selected={wide === label}
+              onClick={() => setWide(label)}
+            />
+          ))}
+        </NavigationBar>
+      </div>
+      <div className="rail-box">
+        <NavigationRail
+          aria-label="Rail"
+          expanded={open}
+          header={
+            <>
+              <IconButton
+                icon={open ? 'arrow_back' : 'more_vert'}
+                label={open ? 'Collapse' : 'Expand'}
+                onClick={() => setOpen(!open)}
+              />
+              <Fab icon="edit" label="Compose" size="baseline" />
+            </>
+          }
+        >
+          {items.map(([icon, label]) => (
+            <NavigationItem
+              key={label}
+              icon={icon}
+              label={label}
+              selected={rail === label}
+              onClick={() => setRail(label)}
+            />
+          ))}
+        </NavigationRail>
+        <p className="rail-page">{rail}</p>
       </div>
     </div>
   )
@@ -1113,6 +1184,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="navigation">
+        <h2 id="navigation">Navigation</h2>
+        <Navigation />
       </section>
 
       <section aria-labelledby="app-bars">

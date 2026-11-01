@@ -20,6 +20,9 @@ import {
   ListItem,
   Menu,
   MenuItem,
+  NavigationBar,
+  NavigationItem,
+  NavigationRail,
   Radio,
   RichTooltip,
   Select,
@@ -1057,4 +1060,51 @@ it('puts actions and a FAB in a bottom app bar', () => {
   )
   expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy()
   expect(screen.getByRole('button', { name: 'New playlist' })).toBeTruthy()
+})
+
+describe('Navigation', () => {
+  it('makes a bar of links, the current one marked', () => {
+    render(
+      <NavigationBar aria-label="Main">
+        <NavigationItem icon="search" label="Search" selected>
+          <a href="/search" />
+        </NavigationItem>
+        <NavigationItem icon="favorite" label="Favourites" selected={false}>
+          <a href="/favourites" />
+        </NavigationItem>
+      </NavigationBar>
+    )
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(nav.className).toContain('md-comp-navigation-bar')
+    expect(
+      screen.getByRole('link', { name: 'Search' }).getAttribute('aria-current')
+    ).toBe('page')
+    expect(
+      screen
+        .getByRole('link', { name: 'Favourites' })
+        .getAttribute('aria-current')
+    ).toBeNull()
+  })
+
+  it('puts labels inside the pill when the rail is expanded', () => {
+    const pick = vi.fn()
+    const { rerender } = render(
+      <NavigationRail aria-label="Main" header={<button>Menu</button>}>
+        <NavigationItem icon="settings" label="Settings" onClick={pick} />
+      </NavigationRail>
+    )
+    const item = screen.getByRole('button', { name: /Settings/ })
+    // Collapsed: the label under the pill.
+    expect(item.lastElementChild!.textContent).toBe('Settings')
+    fireEvent.click(item)
+    expect(pick).toHaveBeenCalledOnce()
+    rerender(
+      <NavigationRail aria-label="Main" expanded>
+        <NavigationItem icon="settings" label="Settings" selected />
+      </NavigationRail>
+    )
+    const expanded = screen.getByRole('button', { name: /Settings/ })
+    expect(expanded.children).toHaveLength(1)
+    expect(expanded.getAttribute('aria-current')).toBe('true')
+  })
 })

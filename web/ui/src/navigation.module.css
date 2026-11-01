@@ -1,0 +1,258 @@
+/* M3 Expressive navigation: the short navigation bar and the wide
+   navigation rail, collapsed or expanded, following Compose's
+   ShortNavigationBar, WideNavigationRail and NavigationItem at the pinned
+   commit. An item is its icon and label; the active indicator, a pill,
+   grows from its centre and fades in when the item is selected
+   (DefaultSpatial), and the hover, focus and press layer shows on the
+   pill alone. */
+
+/* The bar: 64dp on surface-container, its items sharing the width. */
+.bar {
+  box-sizing: border-box;
+  display: flex;
+  min-height: var(--md-comp-navigation-bar-container-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--md-comp-navigation-bar-container-color);
+}
+
+.bar > .item {
+  flex: 1 1 0;
+}
+
+/* Start-icon items sit in the middle, sharing 60% of the bar for three
+   items and 10% more for each one after, and any item that needs more
+   room taking it, the group staying centred. */
+.centered {
+  justify-content: center;
+}
+
+.bar.centered > .item {
+  flex: none;
+  min-width: calc(min(var(--_count) + 3, 10) * 10% / var(--_count));
+}
+
+/* The rail: 96dp on surface, 44dp down to its content, a header 40dp
+   above the items, items 4dp apart. Expanded, it is 220 to 360dp wide,
+   fitting its items, and they touch. */
+.rail {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-comp-navigation-rail-collapsed-item-vertical-space);
+  width: var(--md-comp-navigation-rail-collapsed-container-width);
+  padding-top: var(--md-comp-navigation-rail-collapsed-top-space);
+  background: var(--md-comp-navigation-rail-collapsed-container-color);
+  interpolate-size: allow-keywords;
+  transition: width var(--md-sys-motion-spring-default-spatial-duration)
+    var(--md-sys-motion-spring-default-spatial);
+}
+
+.expanded {
+  gap: 0;
+  width: fit-content;
+  min-width: var(--md-comp-navigation-rail-expanded-container-width-minimum);
+  max-width: var(--md-comp-navigation-rail-expanded-container-width-maximum);
+}
+
+/* 40dp under the header, less the gap the rail puts between items. */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: calc(
+    40px - var(--md-comp-navigation-rail-collapsed-item-vertical-space)
+  );
+}
+
+.expanded > .header {
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding-inline-start: 20px;
+}
+
+/* An item, with its icon above its label (the bar and the collapsed rail):
+   the pill 56 by 32dp around the icon, the label 4dp below. */
+.item {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 48px;
+  margin: 0;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--_label);
+  font-family: var(--md-comp-navigation-bar-label-text-font);
+  font-size: var(--md-comp-navigation-bar-label-text-size);
+  line-height: var(--md-comp-navigation-bar-label-text-line-height);
+  font-weight: var(--md-comp-navigation-bar-label-text-weight);
+  letter-spacing: var(--md-comp-navigation-bar-label-text-tracking);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --_label: var(--md-comp-navigation-bar-item-inactive-label-text-color);
+  --_icon: var(--md-comp-navigation-bar-item-inactive-icon-color);
+  --md-icon-size: var(--md-comp-navigation-bar-vertical-item-icon-size);
+}
+
+.rail > .item {
+  min-height: 64px;
+  --_label: var(--md-comp-navigation-rail-color-item-inactive-label-text);
+  --_icon: var(--md-comp-navigation-rail-color-item-inactive-icon);
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  padding-inline: 4px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pill {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--md-comp-navigation-bar-vertical-item-active-indicator-width);
+  height: var(--md-comp-navigation-bar-vertical-item-active-indicator-height);
+  border-radius: var(--md-comp-navigation-bar-item-active-indicator-shape);
+  color: var(--_icon);
+}
+
+.indicator {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--md-comp-navigation-bar-item-active-indicator-color);
+  opacity: 0;
+  scale: 0 1;
+  transition:
+    scale var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial),
+    opacity var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial);
+}
+
+.pill > :not(.indicator, .layer) {
+  position: relative;
+}
+
+/* Selected: the pill, a filled icon and the selected colours. */
+.item:is([aria-current]:not([aria-current='false'])) {
+  --_label: var(--md-comp-navigation-bar-item-active-label-text-color);
+  --_icon: var(--md-comp-navigation-bar-item-active-icon-color);
+  --md-icon-fill: 1;
+}
+
+.rail > .item:is([aria-current]:not([aria-current='false'])) {
+  --_label: var(--md-comp-navigation-rail-color-item-active-label-text);
+  --_icon: var(--md-comp-navigation-rail-color-item-active-icon);
+}
+
+.item:is([aria-current]:not([aria-current='false'])) .indicator {
+  opacity: 1;
+  scale: 1 1;
+}
+
+/* The state layer is the selected icon colour, on the pill, for the
+   whole item's hover, focus and press. */
+.layer {
+  color: var(--md-comp-navigation-rail-color-item-active-hovered-state-layer);
+}
+
+@media (hover: hover) {
+  .item:hover .layer::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.item:focus-visible {
+  outline: none;
+}
+
+.item:focus-visible .pill {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: 2px;
+}
+
+.item:focus-visible .layer::before {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+/* An item with its icon before its label (start-icon bar items, and the
+   expanded rail): one pill around both. In the bar it is 40dp tall, 16dp
+   in, 4dp between; in the rail, 56dp, 16dp in, 8dp between, in label
+   large, 20dp in from the rail's edge. Selected, the label takes the
+   icon's colour, being on the pill. */
+.start {
+  flex-direction: row;
+  padding: 0;
+}
+
+.start > .pill {
+  width: auto;
+  height: var(--md-comp-navigation-bar-horizontal-item-active-indicator-height);
+  gap: var(--md-comp-navigation-bar-item-active-indicator-icon-label-space);
+  padding-inline: var(
+      --md-comp-navigation-bar-horizontal-item-active-indicator-leading-space
+    )
+    var(
+      --md-comp-navigation-bar-horizontal-item-active-indicator-trailing-space
+    );
+}
+
+.expanded > .item {
+  flex-direction: row;
+  justify-content: flex-start;
+  min-height: 48px;
+  padding: 0;
+  margin-inline: 20px;
+  font-family: var(--md-comp-navigation-rail-horizontal-item-label-text-font);
+  font-size: var(--md-comp-navigation-rail-horizontal-item-label-text-size);
+  line-height: var(
+    --md-comp-navigation-rail-horizontal-item-label-text-line-height
+  );
+  font-weight: var(--md-comp-navigation-rail-horizontal-item-label-text-weight);
+  letter-spacing: var(
+    --md-comp-navigation-rail-horizontal-item-label-text-tracking
+  );
+}
+
+.expanded > .item > .pill {
+  width: auto;
+  height: var(
+    --md-comp-navigation-rail-horizontal-item-active-indicator-height
+  );
+  gap: var(--md-comp-navigation-rail-horizontal-item-icon-label-space);
+  padding-inline: var(
+      --md-comp-navigation-rail-horizontal-item-full-width-leading-space
+    )
+    var(--md-comp-navigation-rail-horizontal-item-full-width-trailing-space);
+}
+
+.start .label,
+.expanded .label {
+  padding: 0;
+  color: var(--_label);
+}
+
+.start:is([aria-current]:not([aria-current='false'])) .label,
+.expanded > .item:is([aria-current]:not([aria-current='false'])) .label {
+  color: var(--_icon);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail,
+  .indicator {
+    transition: none;
+  }
+}

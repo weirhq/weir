@@ -1,6 +1,7 @@
 /* A Material Symbol, drawn by the bundled font's ligatures. Its size comes
    from --md-icon-size (default 24px), so components can set it for their
-   icons; filled icons animate their FILL axis. */
+   icons; filled icons animate their FILL axis, which --md-icon-fill also
+   sets, for a component whose selection lives in CSS. */
 .icon {
   display: inline-block;
   flex: none;
@@ -19,7 +20,7 @@
   font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   font-variation-settings:
-    'FILL' 0,
+    'FILL' var(--md-icon-fill, 0),
     'opsz' var(--md-icon-optical-size, 24);
   transition: font-variation-settings
     var(--md-sys-motion-spring-fast-effects-duration)
@@ -27,7 +28,5 @@
 }
 
 .filled {
-  font-variation-settings:
-    'FILL' 1,
-    'opsz' var(--md-icon-optical-size, 24);
+  --md-icon-fill: 1;
 }

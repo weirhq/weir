@@ -4,6 +4,7 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   AssistChip,
+  Badge,
   BottomAppBar,
   BottomSheet,
   Button,
@@ -545,6 +546,13 @@ function Navigation() {
     ['queue_music', 'Queue'],
     ['settings', 'Settings']
   ] as const
+  // A dot on Favourites, a count on Queue, as badges mark news.
+  const badge = (label: string) =>
+    label === 'Queue' ? (
+      <Badge>3</Badge>
+    ) : label === 'Favourites' ? (
+      <Badge />
+    ) : undefined
   const [bar, setBar] = useState('Search')
   const [wide, setWide] = useState('Favourites')
   const [rail, setRail] = useState('Search')
@@ -558,6 +566,7 @@ function Navigation() {
               key={label}
               icon={icon}
               label={label}
+              badge={badge(label)}
               selected={bar === label}
               onClick={() => setBar(label)}
             />
@@ -569,6 +578,7 @@ function Navigation() {
               key={label}
               icon={icon}
               label={label}
+              badge={badge(label)}
               selected={wide === label}
               onClick={() => setWide(label)}
             />
@@ -595,6 +605,7 @@ function Navigation() {
               key={label}
               icon={icon}
               label={label}
+              badge={badge(label)}
               selected={rail === label}
               onClick={() => setRail(label)}
             />

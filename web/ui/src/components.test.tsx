@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import {
   AssistChip,
+  Badge,
+  BadgedBox,
   BottomAppBar,
   BottomSheet,
   Button,
@@ -1687,4 +1689,44 @@ it('confirms a time from the dialog, typed or picked', () => {
   expect(ok.disabled).toBe(false)
   fireEvent.click(ok)
   expect(confirm).toHaveBeenCalledWith('23:20')
+})
+
+describe('Badge', () => {
+  it('is a dot without content and a pill with a count', () => {
+    render(
+      <>
+        <Badge data-testid="dot" />
+        <Badge data-testid="count">12</Badge>
+      </>
+    )
+    const dot = screen.getByTestId('dot')
+    const count = screen.getByTestId('count')
+    expect(dot.textContent).toBe('')
+    expect(dot.className).toContain('md-comp-badge')
+    expect(dot.className).not.toMatch(/large/)
+    expect(count.textContent).toBe('12')
+    expect(count.className).toMatch(/large/)
+  })
+
+  it('sits over its content, and over a navigation item’s icon', () => {
+    render(
+      <>
+        <BadgedBox badge={<Badge>3</Badge>}>
+          <span>icon</span>
+        </BadgedBox>
+        <NavigationBar aria-label="Bar">
+          <NavigationItem
+            icon="queue_music"
+            label="Queue, 3 items"
+            badge={<Badge>3</Badge>}
+            onClick={() => {}}
+          />
+        </NavigationBar>
+      </>
+    )
+    const box = screen.getByText('icon').parentElement!
+    expect(box.lastElementChild!.textContent).toBe('3')
+    const item = screen.getByRole('button', { name: /Queue, 3 items/ })
+    expect(item.textContent).toContain('3')
+  })
 })

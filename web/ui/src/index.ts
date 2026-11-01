@@ -25,6 +25,7 @@ export {
   type TopAppBarProps,
   type TopAppBarScrollBehavior
 } from './app-bar'
+export { Badge, BadgedBox, type BadgeProps, type BadgedBoxProps } from './badge'
 export { BottomSheet, type BottomSheetProps } from './bottom-sheet'
 export { Card, type CardProps } from './card'
 export {

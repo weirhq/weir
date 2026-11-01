@@ -8,6 +8,7 @@ import {
   type ReactElement,
   type ReactNode
 } from 'react'
+import { BadgedBox } from './badge'
 import { Icon } from './icon'
 import type { IconName } from './icon-names'
 import styles from './navigation.module.css'
@@ -112,6 +113,8 @@ export type NavigationItemProps = {
   /** A Material Symbol's name, filled while selected, or any element. */
   icon: IconName | ReactElement
   label: ReactNode
+  /** A Badge over the icon, such as a count; say what it counts in label. */
+  badge?: ReactNode
   /** Marks it as current, if the router doesn't. */
   selected?: boolean
   /** Makes it a button, for navigation that isn't by link. */
@@ -128,6 +131,7 @@ export type NavigationItemProps = {
 export function NavigationItem({
   icon,
   label,
+  badge,
   selected,
   onClick,
   children,
@@ -139,7 +143,9 @@ export function NavigationItem({
     <>
       <span className={styles.pill}>
         <span className={styles.indicator} />
-        {typeof icon === 'string' ? <Icon name={icon} /> : icon}
+        <BadgedBox badge={badge}>
+          {typeof icon === 'string' ? <Icon name={icon} /> : icon}
+        </BadgedBox>
         {start && text}
         <StateLayer className={styles.layer} />
       </span>

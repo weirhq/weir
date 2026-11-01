@@ -1,0 +1,46 @@
+/* M3 badges, following Compose's Badge and BadgedBox at the pinned commit. */
+
+.badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--md-comp-badge-size);
+  height: var(--md-comp-badge-size);
+  border-radius: var(--md-comp-badge-shape);
+  background: var(--md-comp-badge-color);
+}
+
+/* With a count: 16dp tall, 4dp either side of its label small text. */
+.large {
+  min-width: var(--md-comp-badge-large-size);
+  height: var(--md-comp-badge-large-size);
+  padding: 0 4px;
+  border-radius: var(--md-comp-badge-large-shape);
+  background: var(--md-comp-badge-large-color);
+  color: var(--md-comp-badge-large-label-text-color);
+  font-family: var(--md-comp-badge-large-label-text-font);
+  font-size: var(--md-comp-badge-large-label-text-size);
+  line-height: var(--md-comp-badge-large-label-text-line-height);
+  font-weight: var(--md-comp-badge-large-label-text-weight);
+  letter-spacing: var(--md-comp-badge-large-label-text-tracking);
+  white-space: nowrap;
+}
+
+.box {
+  position: relative;
+  display: inline-flex;
+}
+
+/* A dot sits 6dp in from the top end; a count 12dp in, reaching 2dp above
+   the top (BadgeOffset, BadgeWithContent*Offset). */
+.box > .badge {
+  position: absolute;
+  inset-inline-start: calc(100% - 6px);
+  top: 0;
+}
+
+.box > .large {
+  inset-inline-start: calc(100% - 12px);
+  top: -2px;
+}

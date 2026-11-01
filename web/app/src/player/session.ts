@@ -84,11 +84,13 @@ export function usePlaybackSession<T extends HTMLMediaElement>({
     }
     const hls = new Hls({ startPosition: startAt > 0 ? startAt : -1 })
     hls.on(Hls.Events.ERROR, (_event, data) => {
-      if (data.fatal)
-        setFailure({
-          plan,
-          message: 'Playback stopped: the stream couldn’t be loaded.'
-        })
+      if (!data.fatal) return
+      // The message stays plain; the console says what hls.js hit.
+      console.error('hls.js:', data.details, data.error, data)
+      setFailure({
+        plan,
+        message: 'Playback stopped: the stream couldn’t be loaded.'
+      })
     })
     hls.loadSource(plan.url)
     hls.attachMedia(el)

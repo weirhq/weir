@@ -1,70 +1,28 @@
+/* Beside wider windows the rail runs the window's height, and the page sits
+   in a column beside it: the search bar on top, the page, and its foot. So
+   the rail's box runs to the end of the page and never moves for the foot. */
 .shell {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
 }
 
-/* The top app bar has the brand as its title, and search and the account
-   as its actions. */
+.rail {
+  position: sticky;
+  top: 0;
+  flex: none;
+  align-self: flex-start;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+/* The wordmark under the menu button, home. Weir has no logo yet. */
 .brand {
-  color: inherit;
-  text-decoration: none;
-}
-
-.navLink {
-  padding: 8px 16px;
-  border-radius: var(--md-sys-shape-corner-full);
-  color: var(--md-sys-color-on-surface-variant);
-  font-family: var(--md-sys-typescale-label-large-font);
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.navLink:hover {
-  background: color-mix(
-    in srgb,
-    var(--md-sys-color-on-surface) 8%,
-    transparent
-  );
-}
-.navLink[aria-current='page'] {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.search {
-  display: flex;
-}
-
-.searchInput {
-  width: min(360px, 100%);
-  min-height: 40px;
-  padding: 0 16px;
-  border: none;
-  border-radius: var(--md-sys-shape-corner-full);
-  background: var(--md-sys-color-surface-container-highest);
   color: var(--md-sys-color-on-surface);
-  font: inherit;
-}
-.searchInput:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-}
-
-.user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-/* Beside wider windows, the rail runs down the side under the bar, and
-   the page and its foot sit in a column beside it, so the rail's box runs
-   to the end of the page and the rail never has to move up for the foot. */
-.body {
-  display: flex;
-  flex: 1;
-  --_bar: 64px;
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: var(--md-sys-typescale-title-large-size);
+  line-height: var(--md-sys-typescale-title-large-line-height);
+  font-weight: var(--md-sys-typescale-title-large-weight);
+  text-decoration: none;
 }
 
 .column {
@@ -74,41 +32,63 @@
   min-width: 0;
 }
 
-.rail {
+.bar {
   position: sticky;
-  top: var(--_bar);
+  top: 0;
+  z-index: 20;
+}
+
+/* The account: a 30dp avatar at the search bar's end, opening a menu with
+   who's signed in, Settings and Sign out. */
+.avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--md-comp-search-bar-avatar-size);
+  height: var(--md-comp-search-bar-avatar-size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-comp-search-bar-avatar-shape);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  cursor: pointer;
+}
+
+.menuName {
+  margin: 0;
+  padding: 8px 12px 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--md-sys-typescale-title-small-font);
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+}
+
+/* A match's poster, small, beside its title. */
+.thumb {
+  display: block;
   flex: none;
-  align-self: flex-start;
-  height: calc(100dvh - var(--_bar));
-  overflow-y: auto;
+  width: 32px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background: var(--md-sys-color-surface-container-highest);
+}
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .main {
   flex: 1;
   min-width: 0;
   padding: 24px 16px 48px;
-}
-
-@media (max-width: 720px) {
-  /* Search gets a row of its own, under the bar's row. */
-  .bar {
-    padding-bottom: 56px;
-  }
-  .search {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 16px;
-    left: 16px;
-  }
-  .searchInput {
-    width: 100%;
-  }
-  .user span {
-    display: none;
-  }
-  .body {
-    --_bar: 120px;
-  }
 }
 
 /* The player, with snackbars just above it, at the foot of the window. */

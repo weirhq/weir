@@ -36,12 +36,15 @@ it('shows continue watching, recently added and the libraries', async () => {
     shown.querySelectorAll('[aria-hidden]').forEach((e) => e.remove())
     return shown.textContent
   }
+  // The wordmark leads home; admins get Settings last.
   expect(within(nav).getAllByRole('link').map(label)).toEqual([
+    'Weir',
     'Home',
     'Films',
     'TV',
     'Music',
-    'Playlists'
+    'Playlists',
+    'Settings'
   ])
 })
 
@@ -125,6 +128,24 @@ it('searches from the header', async () => {
   await screen.findByRole('heading', { name: 'Results for “zod”' })
   expect(screen.getByText('Zodiac')).toBeTruthy()
   expect(screen.queryByText('Severance')).toBeNull()
+})
+
+it('suggests matches under the search bar as you type', async () => {
+  const user = userEvent.setup()
+  renderSignedIn('/')
+  const input = await screen.findByRole('searchbox', { name: 'Search' })
+  await user.type(input, 'zod')
+  await vi.waitFor(() =>
+    expect(input.getAttribute('aria-expanded')).toBe('true')
+  )
+  const results = document.getElementById(input.getAttribute('aria-controls')!)!
+  const match = within(results).getByRole('link', { name: /Zodiac/ })
+  expect(match.textContent).toContain('Film · 2007')
+  expect(input.getAttribute('aria-expanded')).toBe('true')
+  await user.click(match)
+  await screen.findByRole('heading', { name: 'Zodiac', level: 1 })
+  expect(input.getAttribute('aria-expanded')).toBe('false')
+  expect((input as HTMLInputElement).value).toBe('')
 })
 
 it('says so when an item is gone', async () => {

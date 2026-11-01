@@ -20,7 +20,9 @@ it('sends a fresh server to setup, then signs the new admin in', async () => {
   await user.click(screen.getByRole('button', { name: 'Create account' }))
 
   await screen.findByRole('heading', { name: 'Recently added in Films' })
-  expect(screen.getByText('Luna Nova')).toBeTruthy()
+  expect(
+    screen.getByRole('button', { name: 'Account: Luna Nova' })
+  ).toBeTruthy()
   expect(session.signedIn).toBe(true)
 })
 
@@ -42,7 +44,9 @@ it('asks for a password, reports a wrong one, and signs in and out', async () =>
   await user.click(screen.getByRole('button', { name: 'Sign in' }))
   await screen.findByRole('heading', { name: 'Recently added in Films' })
 
-  await user.click(screen.getByRole('button', { name: 'Sign out' }))
+  // Signing out is in the account menu, at the search bar's end.
+  await user.click(screen.getByRole('button', { name: /^Account:/ }))
+  await user.click(await screen.findByRole('menuitem', { name: 'Sign out' }))
   await screen.findByRole('heading', { name: 'Sign in to Weir' })
   expect(fake.logouts).toBe(1)
 })

@@ -1,6 +1,6 @@
 import '@weirhq/m3e/tokens.css'
 import '@weirhq/m3e/styles.css'
-import { createClient } from '@connectrpc/connect'
+import { Code, ConnectError, createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { QueryClient } from '@tanstack/react-query'
 import { StrictMode } from 'react'
@@ -19,6 +19,18 @@ const session = new Session(
 )
 await session.restore()
 
+// Answers that won't change on asking again come straight back; other
+// failures, such as a dropped connection, are retried as usual.
+const final = [Code.NotFound, Code.PermissionDenied, Code.InvalidArgument]
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failures, err) =>
+        failures < 3 && !final.includes(ConnectError.from(err).code)
+    }
+  }
+})
+
 const reauth = new Reauth()
 const api = createApi(
   createConnectTransport({
@@ -29,6 +41,6 @@ const api = createApi(
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App context={{ api, session, reauth, queryClient: new QueryClient() }} />
+    <App context={{ api, session, reauth, queryClient }} />
   </StrictMode>
 )

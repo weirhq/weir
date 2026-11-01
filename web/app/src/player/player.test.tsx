@@ -57,7 +57,7 @@ it('direct-plays from the file URL, declaring what the browser plays', async () 
     versionId: 'zodiac-v1'
   })
   renderSignedIn('/play/zodiac', browse)
-  await screen.findByRole('link', { name: '‹ Zodiac' })
+  await screen.findByRole('link', { name: 'Back to Zodiac' })
   await vi.waitFor(() =>
     expect(document.querySelector('video')!.getAttribute('src')).toBe(
       '/media/files/f1?sig=x'
@@ -155,7 +155,7 @@ it('sends heartbeats while playing and stops on the way out', async () => {
 
     await userEvent
       .setup({ advanceTimers: vi.advanceTimersByTime })
-      .click(screen.getByRole('link', { name: '‹ Zodiac' }))
+      .click(screen.getByRole('link', { name: 'Back to Zodiac' }))
     await vi.waitFor(() => expect(browse.stops).toHaveLength(1))
     // The element has been reset by now; the last reported position stands.
     expect(browse.stops[0]).toMatchObject({ sessionId: 's2', itemId: 'zodiac' })
@@ -218,7 +218,7 @@ describe('the player’s own controls', () => {
       url: '/media/files/f1?sig=x'
     })
     renderSignedIn('/play/zodiac', browse)
-    await screen.findByRole('link', { name: '‹ Zodiac' })
+    await screen.findByRole('link', { name: 'Back to Zodiac' })
     // No browser controls: Weir draws its own.
     expect(document.querySelector('video')!.hasAttribute('controls')).toBe(
       false
@@ -255,7 +255,7 @@ describe('the player’s own controls', () => {
       sessionId: 's1'
     })
     renderSignedIn('/play/arrival', browse)
-    await screen.findByRole('link', { name: '‹ Arrival' })
+    await screen.findByRole('link', { name: 'Back to Arrival' })
     // The stream has ten minutes so far; Arrival runs 1 h 56 min.
     fakeVideo()
     await vi.waitFor(() =>
@@ -290,7 +290,7 @@ describe('the player’s own controls', () => {
       ]
     })
     renderSignedIn('/play/arrival?from=start', browse)
-    await screen.findByRole('link', { name: '‹ Arrival' })
+    await screen.findByRole('link', { name: 'Back to Arrival' })
     const video = fakeVideo()
     video.currentTime = 754
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useRouteContext } from '@tanstack/react-router'
-import { Button } from '@weirhq/m3e'
+import { Button, IconButton } from '@weirhq/m3e'
 import { useEffect, useState } from 'react'
 import { StreamKind, type Item } from '../gen/weir/api/v1alpha/browse_pb'
 import type { PlaybackPlan } from '../gen/weir/api/v1alpha/playback_pb'
@@ -102,13 +102,17 @@ export function PlayerPage() {
         }
         header={
           <>
-            <Link
-              to="/item/$itemId"
-              params={{ itemId }}
-              className={styles.back}
-            >
-              ‹ {title || 'Back'}
-            </Link>
+            <div className={styles.heading}>
+              <IconButton
+                asChild
+                icon="arrow_back"
+                label={title ? `Back to ${title}` : 'Back'}
+                className={styles.back}
+              >
+                <Link to="/item/$itemId" params={{ itemId }} />
+              </IconButton>
+              {title && <h1 className={styles.title}>{title}</h1>}
+            </div>
             {plan && (
               <Button
                 variant="text"

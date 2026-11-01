@@ -23,11 +23,27 @@
   font-family: var(--md-sys-typescale-body-large-font);
 }
 
+/* The way back, then the title, cut short rather than crowding Info. */
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+/* The arrow sits 16dp from the edge, as in a top app bar. */
 .back {
-  color: #fff;
+  flex: none;
+  margin-inline-start: -8px;
+}
+.title {
+  margin: 0;
+  overflow: hidden;
   font-family: var(--md-sys-typescale-title-medium-font);
   font-size: var(--md-sys-typescale-title-medium-size);
-  text-decoration: none;
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .infoButton {

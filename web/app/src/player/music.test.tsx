@@ -133,13 +133,13 @@ it('stops the music when a film starts', async () => {
   await user.click(
     await screen.findByRole('link', { name: 'Resume from 40:00' })
   )
-  await screen.findByRole('link', { name: '‹ Arrival' })
+  await screen.findByRole('link', { name: 'Back to Arrival' })
   await vi.waitFor(() =>
     expect(browse.stops.map((s) => s.itemId)).toContain('t1')
   )
 
   // Back in the app, the queue is gone rather than starting over.
-  await user.click(screen.getByRole('link', { name: '‹ Arrival' }))
+  await user.click(screen.getByRole('link', { name: 'Back to Arrival' }))
   await screen.findByRole('heading', { name: 'Arrival' })
   expect(screen.queryByRole('region', { name: 'Now playing' })).toBeNull()
 })

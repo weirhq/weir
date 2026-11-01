@@ -346,3 +346,46 @@ func TestSummariesNameTheirParents(t *testing.T) {
 		t.Errorf("episode in %q, poster %q", ep.ParentTitle, ep.PosterUrl)
 	}
 }
+
+// A music library lists and counts its albums, inside its artists, by kind.
+func TestListingByKindReachesAlbums(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	creds := h.bootstrap(t)
+	browse := apiv1alpha.NewBrowseClient(http.DefaultClient, h.url, bearer(creds))
+	music := h.scanFolder(t, library.Music, "music",
+		"Kate Bush/Hounds of Love/01 Running Up That Hill.flac",
+		"Kate Bush/The Kick Inside/01 Moving.flac",
+		"Björk/Debut/01 Human Behaviour.flac")
+	for title, genre := range map[string]string{"Hounds of Love": "Art Pop", "The Kick Inside": "Art Pop", "Debut": "Electronic"} {
+		if _, err := h.store.Pool.Exec(ctx, "INSERT INTO metadata (item_id, source, genres) VALUES ($1, 'musicbrainz', $2)", itemID(t, h, title), []string{genre}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	titles := func(req *apiv1alpha.ListItemsRequest) []string {
+		t.Helper()
+		resp, err := browse.ListItems(ctx, connect.NewRequest(req))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var out []string
+		for _, it := range resp.Msg.Items {
+			out = append(out, it.Title)
+		}
+		return out
+	}
+	album := []apiv1alpha.ItemKind{apiv1alpha.ItemKind_ITEM_KIND_ALBUM}
+	if got := titles(&apiv1alpha.ListItemsRequest{LibraryId: music.String()}); !slices.Equal(got, []string{"Björk", "Kate Bush"}) {
+		t.Errorf("top level: %v", got)
+	}
+	if got := titles(&apiv1alpha.ListItemsRequest{LibraryId: music.String(), Kinds: album}); !slices.Equal(got, []string{"Debut", "Hounds of Love", "The Kick Inside"}) {
+		t.Errorf("albums: %v", got)
+	}
+	if got := titles(&apiv1alpha.ListItemsRequest{LibraryId: music.String(), Kinds: album, Genre: "Art Pop"}); !slices.Equal(got, []string{"Hounds of Love", "The Kick Inside"}) {
+		t.Errorf("art pop albums: %v", got)
+	}
+	facets, err := browse.ListLibraryFacets(ctx, connect.NewRequest(&apiv1alpha.ListLibraryFacetsRequest{LibraryId: music.String(), Kinds: album}))
+	if err != nil || len(facets.Msg.Genres) != 2 || facets.Msg.Genres[0].Genre != "Art Pop" || facets.Msg.Genres[0].Count != 2 {
+		t.Errorf("album genres: %v %v", facets, err)
+	}
+}

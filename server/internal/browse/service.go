@@ -362,11 +362,17 @@ func (s *Service) ListLibraryFacets(ctx context.Context, req *connect.Request[ap
 	if err != nil || !slices.Contains(libs, id) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such library"))
 	}
-	genres, err := s.store.LibraryGenres(ctx, id)
+	kinds := []string{}
+	for _, k := range req.Msg.Kinds {
+		if name, ok := kindNames[k]; ok {
+			kinds = append(kinds, name)
+		}
+	}
+	genres, err := s.store.LibraryGenres(ctx, dbgen.LibraryGenresParams{LibraryID: id, Kinds: kinds})
 	if err != nil {
 		return nil, auth.Internal(ctx, "library genres", err)
 	}
-	decades, err := s.store.LibraryDecades(ctx, id)
+	decades, err := s.store.LibraryDecades(ctx, dbgen.LibraryDecadesParams{LibraryID: id, Kinds: kinds})
 	if err != nil {
 		return nil, auth.Internal(ctx, "library decades", err)
 	}

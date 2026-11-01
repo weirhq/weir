@@ -23,7 +23,8 @@ SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_i
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
 LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)
-WHERE (sqlc.narg(library_id)::uuid IS NULL OR (i.library_id = sqlc.narg(library_id)::uuid AND i.parent_id IS NULL))
+WHERE (sqlc.narg(library_id)::uuid IS NULL OR (i.library_id = sqlc.narg(library_id)::uuid
+         AND (i.parent_id IS NULL OR cardinality(sqlc.arg(kinds)::text[]) > 0)))
   AND (sqlc.narg(parent_id)::uuid IS NULL OR i.parent_id = sqlc.narg(parent_id)::uuid)
   AND (cardinality(sqlc.arg(kinds)::text[]) = 0 OR i.kind = ANY(sqlc.arg(kinds)::text[]))
   AND (NOT sqlc.arg(unwatched)::bool OR CASE
@@ -102,21 +103,27 @@ ORDER BY score DESC, i.sort_title
 LIMIT sqlc.arg(max_results)::int;
 
 -- name: LibraryGenres :many
--- A library's genres across its top-level items, the most items first.
+-- A library's genres across its top-level items, or its items of some
+-- kinds at any depth, the most items first.
 SELECT g::text AS genre, count(*)::int AS count
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
 CROSS JOIN LATERAL unnest(r.genres) AS g
-WHERE i.library_id = $1 AND i.parent_id IS NULL
+WHERE i.library_id = sqlc.arg(library_id)
+  AND CASE WHEN cardinality(sqlc.arg(kinds)::text[]) = 0 THEN i.parent_id IS NULL
+           ELSE i.kind = ANY(sqlc.arg(kinds)::text[]) END
 GROUP BY g
 ORDER BY count(*) DESC, g;
 
 -- name: LibraryDecades :many
--- The decades a library's top-level items are from, newest first.
+-- The decades a library's top-level items, or its items of some kinds,
+-- are from, newest first.
 SELECT (r.year / 10 * 10)::int AS decade, count(*)::int AS count
 FROM item i
 JOIN resolved_metadata r ON r.item_id = i.id
-WHERE i.library_id = $1 AND i.parent_id IS NULL AND r.year > 0
+WHERE i.library_id = sqlc.arg(library_id) AND r.year > 0
+  AND CASE WHEN cardinality(sqlc.arg(kinds)::text[]) = 0 THEN i.parent_id IS NULL
+           ELSE i.kind = ANY(sqlc.arg(kinds)::text[]) END
 GROUP BY 1
 ORDER BY 1 DESC;
 

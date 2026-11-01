@@ -92,6 +92,13 @@ func TestWatchProgress(t *testing.T) {
 	if err != nil || len(recent.Msg.Items) != 3 || recent.Msg.Items[0].Kind != apiv1alpha.ItemKind_ITEM_KIND_SHOW {
 		t.Errorf("recently added (newest first): %v %v", recent, err)
 	}
+	// One library at a time, for a row per library.
+	recent, err = browse.ListRecentlyAdded(ctx, connect.NewRequest(&apiv1alpha.ListRecentlyAddedRequest{LibraryId: films.String()}))
+	if err != nil || len(recent.Msg.Items) != 2 || recent.Msg.Items[0].Kind != apiv1alpha.ItemKind_ITEM_KIND_MOVIE {
+		t.Errorf("recently added in films: %v %v", recent, err)
+	}
+	_, err = browse.ListRecentlyAdded(ctx, connect.NewRequest(&apiv1alpha.ListRecentlyAddedRequest{LibraryId: uuid.Must(uuid.NewV7()).String()}))
+	wantCode(t, err, connect.CodeNotFound)
 }
 
 func encode(t *testing.T, width, height int, asPNG bool) []byte {

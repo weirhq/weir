@@ -283,6 +283,13 @@ func (s *Service) ListRecentlyAdded(ctx context.Context, req *connect.Request[ap
 	if err != nil {
 		return nil, err
 	}
+	if req.Msg.LibraryId != "" {
+		id, err := uuid.Parse(req.Msg.LibraryId)
+		if err != nil || !slices.Contains(libs, id) {
+			return nil, connect.NewError(connect.CodeNotFound, errors.New("no such library"))
+		}
+		libs = []uuid.UUID{id}
+	}
 	kinds := []string{"movie", "show", "album"}
 	if len(req.Msg.Kinds) > 0 {
 		kinds = nil

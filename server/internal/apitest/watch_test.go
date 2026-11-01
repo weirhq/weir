@@ -188,6 +188,19 @@ func TestArtwork(t *testing.T) {
 	if code, _, _ := size(string(path)); code != http.StatusForbidden {
 		t.Errorf("unsigned: %d", code)
 	}
+	// A picture inside a media file comes through the engine.
+	h.engine.Pictures = map[string][]byte{"/music/01 Track.flac#1": encode(t, 500, 500, true)}
+	if err := h.store.UpsertArtwork(ctx, dbgen.UpsertArtworkParams{ItemID: arrival, Kind: "logo", Source: "embedded", Location: "/music/01 Track.flac#1"}); err != nil {
+		t.Fatal(err)
+	}
+	item, err = browse.GetItem(ctx, connect.NewRequest(&apiv1alpha.GetItemRequest{Id: arrival.String()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code, cfg, ct := size(item.Msg.Item.LogoUrl); code != http.StatusOK || cfg.Width != 500 || ct != "image/png" {
+		t.Errorf("embedded logo: %d %dx%d %s", code, cfg.Width, cfg.Height, ct)
+	}
+
 	// A member without access to the library can't reach the item, so gets
 	// no picture links.
 	_, pearl := h.member(t, adm)

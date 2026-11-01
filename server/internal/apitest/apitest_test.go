@@ -34,6 +34,8 @@ type harness struct {
 	// What the fake engine has reported.
 	engineCaps   *enginev1alpha.CapabilitiesResponse
 	engineStatus *fakeStatus
+	// The fake engine, for its sessions and embedded pictures.
+	engine *playbacktest.Engine
 	// The server's library_paths root, for library tests.
 	media string
 }
@@ -64,13 +66,14 @@ func newHarness(t *testing.T) *harness {
 	mux := http.NewServeMux()
 	mux.Handle(apiv1alpha.NewAuthHandler(authService, interceptors))
 	mux.Handle(apiv1alpha.NewAdminHandler(admin.NewService(st, []string{media}, jobClient, status), interceptors))
-	h := &harness{store: st, media: media, engineStatus: status}
+	h := &harness{store: st, media: media, engineStatus: status, engine: &playbacktest.Engine{}}
+	engine := h.engine.Client(t)
 	signer := mediaurl.NewSigner(key)
 	browseService := browse.NewService(st, signer)
 	mux.Handle(apiv1alpha.NewBrowseHandler(browseService, interceptors))
 	mux.Handle(apiv1alpha.NewPlaylistsHandler(browse.NewPlaylists(browseService), interceptors))
-	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, t.TempDir()))
-	sessions := playback.NewSessions((&playbacktest.Engine{}).Client(t), t.TempDir(), signer)
+	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, t.TempDir(), engine))
+	sessions := playback.NewSessions(engine, t.TempDir(), signer)
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, func() *enginev1alpha.CapabilitiesResponse { return h.engineCaps }), interceptors))
 	mux.Handle(mediaurl.FilePrefix, mediaurl.Handler(signer, st))
 	mux.Handle(playback.SessionPrefix, sessions.Handler())

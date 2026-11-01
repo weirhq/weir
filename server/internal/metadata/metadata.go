@@ -21,10 +21,12 @@ import (
 
 // Sources, as stored in metadata.source and artwork.source.
 const (
-	SourceNFO             = "nfo"
-	SourceTMDB            = "tmdb"
-	SourceMusicBrainz     = "musicbrainz"
-	SourceLocal           = "local"
+	SourceNFO         = "nfo"
+	SourceTMDB        = "tmdb"
+	SourceMusicBrainz = "musicbrainz"
+	SourceLocal       = "local"
+	// Artwork only: a picture inside a media file, at "path#index".
+	SourceEmbedded        = "embedded"
 	SourceCoverArtArchive = "coverartarchive"
 )
 

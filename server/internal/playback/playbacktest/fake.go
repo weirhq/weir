@@ -1,5 +1,6 @@
 // Package playbacktest provides a fake engine for session tests: a real
-// gRPC server in memory that writes small segment files on demand.
+// gRPC server in memory that writes small segment files on demand, and
+// hands out embedded pictures.
 package playbacktest
 
 import (
@@ -28,6 +29,9 @@ type Engine struct {
 	Busy bool
 	// Finish ends each run after its segments, like a remux reaching the end.
 	Finish bool
+	// Pictures are the embedded pictures ExtractPicture returns, keyed
+	// "path#index".
+	Pictures map[string][]byte
 
 	mu       sync.Mutex
 	sessions map[string]chan *enginev1alpha.ControlSessionRequest
@@ -59,6 +63,14 @@ func (e *Engine) Seen() []string {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return append([]string(nil), e.Commands...)
+}
+
+func (e *Engine) ExtractPicture(_ context.Context, req *enginev1alpha.ExtractPictureRequest) (*enginev1alpha.ExtractPictureResponse, error) {
+	data, ok := e.Pictures[fmt.Sprintf("%s#%d", req.GetPath(), req.GetIndex())]
+	if !ok {
+		return nil, status.Error(codes.NotFound, "no picture there")
+	}
+	return &enginev1alpha.ExtractPictureResponse{Data: data}, nil
 }
 
 func (e *Engine) StartSession(req *enginev1alpha.StartSessionRequest, stream grpc.ServerStreamingServer[enginev1alpha.StartSessionResponse]) error {

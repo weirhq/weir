@@ -25,7 +25,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp" // decode WebP artwork
+	"google.golang.org/grpc"
 
+	enginev1alpha "github.com/weirhq/weir/proto/weir/engine/v1alpha"
 	"github.com/weirhq/weir/server/internal/access"
 	"github.com/weirhq/weir/server/internal/media"
 	"github.com/weirhq/weir/server/internal/store"
@@ -42,22 +44,30 @@ var widths = []int{160, 320, 480, 780, 1280, 1920}
 
 var kinds = map[string]bool{"poster": true, "backdrop": true, "logo": true, "thumb": true}
 
+// Pictures copies pictures embedded in media files, such as an album's
+// cover art in its tracks. The engine does it.
+type Pictures interface {
+	ExtractPicture(ctx context.Context, in *enginev1alpha.ExtractPictureRequest, opts ...grpc.CallOption) (*enginev1alpha.ExtractPictureResponse, error)
+}
+
 // Server fetches, caches and serves artwork.
 type Server struct {
-	store  *store.Store
-	signer *media.Signer
-	dir    string
-	http   *http.Client
+	store    *store.Store
+	signer   *media.Signer
+	dir      string
+	http     *http.Client
+	pictures Pictures
 
 	mu    sync.Mutex
 	locks map[string]*sync.Mutex
 }
 
-func NewServer(st *store.Store, signer *media.Signer, dataDir string) *Server {
+func NewServer(st *store.Store, signer *media.Signer, dataDir string, pictures Pictures) *Server {
 	return &Server{
 		store: st, signer: signer, dir: filepath.Join(dataDir, "artwork"),
-		http:  &http.Client{Timeout: 30 * time.Second},
-		locks: map[string]*sync.Mutex{},
+		http:     &http.Client{Timeout: 30 * time.Second},
+		pictures: pictures,
+		locks:    map[string]*sync.Mutex{},
 	}
 }
 
@@ -179,7 +189,7 @@ func (s *Server) original(ctx context.Context, item uuid.UUID, kind string) (str
 				return matches[0], *c.Hash, nil
 			}
 		}
-		data, err := s.fetch(ctx, c.Location)
+		data, err := s.fetch(ctx, c.Source, c.Location)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", c.Source, err))
 			continue
@@ -221,7 +231,10 @@ func (s *Server) original(ctx context.Context, item uuid.UUID, kind string) (str
 	return "", "", errors.Join(errs...)
 }
 
-func (s *Server) fetch(ctx context.Context, location string) ([]byte, error) {
+func (s *Server) fetch(ctx context.Context, source, location string) ([]byte, error) {
+	if source == "embedded" {
+		return s.embedded(ctx, location)
+	}
 	if filepath.IsAbs(location) {
 		f, err := os.Open(location)
 		if err != nil {
@@ -243,6 +256,30 @@ func (s *Server) fetch(ctx context.Context, location string) ([]byte, error) {
 		return nil, fmt.Errorf("%s", resp.Status)
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, maxImageBytes))
+}
+
+// embedded copies a picture out of its media file through the engine. Its
+// location is the file's path and the picture's stream index, "path#index".
+func (s *Server) embedded(ctx context.Context, location string) ([]byte, error) {
+	at := strings.LastIndexByte(location, '#')
+	if at < 0 {
+		return nil, fmt.Errorf("embedded picture %q isn't path#index", location)
+	}
+	index, err := strconv.ParseUint(location[at+1:], 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("embedded picture %q isn't path#index", location)
+	}
+	if s.pictures == nil {
+		return nil, errors.New("no engine to read embedded pictures")
+	}
+	resp, err := s.pictures.ExtractPicture(ctx,
+		&enginev1alpha.ExtractPictureRequest{Path: location[:at], Index: uint32(index)},
+		// gRPC's default 4 MB is less than a large cover can be.
+		grpc.MaxCallRecvMsgSize(maxImageBytes+64<<10))
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetData(), nil
 }
 
 func decodeFile(path string) (image.Image, error) {

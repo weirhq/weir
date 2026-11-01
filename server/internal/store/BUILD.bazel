@@ -25,6 +25,7 @@ go_library(
         "migrations/00005_browse.sql",
         "migrations/00006_watch_state.sql",
         "migrations/00007_playlists.sql",
+        "migrations/00008_embedded_artwork.sql",
     ],
     importpath = "github.com/weirhq/weir/server/internal/store",
     visibility = ["//server:__subpackages__"],

@@ -136,7 +136,7 @@ func run(ctx context.Context, configPath string, checkMigrations bool) error {
 	browseService := browse.NewService(st, signer)
 	mux.Handle(apiv1alpha.NewBrowseHandler(browseService, interceptors))
 	mux.Handle(apiv1alpha.NewPlaylistsHandler(browse.NewPlaylists(browseService), interceptors))
-	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, cfg.DataDir))
+	mux.Handle(artwork.Prefix, artwork.NewServer(st, signer, cfg.DataDir, sup.Client()))
 	sessions := playback.NewSessions(sup.Client(), cfg.SegmentDir, signer)
 	go sessions.Run(ctx)
 	mux.Handle(apiv1alpha.NewPlaybackHandler(playback.NewService(st, signer, sessions, sup.Capabilities), interceptors))

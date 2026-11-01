@@ -22,8 +22,28 @@ func (p tagProber) Probe(_ context.Context, req *enginev1alpha.ProbeRequest, _ .
 	return &enginev1alpha.ProbeResponse{ProbeHash: req.Path, Tags: p[filepath.Base(req.Path)]}, nil
 }
 
+// coverProber is a tagProber whose files in covers carry cover art at that
+// stream index.
+type coverProber struct {
+	tagProber
+	covers map[string]uint32
+}
+
+func (p coverProber) Probe(ctx context.Context, req *enginev1alpha.ProbeRequest, opts ...grpc.CallOption) (*enginev1alpha.ProbeResponse, error) {
+	resp, err := p.tagProber.Probe(ctx, req, opts...)
+	if i, ok := p.covers[filepath.Base(req.Path)]; ok {
+		resp.Attachments = []*enginev1alpha.Attachment{{Index: i, MimeType: "image/jpeg"}}
+	}
+	return resp, err
+}
+
 // scanned creates a library of kind over root and scans it.
 func scanned(t *testing.T, st *store.Store, kind library.Kind, root string, tags tagProber) uuid.UUID {
+	t.Helper()
+	return scannedWith(t, st, kind, root, tags)
+}
+
+func scannedWith(t *testing.T, st *store.Store, kind library.Kind, root string, prober library.Prober) uuid.UUID {
 	t.Helper()
 	ctx := context.Background()
 	id := uuid.Must(uuid.NewV7())
@@ -33,7 +53,7 @@ func scanned(t *testing.T, st *store.Store, kind library.Kind, root string, tags
 	if err := st.AddLibraryPath(ctx, dbgen.AddLibraryPathParams{LibraryID: id, Path: root}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := library.NewScanner(st, tags).Scan(ctx, id); err != nil {
+	if _, err := library.NewScanner(st, prober).Scan(ctx, id); err != nil {
 		t.Fatal(err)
 	}
 	return id
@@ -185,5 +205,42 @@ func TestRefreshMusic(t *testing.T) {
 	}
 	if len(art) != 2 || art[0] != "local" || art[1] != "coverartarchive" {
 		t.Errorf("album art sources %v", art)
+	}
+}
+
+// Albums use their tracks' embedded cover art.
+func TestRefreshMusicArtFromFiles(t *testing.T) {
+	st := storetest.New(t)
+	ctx := context.Background()
+	root := t.TempDir()
+	track := filepath.Join(root, "Kate Bush", "Hounds of Love", "01.flac")
+	write(t, track, "")
+	lib := scannedWith(t, st, library.Music, root, coverProber{
+		tagProber: tagProber{"01.flac": {"album_artist": "Kate Bush", "album": "Hounds of Love", "title": "Running Up That Hill", "track": "1"}},
+		covers:    map[string]uint32{"01.flac": 1},
+	})
+	if _, err := NewRefresher(st, nil, nil).RefreshLibrary(ctx, lib); err != nil {
+		t.Fatal(err)
+	}
+	art := map[string]string{}
+	rows, err := st.Pool.Query(ctx, "SELECT i.title || ' ' || a.kind || ' ' || a.source, a.location FROM artwork a JOIN item i ON i.id = a.item_id")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var what, location string
+		_ = rows.Scan(&what, &location)
+		art[what] = location
+	}
+	want := map[string]string{
+		"Hounds of Love poster embedded": track + "#1",
+	}
+	if len(art) != len(want) {
+		t.Errorf("artwork %v, want %v", art, want)
+	}
+	for k, v := range want {
+		if art[k] != v {
+			t.Errorf("%s: %q, want %q", k, art[k], v)
+		}
 	}
 }

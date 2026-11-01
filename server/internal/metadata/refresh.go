@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"path/filepath"
 	"strings"
@@ -286,6 +287,11 @@ func (r *Refresher) refreshAlbum(ctx context.Context, roots []string, album dbge
 			return err
 		}
 	}
+	if cover := embeddedCover(files); cover != "" {
+		if err := saveArt(ctx, r.store.Queries, album.ID, []Art{{Kind: "poster", Source: SourceEmbedded, Location: cover}}); err != nil {
+			return err
+		}
+	}
 	if r.musicBrainz == nil {
 		return nil
 	}
@@ -328,6 +334,30 @@ func firstTag(files []dbgen.ItemFilePathsRow, keys ...string) string {
 		for _, k := range keys {
 			if v := strings.TrimSpace(probe.Tags[k]); v != "" {
 				return strings.TrimSpace(strings.FieldsFunc(v, func(r rune) bool { return r == '/' || r == ';' })[0])
+			}
+		}
+	}
+	return ""
+}
+
+// embeddedCover is the cover art in the first track that has some, as
+// "path#index", or "". Cover art is an image attachment without a file
+// name; Matroska's named attachments are files such as fonts.
+func embeddedCover(files []dbgen.ItemFilePathsRow) string {
+	for _, f := range files {
+		var probe struct {
+			Attachments []struct {
+				Index    uint32 `json:"index"`
+				Filename string `json:"filename"`
+				MimeType string `json:"mimeType"`
+			} `json:"attachments"`
+		}
+		if json.Unmarshal(f.Probe, &probe) != nil {
+			continue
+		}
+		for _, a := range probe.Attachments {
+			if a.Filename == "" && strings.HasPrefix(a.MimeType, "image/") {
+				return fmt.Sprintf("%s#%d", f.Path, a.Index)
 			}
 		}
 	}

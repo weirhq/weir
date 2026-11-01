@@ -80,7 +80,9 @@ contact = "you@example.org"        # MusicBrainz requires a contact; or WEIR_MUS
 
 The server reaches the engine at `engine_socket`. Set `engine_command` to
 have the server run and restart the engine itself; leave it empty when
-something else runs it, as Docker Compose does. To run the engine on its own:
+something else runs it, as Docker Compose does. The server adds
+`--socket <engine_socket>` to the command, so leave it out. To run the
+engine on its own:
 
 ```sh
 cd engine && cargo run -p weir-engine -- --socket /tmp/weir-engine.sock

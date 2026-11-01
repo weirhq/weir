@@ -12,6 +12,15 @@ Element.prototype.scrollIntoView = () => {}
 Element.prototype.hasPointerCapture = () => false
 Element.prototype.releasePointerCapture = () => {}
 
+// jsdom has no media queries; tests see a wide window, with the rail.
+window.matchMedia ??= (query: string) =>
+  ({
+    matches: true,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {}
+  }) as unknown as MediaQueryList
+
 // The tabs' indicator follows sizes, which jsdom doesn't have.
 globalThis.ResizeObserver ??= class {
   observe() {}

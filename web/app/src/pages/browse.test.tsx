@@ -19,12 +19,20 @@ it('shows continue watching, recently added and the libraries', async () => {
     expect.stringContaining('Severance'),
     expect.stringContaining('Boards of Canada')
   ])
-  const nav = screen.getByRole('navigation', { name: 'Libraries' })
-  expect(
-    within(nav)
-      .getAllByRole('link')
-      .map((a) => a.textContent)
-  ).toEqual(['Films', 'TV', 'Music', 'Playlists'])
+  const nav = screen.getByRole('navigation', { name: 'Main' })
+  // What each link says, leaving out its icon, which isn't read out.
+  const label = (a: HTMLElement) => {
+    const shown = a.cloneNode(true) as HTMLElement
+    shown.querySelectorAll('[aria-hidden]').forEach((e) => e.remove())
+    return shown.textContent
+  }
+  expect(within(nav).getAllByRole('link').map(label)).toEqual([
+    'Home',
+    'Films',
+    'TV',
+    'Music',
+    'Playlists'
+  ])
 })
 
 it('lists a library as a grid', async () => {

@@ -4,25 +4,11 @@
   min-height: 100vh;
 }
 
-/* The top app bar holds the brand and library links as its title, and
-   search and the account as its actions. */
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  min-width: 0;
-}
-
+/* The top app bar has the brand as its title, and search and the account
+   as its actions. */
 .brand {
   color: inherit;
   text-decoration: none;
-}
-
-.nav {
-  display: flex;
-  gap: 4px;
-  min-width: 0;
-  overflow-x: auto;
 }
 
 .navLink {
@@ -72,8 +58,34 @@
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* Beside wider windows, the rail runs down the side under the bar, and
+   the page and its foot sit in a column beside it, so the rail's box runs
+   to the end of the page and the rail never has to move up for the foot. */
+.body {
+  display: flex;
+  flex: 1;
+  --_bar: 64px;
+}
+
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rail {
+  position: sticky;
+  top: var(--_bar);
+  flex: none;
+  align-self: flex-start;
+  height: calc(100dvh - var(--_bar));
+  overflow-y: auto;
+}
+
 .main {
   flex: 1;
+  min-width: 0;
   padding: 24px 16px 48px;
 }
 
@@ -93,6 +105,9 @@
   }
   .user span {
     display: none;
+  }
+  .body {
+    --_bar: 120px;
   }
 }
 

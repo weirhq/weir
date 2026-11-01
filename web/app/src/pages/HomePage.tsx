@@ -3,7 +3,11 @@ import { Link, useRouteContext } from '@tanstack/react-router'
 import { PosterCard } from '../components/PosterCard'
 import { Row } from '../components/Row'
 import { librariesKey } from '../components/AppShell'
-import { ItemSort, type ItemSummary } from '../gen/weir/api/v1alpha/browse_pb'
+import {
+  ItemKind,
+  ItemSort,
+  type ItemSummary
+} from '../gen/weir/api/v1alpha/browse_pb'
 import { LibraryKind, type Library } from '../gen/weir/api/v1alpha/library_pb'
 import { Role } from '../gen/weir/api/v1alpha/user_pb'
 import type { LibrarySearch } from '../router'
@@ -51,14 +55,18 @@ export function HomePage() {
 
 /**
  * A library's rows, as Plex has: what's new to it, what's newly released,
- * what's unwatched, and its two biggest genres. Each title leads to the
- * library listed the same way.
+ * what's unwatched, and its two biggest genres; for music, its albums.
+ * Each title leads to the library listed the same way. A row that would
+ * only repeat one above it, as in a small library, is left out.
  */
 function LibraryRows({ library }: { library: Library }) {
   const { api } = useRouteContext({ from: '__root__' })
   const libraryId = library.id
   const watchable =
     library.kind === LibraryKind.MOVIES || library.kind === LibraryKind.SHOWS
+  // A music library's top level is its artists; its rows are of albums.
+  const music = library.kind === LibraryKind.MUSIC
+  const kinds = music ? [ItemKind.ALBUM] : []
   const recent = useQuery({
     queryKey: ['recentlyAdded', libraryId],
     queryFn: async () =>
@@ -70,6 +78,7 @@ function LibraryRows({ library }: { library: Library }) {
       (
         await api.browse.listItems({
           libraryId,
+          kinds,
           sort: ItemSort.RELEASED,
           pageSize: rowSize
         })
@@ -89,8 +98,8 @@ function LibraryRows({ library }: { library: Library }) {
       ).items
   })
   const facets = useQuery({
-    queryKey: ['facets', libraryId],
-    queryFn: () => api.browse.listLibraryFacets({ libraryId })
+    queryKey: ['facets', libraryId, music],
+    queryFn: () => api.browse.listLibraryFacets({ libraryId, kinds })
   })
   const genres = (facets.data?.genres ?? []).slice(0, 2).map((g) => g.genre)
   const byGenre = useQueries({
@@ -100,6 +109,7 @@ function LibraryRows({ library }: { library: Library }) {
         (
           await api.browse.listItems({
             libraryId,
+            kinds,
             genre,
             sort: ItemSort.RELEASED,
             pageSize: rowSize
@@ -108,31 +118,65 @@ function LibraryRows({ library }: { library: Library }) {
     }))
   })
 
-  const row = (title: string, items: ItemSummary[], search: LibrarySearch) => (
-    <Row
-      key={title}
-      title={`${title} in ${library.name}`}
-      link={
-        <Link to="/library/$libraryId" params={{ libraryId }} search={search} />
-      }
-    >
-      {items.map((item) => (
-        <PosterCard key={item.id} item={item} />
-      ))}
-    </Row>
-  )
+  const albums = music ? { albums: true } : {}
+  const rows: { title: string; items: ItemSummary[]; search: LibrarySearch }[] =
+    [
+      {
+        title: 'Recently added',
+        items: recent.data ?? [],
+        search: { sort: 'added', ...albums }
+      },
+      {
+        title: 'Recently released',
+        items: released.data ?? [],
+        search: { sort: 'released', ...albums }
+      },
+      ...(watchable
+        ? [
+            {
+              title: 'Unwatched',
+              items: unwatched.data ?? [],
+              search: { sort: 'added', unwatched: true } as LibrarySearch
+            }
+          ]
+        : []),
+      ...genres.map((genre, i) => ({
+        title: genre,
+        items: byGenre[i]?.data ?? [],
+        search: { sort: 'released', genre, ...albums } as LibrarySearch
+      }))
+    ]
+  // What each row holds, to leave out one that repeats another.
+  const seen = new Set<string>()
+  const shown = rows.filter(({ items }) => {
+    if (items.length === 0) return false
+    const holds = items
+      .map((i) => i.id)
+      .sort()
+      .join(' ')
+    if (seen.has(holds)) return false
+    seen.add(holds)
+    return true
+  })
   return (
     <>
-      {row('Recently added', recent.data ?? [], { sort: 'added' })}
-      {row('Recently released', released.data ?? [], { sort: 'released' })}
-      {watchable &&
-        row('Unwatched', unwatched.data ?? [], {
-          sort: 'added',
-          unwatched: true
-        })}
-      {genres.map((genre, i) =>
-        row(genre, byGenre[i]?.data ?? [], { sort: 'released', genre })
-      )}
+      {shown.map(({ title, items, search }) => (
+        <Row
+          key={title}
+          title={`${title} in ${library.name}`}
+          link={
+            <Link
+              to="/library/$libraryId"
+              params={{ libraryId }}
+              search={search}
+            />
+          }
+        >
+          {items.map((item) => (
+            <PosterCard key={item.id} item={item} />
+          ))}
+        </Row>
+      ))}
     </>
   )
 }

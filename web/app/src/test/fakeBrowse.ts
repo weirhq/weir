@@ -251,7 +251,10 @@ export class FakeBrowse {
           (s) =>
             (req.parentId
               ? s.parentId === req.parentId
-              : s.libraryId === req.libraryId && !s.parentId) &&
+              : s.libraryId === req.libraryId &&
+                (req.kinds.length > 0
+                  ? req.kinds.includes(s.kind)
+                  : !s.parentId)) &&
             (!req.unwatched || !s.userData?.watched) &&
             (!req.genre || this.detail(s.id).genres.includes(req.genre))
         )

@@ -1,10 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useNavigate, useRouteContext } from '@tanstack/react-router'
-import { Button, FilterChip, Select } from '@weirhq/m3e'
+import { Button, FilterChip, Menu, MenuItem } from '@weirhq/m3e'
 import { librariesKey } from '../components/AppShell'
 import { PosterCard } from '../components/PosterCard'
 import cards from '../components/Cards.module.css'
-import { ItemSort } from '../gen/weir/api/v1alpha/browse_pb'
+import { ItemKind, ItemSort } from '../gen/weir/api/v1alpha/browse_pb'
 import { LibraryKind } from '../gen/weir/api/v1alpha/library_pb'
 import { libraryRoute, type LibrarySearch, type LibrarySort } from '../router'
 import styles from './LibraryPage.module.css'
@@ -18,13 +18,64 @@ const sorts: { value: LibrarySort; label: string; sort: ItemSort }[] = [
   { value: 'released', label: 'Recently released', sort: ItemSort.RELEASED }
 ]
 
-// Radix's select has no empty value, so "any" is a word of its own.
+// The menus' value for no filter.
 const any = 'any'
+
+/**
+ * A filter chip that opens a menu of choices, showing the chosen one, as
+ * M3's filter chips with menus do. Chosen, it's filled with a check.
+ */
+function MenuChip({
+  label,
+  chosen,
+  value,
+  options,
+  onChoose
+}: {
+  label: string
+  chosen: boolean
+  value: string
+  options: { value: string; label: string }[]
+  onChoose: (value: string) => void
+}) {
+  return (
+    <Menu
+      trigger={
+        // It opens a menu rather than toggling, so it isn't pressed.
+        <FilterChip
+          selected={chosen}
+          trailingIcon="arrow_drop_down"
+          aria-pressed={undefined}
+        >
+          {label}
+        </FilterChip>
+      }
+    >
+      {options.map((o) => (
+        <MenuItem
+          key={o.value}
+          trailingIcon={o.value === value ? 'check' : undefined}
+          onSelect={() => onChoose(o.value)}
+        >
+          {o.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  )
+}
 
 export function LibraryPage() {
   const { libraryId } = libraryRoute.useParams()
   const search = libraryRoute.useSearch()
-  const { sort = 'title', unwatched = false, genre, decade } = search
+  const {
+    sort = 'title',
+    unwatched = false,
+    genre,
+    decade,
+    albums = false
+  } = search
+  // A music library lists its artists, or with albums its albums.
+  const kinds = albums ? [ItemKind.ALBUM] : []
   const navigate = useNavigate({ from: libraryRoute.fullPath })
   const { api } = useRouteContext({ from: '__root__' })
   const libraries = useQuery({
@@ -32,15 +83,16 @@ export function LibraryPage() {
     queryFn: async () => (await api.browse.listVisibleLibraries({})).libraries
   })
   const facets = useQuery({
-    queryKey: ['facets', libraryId],
-    queryFn: () => api.browse.listLibraryFacets({ libraryId })
+    queryKey: ['facets', libraryId, albums],
+    queryFn: () => api.browse.listLibraryFacets({ libraryId, kinds })
   })
   const items = useInfiniteQuery({
-    queryKey: ['items', libraryId, sort, unwatched, genre, decade],
+    queryKey: ['items', libraryId, sort, unwatched, genre, decade, albums],
     initialPageParam: '',
     queryFn: ({ pageParam }) =>
       api.browse.listItems({
         libraryId,
+        kinds,
         sort: sorts.find((s) => s.value === sort)!.sort,
         unwatched,
         genre,
@@ -53,6 +105,7 @@ export function LibraryPage() {
   const library = libraries.data?.find((l) => l.id === libraryId)
   const watchable =
     library?.kind === LibraryKind.MOVIES || library?.kind === LibraryKind.SHOWS
+  const music = library?.kind === LibraryKind.MUSIC
   const all = items.data?.pages.flatMap((p) => p.items) ?? []
   const filtered = unwatched || genre !== undefined || decade !== undefined
   // Changes the address, which is what the page lists from.
@@ -64,6 +117,25 @@ export function LibraryPage() {
       <div className={styles.head}>
         <h1 className={cards.heading}>{library?.name ?? ''}</h1>
         <div className={styles.controls}>
+          {music && (
+            <MenuChip
+              label={albums ? 'Albums' : 'Artists'}
+              chosen={false}
+              value={albums ? 'albums' : 'artists'}
+              options={[
+                { value: 'artists', label: 'Artists' },
+                { value: 'albums', label: 'Albums' }
+              ]}
+              // Genres and decades differ between the two; start afresh.
+              onChoose={(v) =>
+                show({
+                  albums: v === 'albums' ? true : undefined,
+                  genre: undefined,
+                  decade: undefined
+                })
+              }
+            />
+          )}
           {watchable && (
             <FilterChip
               selected={unwatched}
@@ -73,43 +145,43 @@ export function LibraryPage() {
             </FilterChip>
           )}
           {(facets.data?.genres.length ?? 0) > 0 && (
-            <Select
-              className={styles.control}
-              label="Genre"
+            <MenuChip
+              label={genre ?? 'Genre'}
+              chosen={genre !== undefined}
               value={genre ?? any}
-              onValueChange={(v) => show({ genre: v === any ? undefined : v })}
               options={[
-                { value: any, label: 'Any' },
+                { value: any, label: 'Any genre' },
                 ...facets.data!.genres.map((g) => ({
                   value: g.genre,
                   label: g.genre
                 }))
               ]}
+              onChoose={(v) => show({ genre: v === any ? undefined : v })}
             />
           )}
           {(facets.data?.decades.length ?? 0) > 0 && (
-            <Select
-              className={styles.control}
-              label="Decade"
+            <MenuChip
+              label={decade !== undefined ? `${decade}s` : 'Decade'}
+              chosen={decade !== undefined}
               value={decade !== undefined ? String(decade) : any}
-              onValueChange={(v) =>
-                show({ decade: v === any ? undefined : Number(v) })
-              }
               options={[
-                { value: any, label: 'Any' },
+                { value: any, label: 'Any decade' },
                 ...facets.data!.decades.map((d) => ({
                   value: String(d.decade),
                   label: `${d.decade}s`
                 }))
               ]}
+              onChoose={(v) =>
+                show({ decade: v === any ? undefined : Number(v) })
+              }
             />
           )}
-          <Select
-            className={styles.control}
-            label="Sort by"
+          <MenuChip
+            label={sorts.find((s) => s.value === sort)!.label}
+            chosen={false}
             value={sort}
-            onValueChange={(v) => show({ sort: v as LibrarySort })}
             options={sorts.map(({ value, label }) => ({ value, label }))}
+            onChoose={(v) => show({ sort: v as LibrarySort })}
           />
         </div>
       </div>

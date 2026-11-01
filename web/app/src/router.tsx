@@ -90,6 +90,8 @@ export type LibrarySearch = {
   genre?: string
   /** A decade's first year: 1990 for the 1990s. */
   decade?: number
+  /** A music library's albums rather than its artists. */
+  albums?: boolean
 }
 
 const librarySorts: LibrarySort[] = ['title', 'year', 'added', 'released']
@@ -106,7 +108,8 @@ export const libraryRoute = createRoute({
     ...(typeof search.genre === 'string' &&
       search.genre && { genre: search.genre }),
     ...(typeof search.decade === 'number' &&
-      Number.isInteger(search.decade) && { decade: search.decade })
+      Number.isInteger(search.decade) && { decade: search.decade }),
+    ...(search.albums === true && { albums: true })
   }),
   component: LibraryPage
 })

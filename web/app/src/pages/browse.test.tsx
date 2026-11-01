@@ -59,27 +59,61 @@ it('shows continue watching, recently added and the libraries', async () => {
   ])
 })
 
-it('gives each library rows for new, released, unwatched and its genres', async () => {
+it('gives each library rows of its genres, leaving out repeats', async () => {
   renderSignedIn('/')
   const link = async (name: string) =>
     within(await screen.findByRole('region', { name }))
       .getByRole('heading')
       .querySelector('a')!
       .getAttribute('href')
-  expect(await link('Recently released in Films')).toBe(
-    '/library/films?sort=released'
-  )
-  expect(await link('Unwatched in Films')).toBe(
-    '/library/films?sort=added&unwatched=true'
-  )
   expect(await link('Drama in Films')).toBe(
     '/library/films?sort=released&genre=Drama'
   )
-  // Music has nothing to watch.
-  await screen.findByRole('region', { name: 'Recently added in Music' })
+  // With so few films, released and unwatched hold just what was added.
+  expect(
+    screen.getByRole('region', { name: 'Recently added in Films' })
+  ).toBeTruthy()
+  expect(
+    screen.queryByRole('region', { name: 'Recently released in Films' })
+  ).toBeNull()
+  expect(
+    screen.queryByRole('region', { name: 'Unwatched in Films' })
+  ).toBeNull()
+  // Music's rows are of albums, and it has nothing to watch.
+  const music = await screen.findByRole('region', {
+    name: 'Recently added in Music'
+  })
+  expect(
+    within(music).getByText('Music Has the Right to Children')
+  ).toBeTruthy()
   expect(
     screen.queryByRole('region', { name: 'Unwatched in Music' })
   ).toBeNull()
+})
+
+it('picks a genre from its chip’s menu', async () => {
+  const user = userEvent.setup()
+  const { browse } = renderSignedIn('/library/films')
+  await screen.findByRole('heading', { name: 'Films' })
+  await user.click(await screen.findByRole('button', { name: 'Genre' }))
+  await user.click(await screen.findByRole('menuitem', { name: 'Drama' }))
+  await vi.waitFor(() => expect(browse.listCalls.at(-1)?.genre).toBe('Drama'))
+  // The chip shows the choice, and isn't a toggle.
+  const chip = await screen.findByRole('button', { name: 'Drama' })
+  expect(chip.getAttribute('aria-pressed')).toBeNull()
+  await user.click(chip)
+  await user.click(await screen.findByRole('menuitem', { name: 'Any genre' }))
+  await vi.waitFor(() => expect(browse.listCalls.at(-1)?.genre).toBe(''))
+})
+
+it('lists a music library’s albums when asked', async () => {
+  renderSignedIn('/library/music?albums=true')
+  await screen.findByRole('heading', { name: 'Music' })
+  expect(
+    await screen.findByText('Music Has the Right to Children')
+  ).toBeTruthy()
+  expect(screen.queryByText('Boards of Canada')).toBeNull()
+  expect(screen.getByRole('button', { name: /Albums/ })).toBeTruthy()
 })
 
 it('filters a library by what the address says, and changes it', async () => {

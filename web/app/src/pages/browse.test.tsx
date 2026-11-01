@@ -70,10 +70,19 @@ it('shows a film with its facts, cast and file, and marks it watched', async () 
     )
   ).toBeTruthy()
   expect(screen.getByText('Why are they here?')).toBeTruthy()
-  expect(screen.getByText('Amy Adams')).toBeTruthy()
+  // Without a photo, a cast member shows their initials.
+  const amy = screen.getByText('Amy Adams').closest('li')!
+  expect(amy.textContent).toContain('AA')
+  // Part-way through, it offers both resuming and starting over.
+  expect(screen.getByRole('link', { name: 'Resume from 40:00' })).toBeTruthy()
+  expect(
+    screen
+      .getByRole('link', { name: 'Play from beginning' })
+      .getAttribute('href')
+  ).toBe('/play/arrival?from=start')
   expect(
     screen.getByText(
-      '4K · 2160p HEVC Dolby Vision · English TRUEHD 7.1 · 1 subtitle · 54.2 GB'
+      '4K · 2160p HEVC Dolby Vision · English Dolby TrueHD 7.1 · 1 subtitle · 54.2 GB'
     )
   ).toBeTruthy()
 

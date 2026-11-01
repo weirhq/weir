@@ -130,6 +130,20 @@ export function ItemPage() {
                   </Link>
                 </Button>
               )}
+            {playable.has(sum.kind) &&
+              sum.kind !== ItemKind.TRACK &&
+              it.versions.length > 0 &&
+              resumeMs > 0 && (
+                <Button variant="tonal" asChild>
+                  <Link
+                    to="/play/$itemId"
+                    params={{ itemId }}
+                    search={{ from: 'start' }}
+                  >
+                    Play from beginning
+                  </Link>
+                </Button>
+              )}
             {playable.has(sum.kind) && it.versions.length > 0 && (
               <AddToPlaylist itemId={itemId} />
             )}
@@ -176,6 +190,20 @@ export function ItemPage() {
           <ul className={styles.cast}>
             {it.cast.slice(0, 12).map((p) => (
               <li key={p.name + p.role}>
+                {p.photoUrl ? (
+                  <img
+                    className={styles.castPhoto}
+                    src={sized(p.photoUrl, 160)}
+                    srcSet={srcSet(p.photoUrl, 320)}
+                    sizes="80px"
+                    alt=""
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className={styles.castPhoto} aria-hidden="true">
+                    {initials(p.name)}
+                  </span>
+                )}
                 <span className={styles.castName}>{p.name}</span>
                 {p.role && <span className={styles.castRole}>{p.role}</span>}
               </li>
@@ -189,25 +217,31 @@ export function ItemPage() {
           <h2 className={cards.heading}>
             {it.versions.length === 1 ? 'File' : 'Versions'}
           </h2>
-          <ul className={styles.versions}>
-            {it.versions.map((v) => (
-              <li key={v.id}>
-                <VersionLine version={v} />
-                {it.versions.length > 1 && (
-                  <>
-                    {' · '}
-                    <Link
-                      to="/play/$itemId"
-                      params={{ itemId }}
-                      search={{ version: v.id }}
-                    >
-                      Play this version
-                    </Link>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+          {it.versions.length === 1 ? (
+            <p className={styles.file}>
+              <VersionLine version={it.versions[0]!} />
+            </p>
+          ) : (
+            <ul className={styles.versions}>
+              {it.versions.map((v) => (
+                <li key={v.id}>
+                  <VersionLine version={v} />
+                  {it.versions.length > 1 && (
+                    <>
+                      {' · '}
+                      <Link
+                        to="/play/$itemId"
+                        params={{ itemId }}
+                        search={{ version: v.id }}
+                      >
+                        Play this version
+                      </Link>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
     </article>
@@ -227,10 +261,24 @@ function Breadcrumbs({ ancestors }: { ancestors: ItemSummary[] }) {
   )
 }
 
+// Ratings that say there isn't one.
+const unrated = new Set(['NR', 'Not Rated', 'Unrated', 'UR'])
+
+/** "Reeve Carney" is "RC". */
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
 function Facts({ item }: { item: Item }) {
   const facts = [
     item.summary?.year ? String(item.summary.year) : '',
-    item.contentRating,
+    unrated.has(item.contentRating) ? '' : item.contentRating,
     item.runtimeMinutes
       ? `${Math.floor(item.runtimeMinutes / 60) ? `${Math.floor(item.runtimeMinutes / 60)} h ` : ''}${item.runtimeMinutes % 60} min`
       : '',
@@ -305,7 +353,7 @@ function VersionLine({ version }: { version: Version }) {
     video &&
       [
         video.height ? `${video.height}p` : '',
-        video.codec.toUpperCase(),
+        codecName(video.codec),
         hdrNames[video.hdrFormat] ?? ''
       ]
         .filter(Boolean)
@@ -313,7 +361,7 @@ function VersionLine({ version }: { version: Version }) {
     audio &&
       [
         languageName(audio.language),
-        audio.codec.toUpperCase(),
+        codecName(audio.codec),
         channels(audio.channels)
       ]
         .filter(Boolean)
@@ -322,6 +370,25 @@ function VersionLine({ version }: { version: Version }) {
     size(Number(version.sizeBytes))
   ].filter(Boolean)
   return <>{parts.join(' · ')}</>
+}
+
+// What people call ffmpeg's codecs; the rest are shown in capitals.
+const codecNames: Record<string, string> = {
+  h264: 'H.264',
+  mpeg2video: 'MPEG-2',
+  mpeg4: 'MPEG-4',
+  ac3: 'Dolby Digital',
+  eac3: 'Dolby Digital Plus',
+  truehd: 'Dolby TrueHD',
+  dts: 'DTS',
+  opus: 'Opus',
+  vorbis: 'Vorbis',
+  pcm_s16le: 'PCM',
+  pcm_s24le: 'PCM'
+}
+
+function codecName(codec: string): string {
+  return codecNames[codec] ?? codec.toUpperCase()
 }
 
 /** 54.2 GB, or 740 MB under a gigabyte. */

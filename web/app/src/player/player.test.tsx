@@ -113,6 +113,17 @@ it('plays HLS through hls.js from the resume point, and explains why', async () 
   )
 })
 
+it('starts from the beginning when asked, whatever the resume point', async () => {
+  const browse = browseWith({
+    method: PlaybackMethod.REMUX,
+    url: '/media/sessions/s1/index.m3u8?sig=x',
+    sessionId: 's1'
+  })
+  renderSignedIn('/play/arrival?from=start', browse)
+  await vi.waitFor(() => expect(hls.instances).toHaveLength(1))
+  expect(hls.instances[0]!.config.startPosition).toBe(-1)
+})
+
 it('sends heartbeats while playing and stops on the way out', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   try {

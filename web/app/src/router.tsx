@@ -149,8 +149,13 @@ export const playRoute = createRoute({
   beforeLoad: ({ context }) => {
     if (!context.session.signedIn) throw redirect({ to: '/login' })
   },
-  validateSearch: (search: Record<string, unknown>): { version?: string } =>
-    typeof search.version === 'string' ? { version: search.version } : {},
+  // from=start plays from the beginning, whatever the resume point.
+  validateSearch: (
+    search: Record<string, unknown>
+  ): { version?: string; from?: 'start' } => ({
+    ...(typeof search.version === 'string' && { version: search.version }),
+    ...(search.from === 'start' && { from: 'start' as const })
+  }),
   component: PlayerPage
 })
 

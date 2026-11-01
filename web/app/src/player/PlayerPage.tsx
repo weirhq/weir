@@ -17,7 +17,7 @@ import styles from './PlayerPage.module.css'
 
 export function PlayerPage() {
   const { itemId } = playRoute.useParams()
-  const { version } = playRoute.useSearch()
+  const { version, from } = playRoute.useSearch()
   const { api } = useRouteContext({ from: '__root__' })
   const [showInfo, setShowInfo] = useState(false)
   // A film or episode takes over from music.
@@ -27,9 +27,10 @@ export function PlayerPage() {
     queryKey: ['item', itemId],
     queryFn: async () => (await api.browse.getItem({ id: itemId })).item
   })
-  const resumeMs = item.data?.summary?.userData?.position
-    ? Number(item.data.summary.userData.position.seconds) * 1000
-    : 0
+  const resumeMs =
+    from !== 'start' && item.data?.summary?.userData?.position
+      ? Number(item.data.summary.userData.position.seconds) * 1000
+      : 0
   const { media, plan, startError, mediaError, setMediaError, onTimeUpdate } =
     usePlaybackSession<HTMLVideoElement>({
       itemId,

@@ -10,8 +10,9 @@ use std::time::Duration;
 
 use engine_proto::v1alpha::engine_server::{Engine, EngineServer};
 use engine_proto::v1alpha::{
-    CapabilitiesRequest, CapabilitiesResponse, ControlSessionRequest, ControlSessionResponse, HealthRequest,
-    HealthResponse, ProbeRequest, ProbeResponse, StartSessionRequest, StartSessionResponse,
+    CapabilitiesRequest, CapabilitiesResponse, ControlSessionRequest, ControlSessionResponse,
+    ExtractPictureRequest, ExtractPictureResponse, HealthRequest, HealthResponse, ProbeRequest,
+    ProbeResponse, StartSessionRequest, StartSessionResponse,
     control_session_request::Command as ControlCommand,
 };
 use tokio::net::UnixListener;
@@ -84,6 +85,25 @@ impl Engine for EngineService {
             Err(err @ probe::Error::Unreadable { .. }) => Err(Status::failed_precondition(err.to_string())),
             Err(err) => {
                 tracing::error!(%err, path = %path.display(), "probe failed");
+                Err(Status::internal(err.to_string()))
+            }
+        }
+    }
+
+    async fn extract_picture(
+        &self,
+        req: Request<ExtractPictureRequest>,
+    ) -> Result<Response<ExtractPictureResponse>, Status> {
+        let req = req.into_inner();
+        let path = PathBuf::from(req.path);
+        match probe::picture(&self.config.ffmpeg, &path, req.index).await {
+            Ok(data) => Ok(Response::new(ExtractPictureResponse { data })),
+            Err(err @ probe::Error::RelativePath(_)) => Err(Status::invalid_argument(err.to_string())),
+            Err(err @ (probe::Error::NotFound(_) | probe::Error::NoPicture { .. })) => {
+                Err(Status::not_found(err.to_string()))
+            }
+            Err(err) => {
+                tracing::error!(%err, path = %path.display(), "extract picture failed");
                 Err(Status::internal(err.to_string()))
             }
         }

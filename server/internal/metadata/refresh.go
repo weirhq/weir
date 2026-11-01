@@ -34,8 +34,8 @@ type Stats struct {
 	Items, Failed int
 }
 
-// RefreshLibrary looks up every top-level item that hasn't been looked up in
-// the last month. One item failing doesn't stop the rest.
+// RefreshLibrary looks up every top-level item that hasn't been looked up
+// online in the last month. One item failing doesn't stop the rest.
 func (r *Refresher) RefreshLibrary(ctx context.Context, libraryID uuid.UUID) (Stats, error) {
 	var stats Stats
 	paths, err := r.store.ListLibraryPaths(ctx, []uuid.UUID{libraryID})
@@ -66,8 +66,13 @@ func (r *Refresher) RefreshLibrary(ctx context.Context, libraryID uuid.UUID) (St
 			slog.WarnContext(ctx, "metadata lookup failed", "item", it.Title, "kind", it.Kind, "err", err)
 			stats.Failed++
 		}
-		if err := r.store.RecordMetadataAttempt(ctx, it.ID); err != nil {
-			return stats, err
+		// Only an online lookup waits a month to be tried again. Local files
+		// are read every time, so an item seen before its provider was set
+		// up, or while its key was rejected, is looked up on the next run.
+		if run.online(it.Kind) {
+			if err := r.store.RecordMetadataAttempt(ctx, it.ID); err != nil {
+				return stats, err
+			}
 		}
 		stats.Items++
 	}
@@ -79,6 +84,17 @@ type unauthorizedError struct{ source string }
 
 func (e unauthorizedError) Error() string { return e.source + ": " + ErrUnauthorized.Error() }
 func (e unauthorizedError) Unwrap() error { return ErrUnauthorized }
+
+// online reports whether items of this kind have a provider to ask.
+func (r *Refresher) online(kind string) bool {
+	switch kind {
+	case "movie", "show":
+		return r.tmdb != nil
+	case "artist", "album":
+		return r.musicBrainz != nil
+	}
+	return false
+}
 
 func (r *Refresher) drop(err error) {
 	var u unauthorizedError

@@ -114,6 +114,31 @@ func TestRefreshMoviesAndShows(t *testing.T) {
 	}
 }
 
+// Refreshing before a provider is set up, or with only an NFO to go on,
+// doesn't hold items back from the provider once it is.
+func TestRefreshLooksUpOnceAProviderIsSetUp(t *testing.T) {
+	st := storetest.New(t)
+	ctx := context.Background()
+	films := t.TempDir()
+	write(t, filepath.Join(films, "Arrival (2016)", "Arrival (2016).mkv"), "")
+	write(t, filepath.Join(films, "Arrival (2016)", "movie.nfo"), `<movie><uniqueid type="tmdb">329865</uniqueid></movie>`)
+	write(t, filepath.Join(films, "Unknown Film (1901).mkv"), "")
+	movies := scanned(t, st, library.Movies, films, nil)
+
+	if stats, err := NewRefresher(st, nil, nil).RefreshLibrary(ctx, movies); err != nil || stats.Items != 2 {
+		t.Fatalf("local only: %+v %v", stats, err)
+	}
+	tmdb := testTMDB(t, "k")
+	tmdb.region = "US"
+	stats, err := NewRefresher(st, tmdb, nil).RefreshLibrary(ctx, movies)
+	if err != nil || stats.Items != 2 {
+		t.Fatalf("with TMDB: %+v %v", stats, err)
+	}
+	if m := resolved(t, st, "Arrival"); m.Tagline != "Why are they here?" {
+		t.Errorf("TMDB wasn't asked about Arrival: tagline %q", m.Tagline)
+	}
+}
+
 func TestRefreshDropsAProviderThatRejectsItsKey(t *testing.T) {
 	st := storetest.New(t)
 	films := t.TempDir()

@@ -1,12 +1,14 @@
 -- name: ItemsNeedingMetadata :many
--- Top-level items never looked up, or not for a month. Seasons, episodes and
--- tracks are filled in with their show or album.
+-- Top-level items never looked up online, or not for a month; local files
+-- alone don't count. Seasons, episodes and tracks are filled in with their
+-- show or album.
 SELECT i.id, i.kind, i.title, i.year, i.parent_id
 FROM item i
 WHERE i.library_id = $1
   AND i.kind IN ('movie', 'show', 'artist', 'album')
   AND NOT EXISTS (
-      SELECT 1 FROM metadata m WHERE m.item_id = i.id AND m.fetched_at > now() - interval '30 days'
+      SELECT 1 FROM metadata m
+      WHERE m.item_id = i.id AND m.source NOT IN ('nfo', 'local') AND m.fetched_at > now() - interval '30 days'
   )
   AND NOT EXISTS (
       SELECT 1 FROM metadata_attempt a WHERE a.item_id = i.id AND a.attempted_at > now() - interval '30 days'

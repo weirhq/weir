@@ -36,6 +36,12 @@ pub enum Error {
         index: u32,
         stderr: String,
     },
+    #[error("{path} has no text subtitle at stream {index}: {stderr}")]
+    NoSubtitle {
+        path: PathBuf,
+        index: u32,
+        stderr: String,
+    },
 }
 
 /// Probes the file at `path` with the ffprobe binary at `ffprobe`.
@@ -96,6 +102,33 @@ pub async fn picture(ffmpeg: &Path, path: &Path, index: u32) -> Result<Vec<u8>, 
         });
     }
     Ok(output.stdout)
+}
+
+/// Converts the text subtitle at stream `index` of `path` to WebVTT, timed
+/// from the start of the file, with the ffmpeg binary at `ffmpeg`. ffmpeg
+/// reads the whole file to find every cue.
+pub async fn subtitle_webvtt(ffmpeg: &Path, path: &Path, index: u32) -> Result<String, Error> {
+    check_path(path).await?;
+    let output = Command::new(ffmpeg)
+        .args(["-v", "error", "-i"])
+        .arg(path)
+        .args(["-map", &format!("0:{index}"), "-c:s", "webvtt"])
+        .args(["-f", "webvtt", "pipe:1"])
+        .kill_on_drop(true)
+        .output()
+        .await
+        .map_err(|source| Error::Spawn {
+            program: ffmpeg.to_owned(),
+            source,
+        })?;
+    if !output.status.success() || !output.stdout.starts_with(b"WEBVTT") {
+        return Err(Error::NoSubtitle {
+            path: path.to_owned(),
+            index,
+            stderr: String::from_utf8_lossy(&output.stderr).trim().to_string(),
+        });
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
 async fn check_path(path: &Path) -> Result<(), Error> {

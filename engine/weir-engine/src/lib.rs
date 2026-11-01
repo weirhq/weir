@@ -11,8 +11,8 @@ use std::time::Duration;
 use engine_proto::v1alpha::engine_server::{Engine, EngineServer};
 use engine_proto::v1alpha::{
     CapabilitiesRequest, CapabilitiesResponse, ControlSessionRequest, ControlSessionResponse,
-    ExtractPictureRequest, ExtractPictureResponse, HealthRequest, HealthResponse, ProbeRequest,
-    ProbeResponse, StartSessionRequest, StartSessionResponse,
+    ExtractPictureRequest, ExtractPictureResponse, ExtractSubtitleRequest, ExtractSubtitleResponse,
+    HealthRequest, HealthResponse, ProbeRequest, ProbeResponse, StartSessionRequest, StartSessionResponse,
     control_session_request::Command as ControlCommand,
 };
 use tokio::net::UnixListener;
@@ -104,6 +104,25 @@ impl Engine for EngineService {
             }
             Err(err) => {
                 tracing::error!(%err, path = %path.display(), "extract picture failed");
+                Err(Status::internal(err.to_string()))
+            }
+        }
+    }
+
+    async fn extract_subtitle(
+        &self,
+        req: Request<ExtractSubtitleRequest>,
+    ) -> Result<Response<ExtractSubtitleResponse>, Status> {
+        let req = req.into_inner();
+        let path = PathBuf::from(req.path);
+        match probe::subtitle_webvtt(&self.config.ffmpeg, &path, req.index).await {
+            Ok(webvtt) => Ok(Response::new(ExtractSubtitleResponse { webvtt })),
+            Err(err @ probe::Error::RelativePath(_)) => Err(Status::invalid_argument(err.to_string())),
+            Err(err @ (probe::Error::NotFound(_) | probe::Error::NoSubtitle { .. })) => {
+                Err(Status::not_found(err.to_string()))
+            }
+            Err(err) => {
+                tracing::error!(%err, path = %path.display(), "extract subtitle failed");
                 Err(Status::internal(err.to_string()))
             }
         }

@@ -118,6 +118,37 @@ async fn copies_out_cover_art() {
 }
 
 #[tokio::test]
+async fn converts_text_subtitles_to_webvtt() {
+    if !have("ffmpeg") || !have("ffprobe") {
+        eprintln!("ffmpeg or ffprobe not on PATH; skipping");
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let srt = dir.path().join("subs.srt");
+    let file = dir.path().join("film.mkv");
+    std::fs::write(&srt, "1\n00:00:01,000 --> 00:00:02,500\nHello there\n").unwrap();
+    let status = Command::new("ffmpeg")
+        .args(["-v", "error", "-f", "lavfi", "-i", "sine=duration=3", "-i"])
+        .arg(&srt)
+        .args(["-map", "0:a", "-map", "1:s", "-c:a", "flac", "-c:s", "srt"])
+        .arg(&file)
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    let vtt = probe::subtitle_webvtt(Path::new("ffmpeg"), &file, 1)
+        .await
+        .unwrap();
+    assert!(vtt.starts_with("WEBVTT"), "{vtt}");
+    assert!(vtt.contains("00:01.000 --> 00:02.500"), "{vtt}");
+    assert!(vtt.contains("Hello there"), "{vtt}");
+    assert!(matches!(
+        probe::subtitle_webvtt(Path::new("ffmpeg"), &file, 0).await,
+        Err(probe::Error::NoSubtitle { .. })
+    ));
+}
+
+#[tokio::test]
 async fn rejects_relative_and_missing_paths() {
     let ffprobe = Path::new("ffprobe");
     assert!(matches!(

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
+import { Card } from '@weirhq/m3e'
 import { errorMessage } from '../../errors'
 import { JobState } from '../../gen/weir/api/v1alpha/admin_pb'
 import { adminLibrariesQuery, statusKey, when } from './keys'
@@ -44,46 +45,48 @@ export function StatusPage() {
 
   return (
     <>
-      <section className={styles.card} aria-label="Engine">
-        <div className={styles.cardHead}>
-          <h2 className={styles.cardTitle}>Engine</h2>
-          {engine && (
-            <span
-              className={engine.healthy ? styles.ok : styles.bad}
-              role="status"
-            >
-              {engine.healthy
-                ? 'Running'
-                : engine.problem
-                  ? 'Not compatible'
-                  : 'Not responding'}
-            </span>
+      <Card asChild className={styles.card}>
+        <section aria-label="Engine">
+          <div className={styles.cardHead}>
+            <h2 className={styles.cardTitle}>Engine</h2>
+            {engine && (
+              <span
+                className={engine.healthy ? styles.ok : styles.bad}
+                role="status"
+              >
+                {engine.healthy
+                  ? 'Running'
+                  : engine.problem
+                    ? 'Not compatible'
+                    : 'Not responding'}
+              </span>
+            )}
+          </div>
+          {engine?.problem && (
+            <p role="alert" className={styles.error}>
+              {engine.problem}
+            </p>
           )}
-        </div>
-        {engine?.problem && (
-          <p role="alert" className={styles.error}>
-            {engine.problem}
-          </p>
-        )}
-        {engine && (
-          <dl className={styles.facts}>
-            <dt>Version</dt>
-            <dd>{engine.engineVersion || 'Unknown'}</dd>
-            <dt>ffmpeg</dt>
-            <dd>{engine.ffmpegVersion || 'Unknown'}</dd>
-            <dt>Playback sessions</dt>
-            <dd>
-              {engine.activeSessions} of {engine.maxSessions}
-            </dd>
-            <dt>Hardware</dt>
-            <dd>
-              {engine.hardware.length
-                ? engine.hardware.join(', ')
-                : 'None in use; converting on the processor'}
-            </dd>
-          </dl>
-        )}
-      </section>
+          {engine && (
+            <dl className={styles.facts}>
+              <dt>Version</dt>
+              <dd>{engine.engineVersion || 'Unknown'}</dd>
+              <dt>ffmpeg</dt>
+              <dd>{engine.ffmpegVersion || 'Unknown'}</dd>
+              <dt>Playback sessions</dt>
+              <dd>
+                {engine.activeSessions} of {engine.maxSessions}
+              </dd>
+              <dt>Hardware</dt>
+              <dd>
+                {engine.hardware.length
+                  ? engine.hardware.join(', ')
+                  : 'None in use; converting on the processor'}
+              </dd>
+            </dl>
+          )}
+        </section>
+      </Card>
       <section aria-label="Recent jobs">
         <h2 className={styles.cardTitle}>Recent jobs</h2>
         {status.data && jobs.length === 0 ? (

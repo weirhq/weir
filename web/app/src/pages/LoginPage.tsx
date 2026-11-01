@@ -1,4 +1,4 @@
-import { Button, TextField } from '@weirhq/m3e'
+import { Button, Card, TextField } from '@weirhq/m3e'
 import { useNavigate, useRouteContext } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { deviceInfo } from '../device'
@@ -33,34 +33,36 @@ export function LoginPage() {
 
   return (
     <main className={styles.centered}>
-      <form className={`${styles.card} ${styles.form}`} onSubmit={submit}>
-        <h1 className={styles.title}>Sign in to Weir</h1>
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        )}
-        <TextField
-          label="Username"
-          autoComplete="username"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <TextField
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <div className={styles.actions}>
-          <Button type="submit" disabled={busy}>
-            Sign in
-          </Button>
-        </div>
-      </form>
+      <Card asChild className={`${styles.card} ${styles.form}`}>
+        <form onSubmit={submit}>
+          <h1 className={styles.title}>Sign in to Weir</h1>
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          <TextField
+            label="Username"
+            autoComplete="username"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <TextField
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <div className={styles.actions}>
+            <Button type="submit" disabled={busy}>
+              Sign in
+            </Button>
+          </div>
+        </form>
+      </Card>
     </main>
   )
 }

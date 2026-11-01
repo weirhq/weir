@@ -8,8 +8,6 @@
 .card {
   width: min(400px, 100%);
   padding: 32px 24px 24px;
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  background: var(--md-sys-color-surface-container);
 }
 
 .form {

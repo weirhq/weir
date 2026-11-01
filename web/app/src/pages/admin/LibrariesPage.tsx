@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Dialog, Select, TextField } from '@weirhq/m3e'
+import { Button, Card, Dialog, Select, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { librariesKey } from '../../components/AppShell'
 import { errorMessage } from '../../errors'
@@ -83,47 +83,49 @@ export function LibrariesPage() {
       )}
       <ul className={styles.list}>
         {libraries?.map((l) => (
-          <li key={l.id} className={styles.card}>
-            {editing === l.id ? (
-              <LibraryForm
-                initial={l}
-                roots={roots}
-                submitLabel="Save"
-                busy={update.isPending}
-                error={update.error}
-                onSubmit={(d) => update.mutate({ ...d, id: l.id })}
-                onCancel={() => setEditing(undefined)}
-              />
-            ) : (
-              <>
-                <div className={styles.cardHead}>
-                  <h2 className={styles.cardTitle}>{l.name}</h2>
-                  <span className={styles.meta}>{kindNames[l.kind]}</span>
-                </div>
-                <ul className={styles.paths}>
-                  {l.paths.map((p) => (
-                    <li key={p}>{p}</li>
-                  ))}
-                </ul>
-                <p className={styles.meta}>{scanState(l.id, jobs)}</p>
-                <div className={styles.actions}>
-                  <Button
-                    variant="tonal"
-                    disabled={scan.isPending}
-                    onClick={() => scan.mutate(l.id)}
-                  >
-                    Scan now
-                  </Button>
-                  <Button variant="text" onClick={() => setEditing(l.id)}>
-                    Edit
-                  </Button>
-                  <Button variant="text" onClick={() => setDeleting(l)}>
-                    Delete
-                  </Button>
-                </div>
-              </>
-            )}
-          </li>
+          <Card key={l.id} asChild className={styles.card}>
+            <li>
+              {editing === l.id ? (
+                <LibraryForm
+                  initial={l}
+                  roots={roots}
+                  submitLabel="Save"
+                  busy={update.isPending}
+                  error={update.error}
+                  onSubmit={(d) => update.mutate({ ...d, id: l.id })}
+                  onCancel={() => setEditing(undefined)}
+                />
+              ) : (
+                <>
+                  <div className={styles.cardHead}>
+                    <h2 className={styles.cardTitle}>{l.name}</h2>
+                    <span className={styles.meta}>{kindNames[l.kind]}</span>
+                  </div>
+                  <ul className={styles.paths}>
+                    {l.paths.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                  <p className={styles.meta}>{scanState(l.id, jobs)}</p>
+                  <div className={styles.actions}>
+                    <Button
+                      variant="tonal"
+                      disabled={scan.isPending}
+                      onClick={() => scan.mutate(l.id)}
+                    >
+                      Scan now
+                    </Button>
+                    <Button variant="text" onClick={() => setEditing(l.id)}>
+                      Edit
+                    </Button>
+                    <Button variant="text" onClick={() => setDeleting(l)}>
+                      Delete
+                    </Button>
+                  </div>
+                </>
+              )}
+            </li>
+          </Card>
         ))}
       </ul>
       {libraries?.length === 0 && !adding && (
@@ -132,7 +134,7 @@ export function LibrariesPage() {
         </p>
       )}
       {adding ? (
-        <div className={styles.card}>
+        <Card className={styles.card}>
           <LibraryForm
             roots={roots}
             submitLabel="Add library"
@@ -141,7 +143,7 @@ export function LibrariesPage() {
             onSubmit={(d) => create.mutate(d)}
             onCancel={() => setAdding(false)}
           />
-        </div>
+        </Card>
       ) : (
         <Button onClick={() => setAdding(true)}>Add library</Button>
       )}

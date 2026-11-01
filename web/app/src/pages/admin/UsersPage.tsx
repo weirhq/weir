@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
-import { Button, Checkbox, Dialog, Select, TextField } from '@weirhq/m3e'
+import { Button, Card, Checkbox, Dialog, Select, TextField } from '@weirhq/m3e'
 import { useState, type FormEvent } from 'react'
 import { errorMessage } from '../../errors'
 import { Role, type User } from '../../gen/weir/api/v1alpha/user_pb'
@@ -40,35 +40,37 @@ export function UsersPage() {
       )}
       <ul className={styles.list}>
         {users.data?.map((u) => (
-          <li key={u.id} className={styles.card}>
-            <div className={styles.cardHead}>
-              <h2 className={styles.cardTitle}>{u.displayName}</h2>
-              <span className={styles.meta}>
-                {u.username} · {roleNames[u.role]}
-                {u.id === session.user?.id && ' · you'}
-              </span>
-            </div>
-            {editing === u.id ? (
-              <EditUser user={u} onDone={() => setEditing(undefined)} />
-            ) : (
-              <div className={styles.actions}>
-                <Button variant="tonal" onClick={() => setEditing(u.id)}>
-                  Edit
-                </Button>
-                {u.id !== session.user?.id && (
-                  <Button variant="text" onClick={() => setDeleting(u)}>
-                    Delete
-                  </Button>
-                )}
+          <Card key={u.id} asChild className={styles.card}>
+            <li>
+              <div className={styles.cardHead}>
+                <h2 className={styles.cardTitle}>{u.displayName}</h2>
+                <span className={styles.meta}>
+                  {u.username} · {roleNames[u.role]}
+                  {u.id === session.user?.id && ' · you'}
+                </span>
               </div>
-            )}
-          </li>
+              {editing === u.id ? (
+                <EditUser user={u} onDone={() => setEditing(undefined)} />
+              ) : (
+                <div className={styles.actions}>
+                  <Button variant="tonal" onClick={() => setEditing(u.id)}>
+                    Edit
+                  </Button>
+                  {u.id !== session.user?.id && (
+                    <Button variant="text" onClick={() => setDeleting(u)}>
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              )}
+            </li>
+          </Card>
         ))}
       </ul>
       {adding ? (
-        <div className={styles.card}>
+        <Card className={styles.card}>
           <NewUser onDone={() => setAdding(false)} />
-        </div>
+        </Card>
       ) : (
         <Button onClick={() => setAdding(true)}>Add user</Button>
       )}

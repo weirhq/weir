@@ -1,0 +1,141 @@
+/* M3 cards. Each variant maps its component tokens onto the private --_
+   properties below. Following Compose (Card.kt at the pinned commit), a
+   card is a Surface: it clips its content, takes on-surface as its content
+   colour, and a card you can press (a button, or a link through asChild)
+   raises its shadow when hovered, focused or pressed. */
+
+/* Layout and resets carry no weight, so a class on the card can lay out
+   its content and set its padding. */
+:where(.card) {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--_shape);
+  background: var(--_container);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--_shadow);
+  /* Elevation animates out over 150ms (ElevationDefaults' outgoing spec,
+     internal/Elevation.kt); the states below bring it in. */
+  transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.filled {
+  --_container: var(--md-comp-filled-card-container-color);
+  --_shape: var(--md-comp-filled-card-container-shape);
+  --_shadow: var(--md-comp-filled-card-container-shadow);
+  --_shadow-hover: var(--md-comp-filled-card-hover-container-shadow);
+  --_shadow-focus: var(--md-comp-filled-card-focus-container-shadow);
+  --_shadow-pressed: var(--md-comp-filled-card-pressed-container-shadow);
+  --_disabled-shadow: var(--md-comp-filled-card-disabled-container-shadow);
+  /* CardDefaults.cardColors: the disabled colour at its opacity, over the
+     enabled container. */
+  --_disabled-overlay: color-mix(
+    in srgb,
+    var(--md-comp-filled-card-disabled-container-color)
+      calc(var(--md-comp-filled-card-disabled-container-opacity) * 100%),
+    transparent
+  );
+}
+
+.elevated {
+  --_container: var(--md-comp-elevated-card-container-color);
+  --_shape: var(--md-comp-elevated-card-container-shape);
+  --_shadow: var(--md-comp-elevated-card-container-shadow);
+  --_shadow-hover: var(--md-comp-elevated-card-hover-container-shadow);
+  --_shadow-focus: var(--md-comp-elevated-card-focus-container-shadow);
+  --_shadow-pressed: var(--md-comp-elevated-card-pressed-container-shadow);
+  --_disabled-shadow: var(--md-comp-elevated-card-disabled-container-shadow);
+  /* elevatedCardColors composites the disabled colour over itself. */
+  --_disabled-container: var(--md-comp-elevated-card-disabled-container-color);
+}
+
+.outlined {
+  --_container: var(--md-comp-outlined-card-container-color);
+  --_shape: var(--md-comp-outlined-card-container-shape);
+  --_shadow: var(--md-comp-outlined-card-container-shadow);
+  --_shadow-hover: var(--md-comp-outlined-card-hover-container-shadow);
+  --_shadow-focus: var(--md-comp-outlined-card-focus-container-shadow);
+  --_shadow-pressed: var(--md-comp-outlined-card-pressed-container-shadow);
+  --_disabled-shadow: var(--md-comp-outlined-card-disabled-container-shadow);
+  --_outline: var(--md-comp-outlined-card-outline-color);
+  --_outline-width: var(--md-comp-outlined-card-outline-width);
+  /* outlinedCardBorder keeps one colour while enabled, whatever the state,
+     and when disabled composites the outline at its opacity over the
+     elevated card's container. */
+  --_disabled-outline: color-mix(
+    in srgb,
+    var(--md-comp-outlined-card-disabled-outline-color)
+      calc(var(--md-comp-outlined-card-disabled-outline-opacity) * 100%),
+    var(--md-comp-elevated-card-container-color)
+  );
+}
+
+/* Surface draws its border inside the shape, over the content, so an
+   outlined card is no bigger than the others. */
+.outlined::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: var(--_outline-width) solid var(--_outline);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Pressable cards. */
+
+.card:is(a[href], button) {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Elevation animates in over 120ms, FastOutSlowIn (incoming spec). */
+@media (hover: hover) {
+  .card:is(a[href], button):hover {
+    box-shadow: var(--_shadow-hover);
+    transition: box-shadow 120ms var(--md-sys-motion-easing-legacy);
+  }
+}
+
+.card:is(a[href], button):focus-visible {
+  box-shadow: var(--_shadow-focus);
+  transition: box-shadow 120ms var(--md-sys-motion-easing-legacy);
+}
+
+.card:is(a[href], button):active {
+  box-shadow: var(--_shadow-pressed);
+  transition: box-shadow 120ms var(--md-sys-motion-easing-legacy);
+}
+
+/* Only pressable cards show a state layer. */
+.card:not(:is(a[href], button)) > .layer {
+  display: none;
+}
+
+/* Disabled: the disabled container, outline and shadow, and on-surface at
+   38% (DisabledAlpha). It snaps rather than animates, as Compose's does. */
+.card:disabled {
+  cursor: default;
+  background:
+    linear-gradient(var(--_disabled-overlay), var(--_disabled-overlay)),
+    var(--_disabled-container, var(--_container));
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+  --_outline: var(--_disabled-outline);
+  box-shadow: var(--_disabled-shadow);
+  transition: none;
+}
+
+.card:not(.filled):disabled {
+  --_disabled-overlay: transparent;
+}

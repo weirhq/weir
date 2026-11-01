@@ -4,6 +4,7 @@ import {
   AssistChip,
   Button,
   ButtonGroup,
+  Card,
   Checkbox,
   ConnectedButtonGroup,
   Dialog,
@@ -605,5 +606,57 @@ describe('List', () => {
     expect(link.contains(button)).toBe(false)
     fireEvent.click(button)
     expect(play).toHaveBeenCalledOnce()
+  })
+})
+
+describe('Card', () => {
+  it('is a plain container by default, filled', () => {
+    render(
+      <Card aria-label="Engine" role="region">
+        <h2>Engine</h2>
+      </Card>
+    )
+    const card = screen.getByRole('region', { name: 'Engine' })
+    expect(card.tagName).toBe('DIV')
+    expect(card.className).toContain('md-comp-filled-card')
+    // No state layer on a card you can't press.
+    expect(card.querySelector('[aria-hidden]')).toBeNull()
+  })
+
+  it('becomes a button with onClick, and can be disabled', () => {
+    const open = vi.fn()
+    const { rerender } = render(
+      <Card variant="elevated" onClick={open}>
+        Arrival
+      </Card>
+    )
+    const card = screen.getByRole('button', { name: 'Arrival' })
+    expect(card.className).toContain('md-comp-elevated-card')
+    fireEvent.click(card)
+    expect(open).toHaveBeenCalledOnce()
+    rerender(
+      <Card variant="elevated" onClick={open} disabled>
+        Arrival
+      </Card>
+    )
+    fireEvent.click(card)
+    expect(open).toHaveBeenCalledOnce()
+  })
+
+  it('renders its child as the card with asChild', () => {
+    render(
+      <ul>
+        <Card variant="outlined" asChild>
+          <li>Films</li>
+        </Card>
+        <Card asChild>
+          <a href="/library/films">Open Films</a>
+        </Card>
+      </ul>
+    )
+    const item = screen.getByRole('listitem')
+    expect(item.className).toContain('md-comp-outlined-card')
+    expect(item.textContent).toBe('Films')
+    expect(screen.getByRole('link', { name: 'Open Films' })).toBeTruthy()
   })
 })

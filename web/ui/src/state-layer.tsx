@@ -8,7 +8,7 @@ export const focusRing = styles.focusRing!
  * The hover, focus and press feedback for an interactive element. Render it
  * as a child of the element, which needs position: relative.
  */
-export function StateLayer() {
+export function StateLayer({ className }: { className?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -52,5 +52,11 @@ export function StateLayer() {
     return () => host.removeEventListener('pointerdown', press)
   }, [])
 
-  return <span ref={ref} aria-hidden className={styles.layer} />
+  return (
+    <span
+      ref={ref}
+      aria-hidden
+      className={className ? `${styles.layer} ${className}` : styles.layer}
+    />
+  )
 }

@@ -1,4 +1,4 @@
-import { Button, TextField } from '@weirhq/m3e'
+import { Button, Card, TextField } from '@weirhq/m3e'
 import { useNavigate, useRouteContext } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { deviceInfo } from '../device'
@@ -49,54 +49,56 @@ export function SetupPage() {
 
   return (
     <main className={styles.centered}>
-      <form className={`${styles.card} ${styles.form}`} onSubmit={submit}>
-        <h1 className={styles.title}>Set up Weir</h1>
-        <p className={styles.lead}>
-          Create the admin account for this server. You can add other people
-          after.
-        </p>
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
+      <Card asChild className={`${styles.card} ${styles.form}`}>
+        <form onSubmit={submit}>
+          <h1 className={styles.title}>Set up Weir</h1>
+          <p className={styles.lead}>
+            Create the admin account for this server. You can add other people
+            after.
           </p>
-        )}
-        <TextField
-          label="Username"
-          autoComplete="username"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <TextField
-          label="Display name (optional)"
-          autoComplete="name"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-        />
-        <TextField
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          required
-          value={password}
-          error={passwordError}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <TextField
-          label="Confirm password"
-          type="password"
-          autoComplete="new-password"
-          required
-          value={confirm}
-          error={confirmError}
-          onChange={(e) => setConfirm(e.target.value)}
-        />
-        <div className={styles.actions}>
-          <Button type="submit" disabled={busy}>
-            Create account
-          </Button>
-        </div>
-      </form>
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          <TextField
+            label="Username"
+            autoComplete="username"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <TextField
+            label="Display name (optional)"
+            autoComplete="name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+          <TextField
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            error={passwordError}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <TextField
+            label="Confirm password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirm}
+            error={confirmError}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          <div className={styles.actions}>
+            <Button type="submit" disabled={busy}>
+              Create account
+            </Button>
+          </div>
+        </form>
+      </Card>
     </main>
   )
 }

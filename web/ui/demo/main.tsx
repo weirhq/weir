@@ -3,6 +3,7 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
+  AppBarWithSearch,
   AssistChip,
   Badge,
   BottomAppBar,
@@ -50,6 +51,7 @@ import {
   iconNames,
   Radio,
   RichTooltip,
+  SearchBar,
   Select,
   Slider,
   SnackbarHost,
@@ -391,6 +393,74 @@ function DateRanges() {
           onConfirm={setConfirmed}
         />
       </div>
+    </div>
+  )
+}
+
+function SearchBars() {
+  const films = [
+    'Arrival',
+    'Blade Runner',
+    'Children of Men',
+    'Dune',
+    'Ex Machina',
+    'Gravity',
+    'Her',
+    'Interstellar',
+    'Moon',
+    'Solaris'
+  ]
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const [fullScreen, setFullScreen] = useState(false)
+  const [searched, setSearched] = useState('')
+  const matches = films.filter((f) =>
+    f.toLowerCase().includes(query.toLowerCase())
+  )
+  const pick = (f: string) => {
+    setQuery(f)
+    setSearched(f)
+    setOpen(false)
+  }
+  return (
+    <div className="column">
+      <div className="search-demo" data-testid="search-demo">
+        <AppBarWithSearch
+          navigationIcon={<IconButton icon="menu" label="Menu" />}
+        >
+          <SearchBar
+            value={query}
+            onValueChange={(v) => {
+              setQuery(v)
+              setOpen(true)
+            }}
+            onSearch={pick}
+            placeholder="Search films"
+            expanded={open}
+            onExpandedChange={setOpen}
+            expandsTo={fullScreen ? 'fullScreen' : 'docked'}
+            trailing={
+              <span className="avatar" aria-label="Luna">
+                L
+              </span>
+            }
+          >
+            <List>
+              {matches.map((f) => (
+                <ListItem key={f} headline={f} onClick={() => pick(f)} />
+              ))}
+            </List>
+          </SearchBar>
+        </AppBarWithSearch>
+      </div>
+      <label className="control">
+        <Switch
+          checked={fullScreen}
+          onChange={(e) => setFullScreen(e.target.checked)}
+        />{' '}
+        Expand to full screen
+      </label>
+      <output data-testid="search-value">{searched || 'none'}</output>
     </div>
   )
 }
@@ -1441,6 +1511,11 @@ function Demo() {
       <section aria-labelledby="date-ranges">
         <h2 id="date-ranges">Date range pickers</h2>
         <DateRanges />
+      </section>
+
+      <section aria-labelledby="search-bars">
+        <h2 id="search-bars">Search bars</h2>
+        <SearchBars />
       </section>
 
       <section aria-labelledby="time-pickers">

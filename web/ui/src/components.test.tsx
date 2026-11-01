@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import {
+  AppBarWithSearch,
   AssistChip,
   Badge,
   BadgedBox,
@@ -36,6 +37,7 @@ import {
   NavigationRail,
   Radio,
   RichTooltip,
+  SearchBar,
   Select,
   Slider,
   Snackbar,
@@ -1728,5 +1730,88 @@ describe('Badge', () => {
     expect(box.lastElementChild!.textContent).toBe('3')
     const item = screen.getByRole('button', { name: /Queue, 3 items/ })
     expect(item.textContent).toContain('3')
+  })
+})
+
+describe('SearchBar', () => {
+  function Harness({ onSearch }: { onSearch?: (q: string) => void }) {
+    const [query, setQuery] = useState('')
+    const [open, setOpen] = useState(false)
+    return (
+      <>
+        <AppBarWithSearch
+          navigationIcon={<IconButton icon="menu" label="Menu" />}
+          actions={<span>avatar</span>}
+        >
+          <SearchBar
+            value={query}
+            onValueChange={setQuery}
+            onSearch={onSearch}
+            placeholder="Search films"
+            expanded={open}
+            onExpandedChange={setOpen}
+          >
+            <ul>
+              <li>
+                <button type="button">Arrival</button>
+              </li>
+            </ul>
+          </SearchBar>
+        </AppBarWithSearch>
+        <p>outside</p>
+      </>
+    )
+  }
+
+  it('takes typing and searches on Enter', () => {
+    const search = vi.fn()
+    render(<Harness onSearch={search} />)
+    const input = screen.getByRole('searchbox', { name: 'Search films' })
+    fireEvent.change(input, { target: { value: 'arr' } })
+    fireEvent.submit(input.closest('form')!)
+    expect(search).toHaveBeenCalledWith('arr')
+    expect(screen.getByRole('search')).toBeTruthy()
+    expect(screen.getByRole('banner').textContent).toContain('avatar')
+  })
+
+  it('expands on Down, moves into the results, and collapses', () => {
+    render(<Harness />)
+    const input = screen.getByRole('searchbox', { name: 'Search films' })
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('button', { name: 'Arrival' })).toBeNull()
+    input.focus()
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(input.getAttribute('aria-expanded')).toBe('true')
+    const result = screen.getByRole('button', { name: 'Arrival' })
+    expect(
+      document.getElementById(input.getAttribute('aria-controls')!)
+    ).toContain(result)
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(result)
+    // Escape from a result collapses and goes back to the input.
+    fireEvent.keyDown(result, { key: 'Escape' })
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(input)
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close search' }))
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.pointerDown(screen.getByText('outside'))
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('clears what’s typed while expanded', () => {
+    render(<Harness />)
+    const input = screen.getByRole('searchbox', {
+      name: 'Search films'
+    }) as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'dune' } })
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+    expect(input.value).toBe('')
+    expect(document.activeElement).toBe(input)
   })
 })

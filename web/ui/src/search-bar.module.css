@@ -1,0 +1,203 @@
+/* M3 search bars, following Compose's SearchBar, ExpandedDockedSearchBar,
+   ExpandedFullScreenSearchBar and AppBarWithSearch at the pinned commit. */
+
+/* The bar holds its 56dp place; the surface inside grows over the page
+   when it expands. Between 360 and 720dp wide. */
+.root {
+  position: relative;
+  width: 100%;
+  min-width: min(360px, 100%);
+  max-width: 720px;
+  height: var(--md-comp-search-bar-container-height);
+}
+
+.surface {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--md-comp-search-bar-container-shape);
+  background: var(--md-comp-search-bar-container-color);
+  color: var(--md-comp-search-bar-input-text-color);
+}
+
+/* Collapsed, the whole bar shows hover, and keyboard focus rings it. */
+.surface:not(.open)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+@media (hover: hover) {
+  .surface:not(.open):hover::before {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+.surface:not(.open):has(.input:focus-visible) {
+  outline: 3px solid var(--md-comp-search-bar-focus-indicator-color);
+  outline-offset: 2px;
+}
+
+/* Docked: a card with 28dp corners from the bar down, at least 240dp tall
+   and at most two thirds of the window. */
+.open {
+  z-index: 10;
+  min-height: min(240px, 66.7dvh);
+  max-height: 66.7dvh;
+  border-radius: var(--md-comp-search-view-docked-container-shape);
+  background: var(--md-comp-search-view-container-color);
+}
+
+/* Full screen: the whole window, square, with a 72dp header. */
+.fullScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  max-height: none;
+  border-radius: var(--md-comp-search-view-full-screen-container-shape);
+}
+
+/* The input row: icons 16dp from the ends and from the text. An icon
+   button sits 8dp further out, so its icon lines up the same. */
+.field {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  height: var(--md-comp-search-bar-container-height);
+  margin: 0;
+  padding: 0 16px;
+}
+
+.fullScreen .field {
+  height: var(--md-comp-search-view-full-screen-header-container-height);
+}
+
+.leading,
+.trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.leading {
+  color: var(--md-comp-search-bar-leading-icon-color);
+}
+
+.trailing {
+  gap: 8px;
+  color: var(--md-comp-search-bar-trailing-icon-color);
+}
+
+.leading:has(button) {
+  margin-inline-start: -8px;
+}
+
+.trailing:has(> button:last-child) {
+  margin-inline-end: -8px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: inherit;
+  caret-color: var(--md-sys-color-primary);
+  font-family: var(--md-comp-search-bar-input-text-font);
+  font-size: var(--md-comp-search-bar-input-text-size);
+  line-height: var(--md-comp-search-bar-input-text-line-height);
+  font-weight: var(--md-comp-search-bar-input-text-weight);
+  letter-spacing: var(--md-comp-search-bar-input-text-tracking);
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--md-comp-search-bar-supporting-text-color);
+  opacity: 1;
+}
+
+/* The clear button is the bar's own. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.divider {
+  flex: none;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--md-comp-search-view-divider-color);
+}
+
+/* Results expand down and fade in (long4, emphasized decelerate, after
+   short2). */
+.results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  animation: expand var(--md-sys-motion-duration-long4)
+    var(--md-sys-motion-easing-emphasized-decelerate)
+    var(--md-sys-motion-duration-short2) both;
+}
+
+/* Lists of results sit on the view itself, as Compose's suggestions use
+   transparent list items. */
+.results :global(.md-comp-list) {
+  --md-comp-list-item-container-color: transparent;
+  --md-comp-list-item-segmented-container-color: transparent;
+}
+
+@keyframes expand {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+/* The app bar: 64dp, the bar 4dp from top and bottom and 8dp from what's
+   beside it, the navigation icon and actions 4dp from the ends. */
+.appBar {
+  display: flex;
+  align-items: center;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.nav {
+  flex: none;
+  padding-inline-start: 4px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline-end: 4px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.searchSlot {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  padding: 4px 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .results {
+    animation: none;
+  }
+}

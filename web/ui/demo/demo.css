@@ -275,3 +275,23 @@ h2 {
 .range-box {
   height: 568px;
 }
+
+/* The search bar demo: an app bar over a page, room for the results. */
+.search-demo {
+  height: 360px;
+  border-radius: var(--md-sys-shape-corner-large);
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: var(--md-comp-search-bar-avatar-size);
+  height: var(--md-comp-search-bar-avatar-size);
+  border-radius: var(--md-comp-search-bar-avatar-shape);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+}

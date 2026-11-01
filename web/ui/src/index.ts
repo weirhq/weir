@@ -105,6 +105,12 @@ export {
   type MenuItemProps,
   type MenuProps
 } from './menu'
+export {
+  AppBarWithSearch,
+  SearchBar,
+  type AppBarWithSearchProps,
+  type SearchBarProps
+} from './search-bar'
 export { Select, type SelectOption, type SelectProps } from './select'
 export {
   List,

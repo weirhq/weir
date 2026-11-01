@@ -1,0 +1,81 @@
+/* The scrubber and the volume are thin lines until they're pointed at,
+   held or focused, when they grow to the slider's own track (16dp), handle
+   (4dp), the gap either side of it (6dp) and the stop at its end (4dp). The slider keeps its height,
+   so it's as easy to hit and nothing around it moves. */
+@property --weir-bar-grip {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+.bar {
+  --weir-bar-grip: 0;
+  --md-comp-slider-inactive-track-height: calc(
+    4px + 12px * var(--weir-bar-grip)
+  );
+  --md-comp-slider-handle-width: calc(4px * var(--weir-bar-grip));
+  --md-comp-slider-stop-indicator-size: calc(4px * var(--weir-bar-grip));
+  --md-comp-slider-active-handle-leading-space: calc(
+    6px * var(--weir-bar-grip)
+  );
+  transition: --weir-bar-grip var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+}
+.bar:is(:hover, :active, :has(:focus-visible)) {
+  --weir-bar-grip: 1;
+}
+
+/* The time either side of the scrubber, in figures that don't jiggle. */
+.scrubber {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.seek {
+  flex: 1;
+}
+.time {
+  min-width: 56px;
+  font-family: var(--md-sys-typescale-label-large-font);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* The volume slider unfolds beside its icon once that's clicked. Folded,
+   it's hidden, so it's out of the tab order too. */
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  transition: gap var(--md-sys-motion-spring-fast-spatial-duration)
+    var(--md-sys-motion-spring-fast-spatial);
+}
+.volume[data-open] {
+  gap: 12px;
+}
+.volumeSlider {
+  width: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    width var(--md-sys-motion-spring-fast-spatial-duration)
+      var(--md-sys-motion-spring-fast-spatial),
+    opacity var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects),
+    visibility var(--md-sys-motion-spring-fast-effects-duration),
+    --weir-bar-grip var(--md-sys-motion-spring-fast-effects-duration)
+      var(--md-sys-motion-spring-fast-effects);
+}
+.volume[data-open] .volumeSlider {
+  width: 96px;
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .volume,
+  .volumeSlider {
+    transition: none;
+  }
+}

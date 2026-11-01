@@ -3,8 +3,7 @@ import {
   LoadingIndicator,
   Menu,
   MenuDivider,
-  MenuItem,
-  Slider
+  MenuItem
 } from '@weirhq/m3e'
 import {
   useCallback,
@@ -14,10 +13,16 @@ import {
   type ReactNode,
   type RefObject
 } from 'react'
-import { useMediaQuery } from '../media'
+import {
+  Scrubber,
+  seek,
+  setVolume,
+  togglePlay,
+  useMedia,
+  Volume
+} from './parts'
 import styles from './PlayerControls.module.css'
 
-const volumeKey = 'weir.volume'
 // How long controls stay up after the last movement while playing.
 const idleMs = 3000
 
@@ -45,76 +50,12 @@ export type Tracks = {
   onSubtitle: (index: number) => void
 }
 
-/** "1:02:03", or "2:03" under an hour. */
-export function clock(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds))
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  const ss = String(s % 60).padStart(2, '0')
-  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
-}
-
-/** Sets the volume last chosen, if there is one. */
-function restoreVolume(el: HTMLVideoElement) {
-  try {
-    const saved = Number(localStorage.getItem(volumeKey))
-    if (saved > 0 && saved <= 1) el.volume = saved
-  } catch {
-    // Remembering the volume is a convenience.
-  }
-}
-
 /** Picture-in-picture: the standard API, or Safari's presentation modes. */
 function canPictureInPicture(): boolean {
   return (
     document.pictureInPictureEnabled ||
     'webkitSetPresentationMode' in HTMLVideoElement.prototype
   )
-}
-
-/** What the video element is doing, kept in step with its events. */
-function useMedia(media: RefObject<HTMLVideoElement | null>) {
-  const [state, setState] = useState({
-    playing: false,
-    waiting: true,
-    time: 0,
-    duration: 0,
-    volume: 1,
-    muted: false
-  })
-  useEffect(() => {
-    const el = media.current
-    if (!el) return
-    restoreVolume(el)
-    const read = () =>
-      setState({
-        playing: !el.paused && !el.ended,
-        waiting: el.readyState < HTMLMediaElement.HAVE_FUTURE_DATA,
-        time: el.currentTime,
-        duration: Number.isFinite(el.duration) ? el.duration : 0,
-        volume: el.volume,
-        muted: el.muted
-      })
-    const events = [
-      'play',
-      'pause',
-      'ended',
-      'waiting',
-      'playing',
-      'canplay',
-      'loadedmetadata',
-      'durationchange',
-      'timeupdate',
-      'seeking',
-      'seeked',
-      'volumechange'
-    ]
-    for (const e of events) el.addEventListener(e, read)
-    return () => {
-      for (const e of events) el.removeEventListener(e, read)
-    }
-  }, [media])
-  return state
 }
 
 /** Whether the video is out of the page, in iOS's own full screen or
@@ -202,20 +143,16 @@ export function PlayerControls({
   // A stream still being made, in an HLS event playlist, says only how much
   // there is so far; the item's runtime is the whole of it.
   const duration = Math.max(m.duration, runtime)
-  // Where the scrubber is held, while it is.
-  const [scrub, setScrub] = useState<number>()
+  const [scrubbing, setScrubbing] = useState(false)
   const [active, setActive] = useState(true)
   const [fullscreen, setFullscreen] = useState(false)
   const [airplay, setAirplay] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const shown = active || !m.playing || scrub !== undefined || menuOpen
+  const shown = active || !m.playing || scrubbing || menuOpen
   // The volume slider, folded beside its icon until that's clicked, and
   // folded again when the controls fade.
   const [volumeOpen, setVolumeOpen] = useState(false)
-  // Narrow windows have no volume slider; phones have volume buttons.
-  const volumeSlider = useMediaQuery('(min-width: 601px)')
-  const volumeFolded = volumeSlider && !volumeOpen
   const [wasShown, setWasShown] = useState(shown)
   if (shown !== wasShown) {
     setWasShown(shown)
@@ -262,24 +199,11 @@ export function PlayerControls({
   const video = () => media.current as WebKitVideo | null
   const toggle = () => {
     const el = video()
-    if (!el) return
-    if (el.paused || el.ended) void el.play().catch(() => undefined)
-    else el.pause()
+    if (el) togglePlay(el)
   }
   const seekTo = (t: number) => {
     const el = video()
-    if (el) el.currentTime = Math.min(Math.max(0, t), duration || t)
-  }
-  const setVolume = (v: number) => {
-    const el = video()
-    if (!el) return
-    el.volume = v
-    el.muted = v === 0
-    try {
-      if (v > 0) localStorage.setItem(volumeKey, String(v))
-    } catch {
-      // Remembering the volume is a convenience.
-    }
+    if (el) seek(el, t, duration)
   }
   const toggleFullscreen = () => {
     const d = document as WebKitDocument
@@ -334,12 +258,12 @@ export function PlayerControls({
         case 'ArrowUp':
           e.preventDefault()
           setVolumeOpen(true)
-          setVolume(Math.min(1, el.volume + 0.1))
+          setVolume(el, Math.min(1, el.volume + 0.1))
           break
         case 'ArrowDown':
           e.preventDefault()
           setVolumeOpen(true)
-          setVolume(Math.max(0, el.volume - 0.1))
+          setVolume(el, Math.max(0, el.volume - 0.1))
           break
         case 'm':
           el.muted = !el.muted
@@ -353,13 +277,6 @@ export function PlayerControls({
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Seeks to where the scrubber was let go.
-  const commit = () => {
-    if (scrub !== undefined) seekTo(scrub)
-    setScrub(undefined)
-  }
-  const time = scrub ?? m.time
-  const volume = m.muted ? 0 : m.volume
   return (
     <div
       className={styles.overlay}
@@ -393,29 +310,12 @@ export function PlayerControls({
         </div>
       )}
       <div className={styles.bottom}>
-        <div className={styles.scrubber}>
-          <span className={styles.time}>{clock(time)}</span>
-          {/* The slider takes the pointer itself; its release bubbles up
-              here, where the seek happens once the handle is let go. */}
-          <div
-            className={styles.seek}
-            onPointerUp={commit}
-            onPointerCancel={commit}
-          >
-            <Slider
-              className={styles.bar}
-              aria-label="Seek"
-              aria-valuetext={`${clock(time)} of ${clock(duration)}`}
-              min={0}
-              max={Math.max(duration, 1)}
-              value={Math.min(time, Math.max(duration, 1))}
-              valueLabel={clock}
-              onValueChange={setScrub}
-              onKeyUp={commit}
-            />
-          </div>
-          <span className={styles.time}>-{clock(duration - time)}</span>
-        </div>
+        <Scrubber
+          media={media}
+          time={m.time}
+          duration={duration}
+          onHold={setScrubbing}
+        />
         <div className={styles.buttons}>
           <IconButton
             icon={m.playing ? 'pause' : 'play_arrow'}
@@ -433,33 +333,13 @@ export function PlayerControls({
             label="Forward 30 seconds"
             onClick={() => seekTo((video()?.currentTime ?? 0) + 30)}
           />
-          <div
-            className={styles.volume}
-            data-open={(volumeSlider && volumeOpen) || undefined}
-          >
-            {/* Opens the slider first, then mutes and unmutes; the one
-                button, so it keeps focus. */}
-            <IconButton
-              icon={volume === 0 ? 'volume_off' : 'volume_up'}
-              label={volumeFolded ? 'Volume' : m.muted ? 'Unmute' : 'Mute'}
-              aria-expanded={volumeFolded ? false : undefined}
-              onClick={() => {
-                const el = video()
-                if (volumeFolded) setVolumeOpen(true)
-                else if (el) el.muted = !el.muted
-              }}
-            />
-            {volumeSlider && (
-              <Slider
-                className={`${styles.bar} ${styles.volumeSlider}`}
-                aria-label="Volume"
-                min={0}
-                max={1}
-                value={volume}
-                onValueChange={setVolume}
-              />
-            )}
-          </div>
+          <Volume
+            media={media}
+            volume={m.volume}
+            muted={m.muted}
+            open={volumeOpen}
+            onOpen={() => setVolumeOpen(true)}
+          />
           <span className={styles.spacer} />
           {tracks &&
             (tracks.audio.length > 1 || tracks.subtitles.length > 0) && (

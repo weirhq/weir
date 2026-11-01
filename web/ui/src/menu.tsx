@@ -20,6 +20,9 @@ export type MenuProps = {
   /** Which side of the trigger the menu opens on; below by default. */
   side?: 'top' | 'right' | 'bottom' | 'left'
   align?: 'start' | 'center' | 'end'
+  /** Where the menu is rendered; the page's body by default. Give the
+      element that's full screen, if one is, or the menu won't show. */
+  container?: HTMLElement | null
   className?: string
 }
 
@@ -34,12 +37,13 @@ export function Menu({
   onOpenChange,
   side = 'bottom',
   align = 'start',
+  container,
   className
 }: MenuProps) {
   return (
     <DropdownMenu.Root open={open} onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
+      <DropdownMenu.Portal container={container}>
         <DropdownMenu.Content
           side={side}
           align={align}

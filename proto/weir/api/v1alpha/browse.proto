@@ -91,13 +91,17 @@ message ItemSummary {
   string parent_id = 8;
   UserData user_data = 9;
   // Signed image URLs; empty when there is no such picture. Add w=<pixels>
-  // for a resized copy.
+  // for a resized copy. A track without a poster of its own has its
+  // album's.
   string poster_url = 10;
   // A wide picture: an episode's still, or else the item's backdrop.
   string thumb_url = 11;
   // The longest version's runtime, for showing progress; empty when unknown
   // or when there's nothing to play, as for a show.
   google.protobuf.Duration duration = 12;
+  // What it belongs to: a track's album, or a season's or episode's show.
+  // Empty for top-level items.
+  string parent_title = 13;
 }
 
 enum ItemSort {

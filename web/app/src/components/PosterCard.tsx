@@ -8,6 +8,11 @@ export function isWide(item: ItemSummary): boolean {
   return item.kind === ItemKind.EPISODE
 }
 
+/** Albums show square covers. */
+export function isSquare(item: ItemSummary): boolean {
+  return item.kind === ItemKind.ALBUM
+}
+
 /** A line under the title: year, episode number, or track number. */
 export function subtitle(item: ItemSummary): string {
   switch (item.kind) {
@@ -42,7 +47,11 @@ export function PosterCard({
       params={{ itemId: item.id }}
       className={styles.card}
     >
-      <div className={wide ? styles.still : styles.poster}>
+      <div
+        className={
+          wide ? styles.still : isSquare(item) ? styles.square : styles.poster
+        }
+      >
         {image ? (
           <img
             src={`${image}&w=320`}

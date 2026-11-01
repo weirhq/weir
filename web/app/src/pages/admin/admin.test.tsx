@@ -14,7 +14,7 @@ it('keeps members out of server settings', async () => {
   const fake = new FakeAuth()
   fake.role = Role.MEMBER
   renderSignedIn('/admin', new FakeBrowse(), { fake })
-  await screen.findByRole('region', { name: 'Recently added' })
+  await screen.findByRole('region', { name: 'Recently added in Films' })
   expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
 })
 

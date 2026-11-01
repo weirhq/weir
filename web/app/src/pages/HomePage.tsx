@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useRouteContext } from '@tanstack/react-router'
 import { PosterCard } from '../components/PosterCard'
 import { Row } from '../components/Row'
@@ -12,13 +12,17 @@ export function HomePage() {
     queryKey: ['continueWatching'],
     queryFn: async () => (await api.browse.listContinueWatching({})).items
   })
-  const recent = useQuery({
-    queryKey: ['recentlyAdded'],
-    queryFn: async () => (await api.browse.listRecentlyAdded({})).items
-  })
   const libraries = useQuery({
     queryKey: librariesKey,
     queryFn: async () => (await api.browse.listVisibleLibraries({})).libraries
+  })
+  // A row per library, as Plex does, so each keeps its own card shape.
+  const recent = useQueries({
+    queries: (libraries.data ?? []).map((library) => ({
+      queryKey: ['recentlyAdded', library.id],
+      queryFn: async () =>
+        (await api.browse.listRecentlyAdded({ libraryId: library.id })).items
+    }))
   })
 
   if (libraries.data?.length === 0) {
@@ -43,11 +47,13 @@ export function HomePage() {
           />
         ))}
       </Row>
-      <Row title="Recently added">
-        {(recent.data ?? []).map((item) => (
-          <PosterCard key={item.id} item={item} />
-        ))}
-      </Row>
+      {(libraries.data ?? []).map((library, i) => (
+        <Row key={library.id} title={`Recently added in ${library.name}`}>
+          {(recent[i]?.data ?? []).map((item) => (
+            <PosterCard key={item.id} item={item} />
+          ))}
+        </Row>
+      ))}
     </>
   )
 }

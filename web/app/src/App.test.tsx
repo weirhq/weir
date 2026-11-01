@@ -19,7 +19,7 @@ it('sends a fresh server to setup, then signs the new admin in', async () => {
   await user.type(screen.getByLabelText('Confirm password'), 'short but longer')
   await user.click(screen.getByRole('button', { name: 'Create account' }))
 
-  await screen.findByRole('heading', { name: 'Recently added' })
+  await screen.findByRole('heading', { name: 'Recently added in Films' })
   expect(screen.getByText('Luna Nova')).toBeTruthy()
   expect(session.signedIn).toBe(true)
 })
@@ -40,7 +40,7 @@ it('asks for a password, reports a wrong one, and signs in and out', async () =>
   await user.clear(screen.getByLabelText('Password'))
   await user.type(screen.getByLabelText('Password'), 'correct horse')
   await user.click(screen.getByRole('button', { name: 'Sign in' }))
-  await screen.findByRole('heading', { name: 'Recently added' })
+  await screen.findByRole('heading', { name: 'Recently added in Films' })
 
   await user.click(screen.getByRole('button', { name: 'Sign out' }))
   await screen.findByRole('heading', { name: 'Sign in to Weir' })

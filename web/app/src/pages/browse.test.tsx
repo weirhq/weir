@@ -8,17 +8,27 @@ it('shows continue watching, recently added and the libraries', async () => {
     name: 'Continue watching'
   })
   expect(within(resume).getByText('Arrival')).toBeTruthy()
-  const recent = screen.getByRole('region', { name: 'Recently added' })
-  expect(
-    within(recent)
+  // Recently added comes a row per library, albums with square covers.
+  const titles = async (library: string) =>
+    within(
+      await screen.findByRole('region', {
+        name: `Recently added in ${library}`
+      })
+    )
       .getAllByRole('link')
       .map((a) => a.textContent)
-  ).toEqual([
+  expect(await titles('Films')).toEqual([
     expect.stringContaining('Arrival'),
-    expect.stringContaining('Zodiac'),
-    expect.stringContaining('Severance'),
-    expect.stringContaining('Boards of Canada')
+    expect.stringContaining('Zodiac')
   ])
+  expect(await titles('TV')).toEqual([expect.stringContaining('Severance')])
+  expect(await titles('Music')).toEqual([
+    expect.stringContaining('Music Has the Right to Children')
+  ])
+  const album = screen
+    .getByRole('region', { name: 'Recently added in Music' })
+    .querySelector('a > div')!
+  expect(album.className).toMatch(/square/)
   const nav = screen.getByRole('navigation', { name: 'Main' })
   // What each link says, leaving out its icon, which isn't read out.
   const label = (a: HTMLElement) => {

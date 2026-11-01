@@ -10,12 +10,14 @@
   outline: none;
 }
 .card:focus-visible .poster,
+.card:focus-visible .square,
 .card:focus-visible .still {
   outline: 3px solid var(--md-sys-color-primary);
   outline-offset: 2px;
 }
 
 .poster,
+.square,
 .still {
   position: relative;
   overflow: hidden;
@@ -26,14 +28,19 @@
 .poster {
   aspect-ratio: 2 / 3;
 }
+.square {
+  aspect-ratio: 1;
+}
 .still {
   aspect-ratio: 16 / 9;
 }
 .card:hover .poster,
+.card:hover .square,
 .card:hover .still {
   border-radius: var(--md-sys-shape-corner-large-increased);
 }
 .poster img,
+.square img,
 .still img {
   display: block;
   width: 100%;

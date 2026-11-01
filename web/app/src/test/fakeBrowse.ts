@@ -246,8 +246,14 @@ export class FakeBrowse {
           (s) => s.userData?.position && !s.userData.watched
         )
       }),
-      listRecentlyAdded: () => ({
-        items: this.summaries.filter((s) => !s.parentId)
+      // Films, shows and albums, as the server picks them, in one library
+      // or all.
+      listRecentlyAdded: (req) => ({
+        items: this.summaries.filter(
+          (s) =>
+            [ItemKind.MOVIE, ItemKind.SHOW, ItemKind.ALBUM].includes(s.kind) &&
+            (!req.libraryId || s.libraryId === req.libraryId)
+        )
       })
     })
     router.service(Playlists, {

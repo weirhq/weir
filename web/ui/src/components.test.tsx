@@ -29,6 +29,12 @@ import {
   SplitButton,
   SuggestionChip,
   Switch,
+  Tab,
+  TabLink,
+  TabList,
+  TabNav,
+  TabPanel,
+  Tabs,
   TextField,
   Tooltip,
   useSnackbar,
@@ -908,5 +914,70 @@ describe('Tooltip', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Learn more' }))
     expect(more).toHaveBeenCalledOnce()
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+})
+
+describe('Tabs', () => {
+  // The indicator follows sizes, which jsdom doesn't have.
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  })
+
+  it('switches panels, with arrow keys between tabs', async () => {
+    render(
+      <Tabs defaultValue="films">
+        <TabList aria-label="Library">
+          <Tab value="films" icon="play_arrow">
+            Films
+          </Tab>
+          <Tab value="shows">Shows</Tab>
+          <Tab value="music" disabled>
+            Music
+          </Tab>
+        </TabList>
+        <TabPanel value="films">All the films</TabPanel>
+        <TabPanel value="shows">All the shows</TabPanel>
+      </Tabs>
+    )
+    const list = screen.getByRole('tablist', { name: 'Library' })
+    expect(list.querySelectorAll('[role=tab]')).toHaveLength(3)
+    const films = screen.getByRole('tab', { name: 'Films' })
+    expect(films.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('tabpanel').textContent).toBe('All the films')
+    films.focus()
+    fireEvent.keyDown(films, { key: 'ArrowRight' })
+    const shows = screen.getByRole('tab', { name: 'Shows' })
+    await waitFor(() => expect(document.activeElement).toBe(shows))
+    fireEvent.mouseDown(shows)
+    await waitFor(() =>
+      expect(screen.getByRole('tabpanel').textContent).toBe('All the shows')
+    )
+  })
+
+  it('makes a nav of links, the current one marked', () => {
+    render(
+      <TabNav aria-label="Server settings" variant="secondary">
+        <TabLink label="Libraries" selected>
+          <a href="/admin" />
+        </TabLink>
+        <TabLink label="Users" selected={false}>
+          <a href="/admin/users" />
+        </TabLink>
+      </TabNav>
+    )
+    const nav = screen.getByRole('navigation', { name: 'Server settings' })
+    expect(nav.querySelectorAll('a')).toHaveLength(2)
+    expect(
+      screen
+        .getByRole('link', { name: 'Libraries' })
+        .getAttribute('aria-current')
+    ).toBe('page')
+    expect(
+      screen.getByRole('link', { name: 'Users' }).getAttribute('aria-current')
+    ).toBeNull()
   })
 })

@@ -5,29 +5,6 @@
   max-width: 960px;
 }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.tab {
-  padding: 12px 16px;
-  border-bottom: 3px solid transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  font-family: var(--md-sys-typescale-title-small-font);
-  font-size: var(--md-sys-typescale-title-small-size);
-  font-weight: var(--md-sys-typescale-title-small-weight);
-  text-decoration: none;
-}
-.tab:hover {
-  color: var(--md-sys-color-on-surface);
-}
-.tab[aria-current='page'] {
-  border-bottom-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-primary);
-}
-
 .list {
   display: flex;
   flex-direction: column;

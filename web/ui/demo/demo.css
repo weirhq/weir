@@ -134,3 +134,14 @@ h2 {
 .in-sheet {
   --md-comp-list-item-container-color: transparent;
 }
+
+.tabs-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
+}
+
+.tab-panel {
+  padding: 16px;
+}

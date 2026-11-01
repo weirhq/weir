@@ -1,0 +1,164 @@
+/* M3 tabs, following Compose's PrimaryTabRow, SecondaryTabRow, their
+   scrollable forms, Tab and LeadingIconTab (TabRow.kt and Tab.kt at the
+   pinned commit). A fixed row shares its width between its tabs; a
+   scrollable one gives each at least 90dp and starts 52dp in. Under the
+   row runs a 1dp outline-variant divider (HorizontalDivider), and over it
+   the indicator slides to the selected tab with DefaultSpatial. */
+
+.row {
+  position: relative;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  /* The divider, drawn inside so a scrolling row keeps the indicator. */
+  box-shadow: inset 0 -1px var(--md-sys-color-outline-variant);
+  background: var(--_container);
+  list-style: none;
+}
+
+.primary {
+  --_container: var(--md-comp-primary-navigation-tab-container-color);
+  --_active: var(--md-comp-primary-navigation-tab-active-label-text-color);
+  --_inactive: var(--md-comp-primary-navigation-tab-inactive-label-text-color);
+  --_hover: var(
+    --md-comp-primary-navigation-tab-inactive-hover-label-text-color
+  );
+  --_height: var(--md-comp-primary-navigation-tab-container-height);
+}
+
+.secondary {
+  --_container: var(--md-comp-secondary-navigation-tab-container-color);
+  --_active: var(--md-comp-secondary-navigation-tab-active-label-text-color);
+  --_inactive: var(
+    --md-comp-secondary-navigation-tab-inactive-label-text-color
+  );
+  --_hover: var(--md-comp-secondary-navigation-tab-hover-label-text-color);
+  --_height: var(--md-comp-secondary-navigation-tab-container-height);
+}
+
+.scrollable {
+  overflow-x: auto;
+  padding-inline-start: 52px;
+  scrollbar-width: none;
+}
+
+/* Each tab: 16dp in at the sides, 48dp tall, its content centred. Its
+   colour fades in with DefaultEffects and out with FastEffects. */
+.tab {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: var(--_height);
+  margin: 0;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  color: var(--_inactive);
+  font-family: var(--md-comp-primary-navigation-tab-label-text-font);
+  font-size: var(--md-comp-primary-navigation-tab-label-text-size);
+  line-height: var(--md-comp-primary-navigation-tab-label-text-line-height);
+  font-weight: var(--md-comp-primary-navigation-tab-label-text-weight);
+  letter-spacing: var(--md-comp-primary-navigation-tab-label-text-tracking);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--md-sys-motion-spring-fast-effects-duration)
+    var(--md-sys-motion-spring-fast-effects);
+  --md-icon-size: var(--md-comp-primary-navigation-tab-icon-size);
+}
+
+.scrollable > .tab {
+  flex: none;
+  min-width: 90px;
+}
+
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--_hover);
+  }
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--md-sys-color-secondary);
+  outline-offset: -3px;
+}
+
+.tab:is([data-state='active'], [aria-current='page']) {
+  color: var(--_active);
+  transition: color var(--md-sys-motion-spring-default-effects-duration)
+    var(--md-sys-motion-spring-default-effects);
+}
+
+.tab:disabled,
+.tab[data-disabled] {
+  cursor: default;
+}
+
+/* The ripple is always the selected colour (Tab.kt). */
+.layer {
+  color: var(--_active);
+}
+
+/* What the indicator measures: the icon and label together. */
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* An icon over the label: 72dp tall, the label's baseline 14dp above the
+   indicator (17dp up from the bottom) and the icon's foot 20dp above the
+   baseline. With title small's baseline 15px into its 20px line, that is
+   11px to the icon, 5px to the label and 12px below it. */
+.stacked {
+  min-height: 72px;
+}
+
+.stacked > .content {
+  align-self: flex-start;
+  gap: 5px;
+  padding-top: 11px;
+}
+
+/* A leading icon: in a row with the label, 8dp before it (LeadingIconTab). */
+.leading > .content {
+  flex-direction: row;
+  gap: 8px;
+}
+
+/* The indicator. Primary: under the content, 3dp tall, rounded 3dp.
+   Secondary: the width of the tab, square. Placed from the script. */
+.indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: var(--md-comp-primary-navigation-tab-active-indicator-height);
+  background: var(--md-comp-primary-navigation-tab-active-indicator-color);
+  pointer-events: none;
+  translate: var(--_x, 0) 0;
+  width: var(--_w, 0);
+}
+
+.primary > .indicator {
+  border-radius: var(--md-comp-primary-navigation-tab-active-indicator-shape);
+}
+
+.moving > .indicator {
+  transition:
+    translate var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial),
+    width var(--md-sys-motion-spring-default-spatial-duration)
+      var(--md-sys-motion-spring-default-spatial);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moving > .indicator {
+    transition: none;
+  }
+}

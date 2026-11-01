@@ -36,6 +36,12 @@ import {
   SnackbarProvider,
   SuggestionChip,
   Switch,
+  Tab,
+  TabLink,
+  TabList,
+  TabNav,
+  TabPanel,
+  Tabs,
   TextField,
   Tooltip,
   useSnackbar
@@ -286,6 +292,94 @@ function Menus() {
           disabled
         />
       </div>
+    </div>
+  )
+}
+
+function TabsDemo() {
+  const [page, setPage] = useState('one')
+  const many = [
+    'Overview',
+    'Films',
+    'Shows',
+    'Music',
+    'Photos',
+    'Audiobooks',
+    'Podcasts',
+    'Playlists',
+    'Collections',
+    'Settings'
+  ]
+  return (
+    <div className="tabs-demo">
+      <Tabs defaultValue="films">
+        <TabList aria-label="Primary">
+          <Tab value="films">Films</Tab>
+          <Tab value="shows">Shows</Tab>
+          <Tab value="music">Music</Tab>
+        </TabList>
+        <TabPanel value="films" className="tab-panel">
+          Films panel
+        </TabPanel>
+        <TabPanel value="shows" className="tab-panel">
+          Shows panel
+        </TabPanel>
+        <TabPanel value="music" className="tab-panel">
+          Music panel
+        </TabPanel>
+      </Tabs>
+      <Tabs defaultValue="search">
+        <TabList aria-label="With icons">
+          <Tab value="search" icon="search">
+            Search
+          </Tab>
+          <Tab value="favorite" icon="favorite">
+            Favourites
+          </Tab>
+          <Tab value="settings" icon="settings">
+            Settings
+          </Tab>
+        </TabList>
+      </Tabs>
+      <Tabs defaultValue="search">
+        <TabList aria-label="Leading icons">
+          <Tab value="search" icon="search" iconPosition="leading">
+            Search
+          </Tab>
+          <Tab value="favorite" icon="favorite" iconPosition="leading">
+            Favourites
+          </Tab>
+        </TabList>
+      </Tabs>
+      <Tabs defaultValue="all">
+        <TabList aria-label="Secondary" variant="secondary">
+          <Tab value="all">All</Tab>
+          <Tab value="unwatched">Unwatched</Tab>
+          <Tab value="watched">Watched</Tab>
+        </TabList>
+      </Tabs>
+      <Tabs defaultValue="Overview">
+        <TabList aria-label="Scrollable" scrollable>
+          {many.map((n) => (
+            <Tab key={n} value={n}>
+              {n}
+            </Tab>
+          ))}
+        </TabList>
+      </Tabs>
+      <TabNav aria-label="Links">
+        {['one', 'two', 'three'].map((p) => (
+          <TabLink key={p} label={`Page ${p}`} selected={page === p}>
+            <a
+              href={`#${p}`}
+              onClick={(e) => {
+                e.preventDefault()
+                setPage(p)
+              }}
+            />
+          </TabLink>
+        ))}
+      </TabNav>
     </div>
   )
 }
@@ -927,6 +1021,11 @@ function Demo() {
       <section aria-labelledby="menus">
         <h2 id="menus">Menus</h2>
         <Menus />
+      </section>
+
+      <section aria-labelledby="tabs">
+        <h2 id="tabs">Tabs</h2>
+        <TabsDemo />
       </section>
 
       <section aria-labelledby="messages">

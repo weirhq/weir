@@ -1,4 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router'
+import { TabLink, TabNav } from '@weirhq/m3e'
 import cards from '../../components/Cards.module.css'
 import styles from './Admin.module.css'
 
@@ -7,7 +8,7 @@ export function AdminLayout() {
   return (
     <div className={styles.page}>
       <h1 className={cards.heading}>Server settings</h1>
-      <nav className={styles.tabs} aria-label="Server settings">
+      <TabNav aria-label="Server settings">
         {(
           [
             ['/admin', 'Libraries'],
@@ -15,17 +16,15 @@ export function AdminLayout() {
             ['/admin/status', 'Status']
           ] as const
         ).map(([to, label]) => (
-          <Link
-            key={to}
-            to={to}
-            className={styles.tab}
-            activeOptions={{ exact: true }}
-            activeProps={{ 'aria-current': 'page' }}
-          >
-            {label}
-          </Link>
+          <TabLink key={to} label={label}>
+            <Link
+              to={to}
+              activeOptions={{ exact: true }}
+              activeProps={{ 'aria-current': 'page' }}
+            />
+          </TabLink>
         ))}
-      </nav>
+      </TabNav>
       <Outlet />
     </div>
   )

@@ -12,6 +12,13 @@ Element.prototype.scrollIntoView = () => {}
 Element.prototype.hasPointerCapture = () => false
 Element.prototype.releasePointerCapture = () => {}
 
+// The tabs' indicator follows sizes, which jsdom doesn't have.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 // jsdom has media elements but no media.
 window.HTMLMediaElement.prototype.play = () => Promise.resolve()
 window.HTMLMediaElement.prototype.load = () => {}

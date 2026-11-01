@@ -56,6 +56,18 @@ export {
   type ListProps
 } from './list'
 export {
+  Tab,
+  TabLink,
+  TabList,
+  TabNav,
+  TabPanel,
+  Tabs,
+  type TabLinkProps,
+  type TabListProps,
+  type TabNavProps,
+  type TabProps
+} from './tabs'
+export {
   RichTooltip,
   Tooltip,
   type RichTooltipProps,

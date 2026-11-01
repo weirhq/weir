@@ -111,3 +111,22 @@ JOIN resolved_metadata r ON r.item_id = i.id
 WHERE i.library_id = $1 AND i.parent_id IS NULL AND r.year > 0
 GROUP BY 1
 ORDER BY 1 DESC;
+
+-- name: PersonCredits :many
+-- What a person is in, by the id in the cast lists shown for items, newest
+-- first, with their place in each list and who they play.
+SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
+       ps.position_ms, ps.watched, ps.play_count, ps.last_played,
+       coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
+       coalesce((SELECT max(f.duration_ms) FROM version v JOIN media_file f ON f.version_id = v.id WHERE v.item_id = i.id), 0)::bigint AS duration_ms,
+       (c.ord - 1)::int AS cast_index,
+       coalesce(c.person->>'name', '')::text AS name,
+       coalesce(c.person->>'role', '')::text AS role,
+       coalesce(c.person->>'photo', '')::text AS photo
+FROM item i
+JOIN resolved_metadata r ON r.item_id = i.id
+CROSS JOIN LATERAL jsonb_array_elements(r.cast_members) WITH ORDINALITY AS c(person, ord)
+LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_id)
+WHERE c.person->>'id' = sqlc.arg(person_id)::text
+  AND i.library_id = ANY(sqlc.arg(library_ids)::uuid[])
+ORDER BY r.year DESC, i.sort_title, i.id;

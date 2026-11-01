@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -267,5 +268,46 @@ func TestListItemsFiltersAndFacets(t *testing.T) {
 	same("genres, most first", genres, "Science Fiction 3", "Horror 2")
 	same("decades, newest first", decades, "2010 1", "2000 1", "1980 2", "1970 1")
 	_, err = browse.ListLibraryFacets(ctx, connect.NewRequest(&apiv1alpha.ListLibraryFacetsRequest{LibraryId: uuid.Must(uuid.NewV7()).String()}))
+	wantCode(t, err, connect.CodeNotFound)
+}
+
+func TestPeople(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	creds := h.bootstrap(t)
+	browse := apiv1alpha.NewBrowseClient(http.DefaultClient, h.url, bearer(creds))
+	h.scanFolder(t, library.Movies, "films", "Arrival (2016).mp4", "Enchanted (2007).mp4", "Zodiac (2007).mp4")
+	cast := func(title, people string) {
+		t.Helper()
+		if _, err := h.store.Pool.Exec(ctx, "INSERT INTO metadata (item_id, source, cast_members) VALUES ($1, 'tmdb', $2)", itemID(t, h, title), people); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cast("Arrival", `[{"id":"9273","name":"Amy Adams","role":"Louise Banks","photo":"https://img.test/amy.jpg"},{"id":"17604","name":"Jeremy Renner"}]`)
+	cast("Enchanted", `[{"id":"9273","name":"Amy Adams","role":"Giselle"}]`)
+	cast("Zodiac", `[{"id":"131","name":"Jake Gyllenhaal"}]`)
+
+	item, err := browse.GetItem(ctx, connect.NewRequest(&apiv1alpha.GetItemRequest{Id: itemID(t, h, "Arrival")}))
+	if err != nil || item.Msg.Item.Cast[0].Id != "9273" {
+		t.Fatalf("cast ids: %v %v", item, err)
+	}
+	amy, err := browse.GetPerson(ctx, connect.NewRequest(&apiv1alpha.GetPersonRequest{Id: "9273"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var credits []string
+	for _, c := range amy.Msg.Credits {
+		credits = append(credits, c.Item.Title+" as "+c.Role)
+	}
+	if amy.Msg.Name != "Amy Adams" || !slices.Equal(credits, []string{"Arrival as Louise Banks", "Enchanted as Giselle"}) {
+		t.Errorf("person %q credits %v", amy.Msg.Name, credits)
+	}
+	// Her photo is Arrival's cast photo, the first she's in with one.
+	if !strings.Contains(amy.Msg.PhotoUrl, itemID(t, h, "Arrival")+"/cast/0?") {
+		t.Errorf("photo %q", amy.Msg.PhotoUrl)
+	}
+	_, err = browse.GetPerson(ctx, connect.NewRequest(&apiv1alpha.GetPersonRequest{Id: "1"}))
+	wantCode(t, err, connect.CodeNotFound)
+	_, err = browse.GetPerson(ctx, connect.NewRequest(&apiv1alpha.GetPersonRequest{}))
 	wantCode(t, err, connect.CodeNotFound)
 }

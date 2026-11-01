@@ -372,6 +372,35 @@ func (s *Service) ListLibraryFacets(ctx context.Context, req *connect.Request[ap
 	return connect.NewResponse(resp), nil
 }
 
+func (s *Service) GetPerson(ctx context.Context, req *connect.Request[apiv1alpha.GetPersonRequest]) (*connect.Response[apiv1alpha.GetPersonResponse], error) {
+	caller, libs, err := s.visibleLibraries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.store.PersonCredits(ctx, dbgen.PersonCreditsParams{UserID: caller.UserID, PersonID: req.Msg.Id, LibraryIds: libs})
+	if err != nil {
+		return nil, auth.Internal(ctx, "person credits", err)
+	}
+	if req.Msg.Id == "" || len(rows) == 0 {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such person"))
+	}
+	u := s.urls(caller)
+	resp := &apiv1alpha.GetPersonResponse{Name: rows[0].Name}
+	for _, r := range rows {
+		// Their photo from the first credit that has one, as that item's
+		// cast photo.
+		if resp.PhotoUrl == "" && r.Photo != "" {
+			resp.PhotoUrl = u.cast(r.ID, int(r.CastIndex))
+		}
+		sum := summary(r.ID, r.Kind, r.Title, r.Year, r.IndexNumber, r.DiscNumber, r.LibraryID, r.ParentID)
+		resp.Credits = append(resp.Credits, &apiv1alpha.Credit{
+			Item: u.decorate(sum, r.ID, view{r.PositionMs, r.Watched, r.PlayCount, r.LastPlayed, r.ArtKinds, r.DurationMs}),
+			Role: r.Role,
+		})
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *Service) visibleLibraries(ctx context.Context) (*access.Caller, []uuid.UUID, error) {
 	caller, err := access.Load(ctx, s.store)
 	if err != nil {

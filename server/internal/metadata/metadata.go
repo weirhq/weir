@@ -46,6 +46,8 @@ type Person struct {
 	Role string `json:"role,omitempty"`
 	// Where their photo is, as a URL.
 	Photo string `json:"photo,omitempty"`
+	// Who they are across items: TMDB's person id.
+	ID string `json:"id,omitempty"`
 }
 
 // Art is a picture of an item: a file path for local art, else a URL.

@@ -75,6 +75,7 @@ type tmdbGenre struct {
 
 type tmdbCredits struct {
 	Cast []struct {
+		ID          int    `json:"id"`
 		Name        string `json:"name"`
 		Character   string `json:"character"`
 		ProfilePath string `json:"profile_path"`
@@ -89,6 +90,9 @@ func (c tmdbCredits) people(images string) []Person {
 			break
 		}
 		person := Person{Name: p.Name, Role: p.Character}
+		if p.ID != 0 {
+			person.ID = strconv.Itoa(p.ID)
+		}
 		if p.ProfilePath != "" {
 			person.Photo = images + p.ProfilePath
 		}

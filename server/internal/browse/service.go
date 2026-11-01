@@ -159,6 +159,14 @@ func (s *Service) ListItems(ctx context.Context, req *connect.Request[apiv1alpha
 		}
 	}
 	params.Sort = sortNames[sort]
+	params.Unwatched = msg.Unwatched
+	if msg.Genre != "" {
+		params.Genre = &msg.Genre
+	}
+	if msg.Decade != 0 {
+		decade := int32(msg.Decade)
+		params.Decade = &decade
+	}
 	size := msg.PageSize
 	if size == 0 {
 		size = defaultPageSize
@@ -336,6 +344,34 @@ func (s *Service) ListRecentlyAdded(ctx context.Context, req *connect.Request[ap
 	return connect.NewResponse(resp), nil
 }
 
+func (s *Service) ListLibraryFacets(ctx context.Context, req *connect.Request[apiv1alpha.ListLibraryFacetsRequest]) (*connect.Response[apiv1alpha.ListLibraryFacetsResponse], error) {
+	// Admins may view any library, so check it exists too.
+	_, libs, err := s.visibleLibraries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	id, err := uuid.Parse(req.Msg.LibraryId)
+	if err != nil || !slices.Contains(libs, id) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such library"))
+	}
+	genres, err := s.store.LibraryGenres(ctx, id)
+	if err != nil {
+		return nil, auth.Internal(ctx, "library genres", err)
+	}
+	decades, err := s.store.LibraryDecades(ctx, id)
+	if err != nil {
+		return nil, auth.Internal(ctx, "library decades", err)
+	}
+	resp := &apiv1alpha.ListLibraryFacetsResponse{}
+	for _, g := range genres {
+		resp.Genres = append(resp.Genres, &apiv1alpha.GenreCount{Genre: g.Genre, Count: uint32(g.Count)})
+	}
+	for _, d := range decades {
+		resp.Decades = append(resp.Decades, &apiv1alpha.DecadeCount{Decade: uint32(d.Decade), Count: uint32(d.Count)})
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *Service) visibleLibraries(ctx context.Context) (*access.Caller, []uuid.UUID, error) {
 	caller, err := access.Load(ctx, s.store)
 	if err != nil {
@@ -426,7 +462,8 @@ var (
 	sortNames = map[apiv1alpha.ItemSort]string{
 		apiv1alpha.ItemSort_ITEM_SORT_UNSPECIFIED: "title", apiv1alpha.ItemSort_ITEM_SORT_TITLE: "title",
 		apiv1alpha.ItemSort_ITEM_SORT_YEAR: "year", apiv1alpha.ItemSort_ITEM_SORT_ADDED: "added",
-		apiv1alpha.ItemSort_ITEM_SORT_INDEX: "index",
+		apiv1alpha.ItemSort_ITEM_SORT_INDEX:    "index",
+		apiv1alpha.ItemSort_ITEM_SORT_RELEASED: "released",
 	}
 	streamKinds = map[string]apiv1alpha.StreamKind{
 		"video": apiv1alpha.StreamKind_STREAM_KIND_VIDEO, "audio": apiv1alpha.StreamKind_STREAM_KIND_AUDIO,

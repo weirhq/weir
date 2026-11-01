@@ -9,7 +9,8 @@ INSERT INTO library_access (user_id, library_id, can_view, can_play, can_manage)
 
 -- name: ListItems :many
 -- One page of a library's top level or an item's children. The sort is one
--- of title, year, added or index.
+-- of title, year, added, index or released. Unwatched leaves out what the
+-- user has finished: for a show, every episode.
 SELECT i.id, i.kind, r.title, r.year, i.index_number, i.disc_number, i.library_id, i.parent_id,
        ps.position_ms, ps.watched, ps.play_count, ps.last_played,
        coalesce((SELECT array_agg(DISTINCT a.kind) FROM artwork a WHERE a.item_id = i.id), '{}')::text[] AS art_kinds,
@@ -21,8 +22,17 @@ LEFT JOIN playback_state ps ON ps.item_id = i.id AND ps.user_id = sqlc.arg(user_
 WHERE (sqlc.narg(library_id)::uuid IS NULL OR (i.library_id = sqlc.narg(library_id)::uuid AND i.parent_id IS NULL))
   AND (sqlc.narg(parent_id)::uuid IS NULL OR i.parent_id = sqlc.narg(parent_id)::uuid)
   AND (cardinality(sqlc.arg(kinds)::text[]) = 0 OR i.kind = ANY(sqlc.arg(kinds)::text[]))
+  AND (NOT sqlc.arg(unwatched)::bool OR CASE
+      WHEN i.kind = 'show' THEN EXISTS (
+          SELECT 1 FROM item s JOIN item e ON e.parent_id = s.id
+          LEFT JOIN playback_state eps ON eps.item_id = e.id AND eps.user_id = sqlc.arg(user_id)
+          WHERE s.parent_id = i.id AND e.kind = 'episode' AND NOT coalesce(eps.watched, false))
+      ELSE NOT coalesce(ps.watched, false) END)
+  AND (sqlc.narg(genre)::text IS NULL OR sqlc.narg(genre)::text = ANY(r.genres))
+  AND (sqlc.narg(decade)::int IS NULL OR r.year BETWEEN sqlc.narg(decade)::int AND sqlc.narg(decade)::int + 9)
 ORDER BY
   CASE WHEN sqlc.arg(sort)::text = 'year' THEN r.year END DESC,
+  CASE WHEN sqlc.arg(sort)::text = 'released' THEN coalesce(nullif(r.release_date, ''), nullif(r.year, 0)::text) END DESC NULLS LAST,
   CASE WHEN sqlc.arg(sort)::text = 'added' THEN i.created_at END DESC,
   CASE WHEN sqlc.arg(sort)::text = 'index' THEN coalesce(i.disc_number, 0) END,
   CASE WHEN sqlc.arg(sort)::text = 'index' THEN i.index_number END NULLS LAST,
@@ -82,3 +92,22 @@ WHERE i.library_id = ANY(sqlc.arg(library_ids)::uuid[])
   )
 ORDER BY score DESC, i.sort_title
 LIMIT sqlc.arg(max_results)::int;
+
+-- name: LibraryGenres :many
+-- A library's genres across its top-level items, the most items first.
+SELECT g::text AS genre, count(*)::int AS count
+FROM item i
+JOIN resolved_metadata r ON r.item_id = i.id
+CROSS JOIN LATERAL unnest(r.genres) AS g
+WHERE i.library_id = $1 AND i.parent_id IS NULL
+GROUP BY g
+ORDER BY count(*) DESC, g;
+
+-- name: LibraryDecades :many
+-- The decades a library's top-level items are from, newest first.
+SELECT (r.year / 10 * 10)::int AS decade, count(*)::int AS count
+FROM item i
+JOIN resolved_metadata r ON r.item_id = i.id
+WHERE i.library_id = $1 AND i.parent_id IS NULL AND r.year > 0
+GROUP BY 1
+ORDER BY 1 DESC;

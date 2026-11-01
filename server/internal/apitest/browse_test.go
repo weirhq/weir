@@ -2,9 +2,11 @@ package apitest
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -188,4 +190,82 @@ func TestListItemsPagesAndBreadcrumbs(t *testing.T) {
 
 	_, err = browse.ListItems(ctx, connect.NewRequest(&apiv1alpha.ListItemsRequest{}))
 	wantCode(t, err, connect.CodeInvalidArgument)
+}
+
+func TestListItemsFiltersAndFacets(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	creds := h.bootstrap(t)
+	browse := apiv1alpha.NewBrowseClient(http.DefaultClient, h.url, bearer(creds))
+	play := apiv1alpha.NewPlaybackClient(http.DefaultClient, h.url, bearer(creds))
+	films := h.scanFolder(t, library.Movies, "films",
+		"Alien (1979).mp4", "Arrival (2016).mp4", "Blade Runner (1982).mp4", "The Thing (1982).mp4", "Zodiac (2007).mp4")
+	shows := h.scanFolder(t, library.Shows, "tv",
+		"Severance (2022)/Season 01/Severance - S01E01.mp4", "Severance (2022)/Season 01/Severance - S01E02.mp4")
+	meta := func(title, release string, genres ...string) {
+		t.Helper()
+		if _, err := h.store.Pool.Exec(ctx, "INSERT INTO metadata (item_id, source, genres, release_date) VALUES ($1, 'tmdb', $2, nullif($3, '')::date)",
+			itemID(t, h, title), genres, release); err != nil {
+			t.Fatal(err)
+		}
+	}
+	meta("Alien", "2003-10-31", "Horror", "Science Fiction") // the director's cut
+	meta("The Thing", "", "Horror")
+	meta("Arrival", "2016-11-11", "Science Fiction")
+	meta("Blade Runner", "", "Science Fiction")
+	list := func(req *apiv1alpha.ListItemsRequest) []string {
+		t.Helper()
+		resp, err := browse.ListItems(ctx, connect.NewRequest(req))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var titles []string
+		for _, it := range resp.Msg.Items {
+			titles = append(titles, it.Title)
+		}
+		return titles
+	}
+	same := func(what string, got []string, want ...string) {
+		t.Helper()
+		if !slices.Equal(got, want) {
+			t.Errorf("%s: %v, want %v", what, got, want)
+		}
+	}
+
+	same("horror", list(&apiv1alpha.ListItemsRequest{LibraryId: films.String(), Genre: "Horror"}), "Alien", "The Thing")
+	same("the 1980s", list(&apiv1alpha.ListItemsRequest{LibraryId: films.String(), Decade: 1980}), "Blade Runner", "The Thing")
+	// By release date where there is one, else by year.
+	same("recently released", list(&apiv1alpha.ListItemsRequest{LibraryId: films.String(), Sort: apiv1alpha.ItemSort_ITEM_SORT_RELEASED}),
+		"Arrival", "Zodiac", "Alien", "Blade Runner", "The Thing")
+
+	if _, err := play.SetWatched(ctx, connect.NewRequest(&apiv1alpha.SetWatchedRequest{ItemId: itemID(t, h, "Arrival"), Watched: true})); err != nil {
+		t.Fatal(err)
+	}
+	same("unwatched films", list(&apiv1alpha.ListItemsRequest{LibraryId: films.String(), Unwatched: true}),
+		"Alien", "Blade Runner", "The Thing", "Zodiac")
+	// A show is unwatched until every episode is watched.
+	if _, err := play.SetWatched(ctx, connect.NewRequest(&apiv1alpha.SetWatchedRequest{ItemId: itemID(t, h, "Episode 1"), Watched: true})); err != nil {
+		t.Fatal(err)
+	}
+	same("a show part-watched", list(&apiv1alpha.ListItemsRequest{LibraryId: shows.String(), Unwatched: true}), "Severance")
+	if _, err := play.SetWatched(ctx, connect.NewRequest(&apiv1alpha.SetWatchedRequest{ItemId: itemID(t, h, "Episode 2"), Watched: true})); err != nil {
+		t.Fatal(err)
+	}
+	same("a show watched", list(&apiv1alpha.ListItemsRequest{LibraryId: shows.String(), Unwatched: true}))
+
+	facets, err := browse.ListLibraryFacets(ctx, connect.NewRequest(&apiv1alpha.ListLibraryFacetsRequest{LibraryId: films.String()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var genres, decades []string
+	for _, g := range facets.Msg.Genres {
+		genres = append(genres, fmt.Sprintf("%s %d", g.Genre, g.Count))
+	}
+	for _, d := range facets.Msg.Decades {
+		decades = append(decades, fmt.Sprintf("%d %d", d.Decade, d.Count))
+	}
+	same("genres, most first", genres, "Science Fiction 3", "Horror 2")
+	same("decades, newest first", decades, "2010 1", "2000 1", "1980 2", "1970 1")
+	_, err = browse.ListLibraryFacets(ctx, connect.NewRequest(&apiv1alpha.ListLibraryFacetsRequest{LibraryId: uuid.Must(uuid.NewV7()).String()}))
+	wantCode(t, err, connect.CodeNotFound)
 }
